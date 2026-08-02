@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Sổ Thu Chi - Đồng bộ Realtime</title>
+  <title>Sổ Thu Chi</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Font Awesome Icons -->
@@ -22,7 +22,7 @@
 
   <!-- TOP HEADER -->
   <header class="bg-blue-600 text-white p-4 text-center font-bold text-lg shadow-md flex items-center justify-between sticky top-0 z-20">
-    <span id="headerTitle">Tài khoản của tôi</span>
+    <span id="headerTitle">Sổ Thu Chi</span>
     <span id="syncBadge" class="text-xs bg-red-500 text-white px-2 py-1 rounded-full flex items-center gap-1">
       <i class="fa-solid fa-wifi"></i> Chưa kết nối
     </span>
@@ -32,7 +32,7 @@
   <main class="flex-1 overflow-y-auto p-4 pb-24">
 
     <!-- TAB 1: TỔNG QUAN -->
-    <section id="tab-overview" class="tab-content hidden space-y-4">
+    <section id="tab-overview" class="tab-content space-y-4">
       <div class="bg-white p-4 rounded-xl shadow-sm space-y-2">
         <p class="text-sm text-gray-500">Số dư hiện tại</p>
         <h2 id="overviewBalance" class="text-3xl font-extrabold text-blue-600">0 đ</h2>
@@ -46,8 +46,8 @@
       </div>
     </section>
 
-    <!-- TAB 2: TÀI KHOẢN (DEFAULT) -->
-    <section id="tab-accounts" class="tab-content space-y-4">
+    <!-- TAB 2: TÀI KHOẢN -->
+    <section id="tab-accounts" class="tab-content hidden space-y-4">
       <div class="bg-blue-600 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
         <p class="text-sm opacity-80">Tổng tài sản</p>
         <div class="flex items-center gap-2 mt-1">
@@ -66,7 +66,7 @@
           <span class="text-sm font-bold text-gray-600">Tài khoản chi tiêu (<span id="accountCount">0</span>)</span>
         </div>
         <div id="accountList" class="space-y-3">
-          <!-- Tài khoản sẽ render động ở đây -->
+          <!-- Tài khoản render động -->
         </div>
       </div>
     </section>
@@ -93,12 +93,12 @@
       <div class="bg-white p-5 rounded-2xl shadow-sm space-y-4">
         <div class="flex items-center gap-2 text-gray-700 font-bold border-b pb-3">
           <i class="fa-solid fa-cloud text-blue-500 text-xl"></i>
-          <span>Đồng bộ Google Cloud (Realtime)</span>
+          <span>Đồng bộ Realtime</span>
         </div>
 
         <div class="bg-green-50 border border-green-200 p-4 rounded-xl space-y-3">
           <label class="block text-xs font-bold text-green-800">
-            <i class="fa-solid fa-envelope"></i> Nhập Gmail dùng chung giữa các máy
+            <i class="fa-solid fa-envelope"></i> Nhập Gmail đồng bộ dùng chung các máy
           </label>
           <input type="email" id="syncEmail" placeholder="ví dụ: truongtv1280@gmail.com" 
                  class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
@@ -112,28 +112,23 @@
             Đã kết nối Realtime Cloud
           </p>
         </div>
-
-        <div class="bg-red-50 border border-red-100 p-3 rounded-xl text-xs text-red-700 space-y-1">
-          <p class="font-bold"><i class="fa-solid fa-thumbtack"></i> Lưu ý dùng song song:</p>
-          <p>Hãy nhập <b>cùng 1 địa chỉ Gmail</b> này trên tất cả các thiết bị. Mọi thay đổi ở máy này sẽ ngay lập tức xuất hiện ở máy kia.</p>
-        </div>
       </div>
     </section>
 
   </main>
 
-  <!-- NÚT TẠO GIAO DỊCH (+ QUAN TRỌNG) -->
+  <!-- NÚT TẠO GIAO DỊCH (+) -->
   <button onclick="openTransactionModal()" class="fixed bottom-16 left-1/2 -translate-x-1/2 bg-blue-600 text-white w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-xl hover:bg-blue-700 active:scale-90 transition z-30">
     <i class="fa-solid fa-plus"></i>
   </button>
 
   <!-- BOTTOM NAVIGATION BAR -->
   <nav class="bg-white border-t border-gray-200 fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md grid grid-cols-4 py-2 z-20 text-center text-xs">
-    <button onclick="switchTab('overview')" id="nav-overview" class="flex flex-col items-center gap-1 text-gray-500">
+    <button onclick="switchTab('overview')" id="nav-overview" class="flex flex-col items-center gap-1 active-tab">
       <i class="fa-solid fa-house text-lg"></i>
       <span>Tổng quan</span>
     </button>
-    <button onclick="switchTab('accounts')" id="nav-accounts" class="flex flex-col items-center gap-1 active-tab">
+    <button onclick="switchTab('accounts')" id="nav-accounts" class="flex flex-col items-center gap-1 text-gray-500">
       <i class="fa-solid fa-wallet text-lg"></i>
       <span>Tài khoản</span>
     </button>
@@ -149,7 +144,7 @@
 
   <!-- MODAL TẠO TÀI KHOẢN -->
   <div id="accountModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end justify-center hidden z-50">
-    <div class="bg-white w-full max-w-md rounded-t-2xl p-5 space-y-4 animate-slide-up">
+    <div class="bg-white w-full max-w-md rounded-t-2xl p-5 space-y-4">
       <div class="flex justify-between items-center border-b pb-2">
         <h3 class="font-bold text-gray-800">Thêm tài khoản mới</h3>
         <button onclick="closeAddAccountModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
@@ -166,9 +161,9 @@
     </div>
   </div>
 
-  <!-- MODAL THÊM GIAO DỊCH (THU/CHI) -->
+  <!-- MODAL THÊM GIAO DỊCH (CÓ DANH MỤC) -->
   <div id="transactionModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end justify-center hidden z-50">
-    <div class="bg-white w-full max-w-md rounded-t-2xl p-5 space-y-4">
+    <div class="bg-white w-full max-w-md rounded-t-2xl p-5 space-y-3">
       <div class="flex justify-between items-center border-b pb-2">
         <h3 class="font-bold text-gray-800">Thêm giao dịch</h3>
         <button onclick="closeTransactionModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
@@ -182,25 +177,30 @@
         <input type="number" id="txAmount" placeholder="0" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-lg">
       </div>
       <div>
-        <label class="block text-xs font-semibold text-gray-600 mb-1">Chọn tài khoản</label>
-        <select id="txAccountSelect" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <!-- Options load từ danh sách tài khoản -->
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Danh mục</label>
+        <select id="txCategorySelect" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+          <!-- Danh mục render theo loại Thu/Chi -->
         </select>
       </div>
       <div>
-        <label class="block text-xs font-semibold text-gray-600 mb-1">Ghi chú / Diễn giải</label>
-        <input type="text" id="txNote" placeholder="VD: Ăn sáng, Lương..." class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Tài khoản</label>
+        <select id="txAccountSelect" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <!-- Options load từ tài khoản -->
+        </select>
       </div>
-      <button onclick="saveTransaction()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-blue-700">Xác nhận Giao dịch</button>
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Ghi chú thêm (Không bắt buộc)</label>
+        <input type="text" id="txNote" placeholder="VD: Ăn phở sáng, Cafe..." class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <button onclick="saveTransaction()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-blue-700 mt-2">Xác nhận Giao dịch</button>
     </div>
   </div>
 
-  <!-- FIREBASE SDK (Compat Version 8.10.1) -->
+  <!-- FIREBASE SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
   <script>
-    // 1. CẤU HÌNH FIREBASE DỰ ÁN CỦA BẠN
     const firebaseConfig = {
       apiKey: "AIzaSyC7Kccxqj9HOfn2Pb01nJAwuoHE2Y86oPs",
       authDomain: "appthuchi-ebea8.firebaseapp.com",
@@ -212,13 +212,17 @@
       measurementId: "G-YSMN9PH1JP"
     };
 
-    // Khởi tạo Firebase
     if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.database();
 
-    // 2. STATE ỨNG DỤNG
+    // Danh mục mặc định
+    const categories = {
+      expense: ['🍲 Ăn uống', '☕ Cafe/Trà sữa', '🛒 Mua sắm', '🚗 Di chuyển', '🏠 Nhà cửa/Điện nước', '🎬 Giải trí', '💊 Sức khỏe', '❓ Chi khác'],
+      income: ['💵 Lương', '🎁 Thưởng', '📈 Đầu tư', '💰 Bán hàng', '❓ Thu khác']
+    };
+
     let state = {
       accounts: [],
       transactions: [],
@@ -229,7 +233,6 @@
 
     let activeRef = null;
 
-    // 3. KHỞI TẠO VÀ LẮNG NGHE REALTIME
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('syncEmail').value = state.userEmail;
       initFirebaseSync();
@@ -244,13 +247,10 @@
       if (!email) return;
 
       const userKey = cleanEmailKey(email);
-      
-      // Hủy đăng ký listener cũ nếu có
       if (activeRef) activeRef.off();
 
       activeRef = db.ref('users/' + userKey);
       
-      // Lắng nghe biến động Realtime từ Firebase
       activeRef.on('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
@@ -263,7 +263,7 @@
         updateUI();
         updateSyncStatus(true);
       }, (error) => {
-        console.error("Lỗi đồng bộ:", error);
+        console.error(error);
         updateSyncStatus(false);
       });
     }
@@ -290,7 +290,7 @@
       localStorage.setItem("sync_email", emailInput);
       initFirebaseSync();
       pushDataToCloud();
-      alert("Đã kích hoạt đồng bộ thành công!");
+      alert("Đã kết nối đồng bộ!");
     }
 
     function updateSyncStatus(isConnected) {
@@ -308,20 +308,17 @@
       }
     }
 
-    // 4. RENDER GIAO DIỆN
     function formatMoney(num) {
       if (state.hideAmount) return "•••••• đ";
       return new Intl.NumberFormat('vi-VN').format(num) + " đ";
     }
 
     function updateUI() {
-      // 1. Tính tổng tài sản
       const total = state.accounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
       document.getElementById('totalBalance').innerText = formatMoney(total);
       document.getElementById('overviewBalance').innerText = formatMoney(total);
       document.getElementById('accountCount').innerText = state.accounts.length;
 
-      // 2. Render danh sách tài khoản
       const accountList = document.getElementById('accountList');
       if (state.accounts.length === 0) {
         accountList.innerHTML = `<div class="bg-white p-4 rounded-xl text-center text-gray-400 text-sm">Chưa có tài khoản nào</div>`;
@@ -344,7 +341,6 @@
         `).join('');
       }
 
-      // 3. Render Thống kê Thu/Chi
       let income = 0, expense = 0;
       state.transactions.forEach(t => {
         if (t.type === 'income') income += Number(t.amount);
@@ -353,16 +349,15 @@
       document.getElementById('totalIncome').innerText = formatMoney(income);
       document.getElementById('totalExpense').innerText = formatMoney(expense);
 
-      // 4. Render Lịch sử gần đây
       const recentList = document.getElementById('recentList');
       if (state.transactions.length === 0) {
         recentList.innerHTML = `<li class="text-gray-400 text-center py-4">Chưa có giao dịch nào</li>`;
       } else {
-        recentList.innerHTML = state.transactions.slice(-5).reverse().map(t => `
+        recentList.innerHTML = state.transactions.slice(-10).reverse().map(t => `
           <li class="flex justify-between items-center border-b pb-2">
             <div>
-              <p class="font-medium text-gray-800">${t.note || (t.type==='income'?'Thu tiền':'Chi tiền')}</p>
-              <p class="text-xs text-gray-400">${t.accName} • ${t.date}</p>
+              <p class="font-bold text-gray-800">${t.category || (t.type==='income'?'Thu tiền':'Chi tiền')}</p>
+              <p class="text-xs text-gray-400">${t.accName} ${t.note ? '• ' + t.note : ''} • ${t.date}</p>
             </div>
             <span class="font-bold ${t.type==='income' ? 'text-green-600' : 'text-red-600'}">
               ${t.type==='income' ? '+' : '-'}${formatMoney(t.amount)}
@@ -372,7 +367,6 @@
       }
     }
 
-    // 5. CHỨC NĂNG TẢI TRANG VÀ THAO TÁC
     function switchTab(tab) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('nav button').forEach(el => {
@@ -385,23 +379,20 @@
       document.getElementById(`nav-${tab}`).classList.remove('text-gray-500');
 
       const titles = {
-        overview: 'Tổng quan Sổ Thu Chi',
-        accounts: 'Tài khoản của tôi',
-        reports: 'Báo cáo Thu Chi',
+        overview: 'Sổ Thu Chi',
+        accounts: 'Tài khoản',
+        reports: 'Báo cáo',
         settings: 'Cài đặt & Đồng bộ'
       };
       document.getElementById('headerTitle').innerText = titles[tab];
     }
 
-    // Ẩn / Hiện Số tiền
     document.getElementById('toggleHideAmount').addEventListener('click', () => {
       state.hideAmount = !state.hideAmount;
-      const eyeIcon = document.getElementById('eyeIcon');
-      eyeIcon.className = state.hideAmount ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
+      document.getElementById('eyeIcon').className = state.hideAmount ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
       updateUI();
     });
 
-    // Thêm Tài khoản
     function openAddAccountModal() {
       document.getElementById('accountModal').classList.remove('hidden');
     }
@@ -431,7 +422,12 @@
       }
     }
 
-    // Thêm Giao dịch
+    function renderCategories() {
+      const catSelect = document.getElementById('txCategorySelect');
+      const currentList = categories[state.txType];
+      catSelect.innerHTML = currentList.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+    }
+
     function openTransactionModal() {
       if (state.accounts.length === 0) {
         alert("Bạn cần tạo ít nhất 1 Tài khoản trước!");
@@ -439,13 +435,16 @@
       }
       const select = document.getElementById('txAccountSelect');
       select.innerHTML = state.accounts.map((acc, index) => `<option value="${index}">${acc.name} (${formatMoney(acc.balance)})</option>`).join('');
+      renderCategories();
       document.getElementById('transactionModal').classList.remove('hidden');
     }
+
     function closeTransactionModal() {
       document.getElementById('transactionModal').classList.add('hidden');
       document.getElementById('txAmount').value = '';
       document.getElementById('txNote').value = '';
     }
+
     function setTxType(type) {
       state.txType = type;
       const expBtn = document.getElementById('typeExpenseBtn');
@@ -458,11 +457,13 @@
         incBtn.className = "py-2 rounded-lg font-bold text-sm bg-green-100 text-green-600 border border-green-300";
         expBtn.className = "py-2 rounded-lg font-bold text-sm bg-gray-100 text-gray-600";
       }
+      renderCategories();
     }
 
     function saveTransaction() {
       const amount = parseFloat(document.getElementById('txAmount').value);
       const accIndex = parseInt(document.getElementById('txAccountSelect').value);
+      const category = document.getElementById('txCategorySelect').value;
       const note = document.getElementById('txNote').value.trim();
 
       if (!amount || amount <= 0) {
@@ -480,6 +481,7 @@
       state.transactions.push({
         type: state.txType,
         amount: amount,
+        category: category,
         accName: acc.name,
         note: note,
         date: new Date().toLocaleDateString('vi-VN')
