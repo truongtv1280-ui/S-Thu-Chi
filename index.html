@@ -30,7 +30,7 @@
     .main-card { background: #fff; margin: 0 14px 14px 14px; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
     .card-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .card-title { font-size: 17px; font-weight: 700; color: #222; display: flex; align-items: center; gap: 6px; }
-    .time-select { padding: 4px 10px; border-radius: 8px; border: 1px solid #dcdfe6; background: #fff; font-size: 13px; color: #333; outline: none; }
+    .time-select { padding: 6px 10px; border-radius: 8px; border: 1px solid #dcdfe6; background: #fff; font-size: 14px; color: #333; outline: none; cursor: pointer; }
 
     /* Bar & Text Summary */
     .summary-grid { display: grid; grid-template-columns: 80px 1fr; gap: 12px; margin-bottom: 20px; align-items: center; }
@@ -125,9 +125,13 @@
     <div class="main-card">
       <div class="card-title-row">
         <div class="card-title">Tình hình thu chi ⚙️</div>
-        <select class="time-select">
-          <option>Tháng này</option>
-          <option>Tháng trước</option>
+        <!-- Thêm đầy đủ tùy chọn như ảnh -->
+        <select class="time-select" id="timeFilter">
+          <option value="today">Hôm nay</option>
+          <option value="week">Tuần này</option>
+          <option value="month" selected>Tháng này</option>
+          <option value="quarter">Quý này</option>
+          <option value="year">Năm nay</option>
         </select>
       </div>
 
@@ -167,12 +171,23 @@
           </div>
         </div>
         <div class="chart-legend" id="chartLegend">
-          <!-- JS sẽ render các mục ở đây -->
+          <!-- JS sẽ render ở đây -->
         </div>
       </div>
 
       <div class="btn-history-container">
         <button class="btn-history" id="openHistoryBtn">Lịch sử ghi chép</button>
+      </div>
+    </div>
+
+    <!-- Phân tích chi tiêu Section -->
+    <div class="main-card">
+      <div class="card-title-row">
+        <div class="card-title">Phân tích c...</div>
+        <select class="time-select">
+          <option>01/2026 - 12/2026</option>
+          <option>01/2025 - 12/2025</option>
+        </select>
       </div>
     </div>
 
@@ -262,7 +277,6 @@
     let isHide = false;
     let currentType = 'EXPENSE';
 
-    // Dữ liệu ban đầu khớp ảnh
     let transactions = JSON.parse(localStorage.getItem('misa_app_txs')) || [
       { id: 1, type: 'EXPENSE', amount: 50000, category: 'Đi lại', note: 'Xăng xe' },
       { id: 2, type: 'EXPENSE', amount: 5000, category: 'Ăn uống', note: 'Cà phê' }
@@ -287,7 +301,6 @@
       const currentBalance = baseBalance + totalThu - totalChi;
       const diff = totalThu - totalChi;
 
-      // Update text
       document.getElementById('balanceText').innerText = isHide ? '•••••••• đ' : formatVND(currentBalance);
       document.getElementById('textThu').innerText = formatVND(totalThu);
       document.getElementById('textChi').innerText = formatVND(totalChi);
@@ -296,12 +309,10 @@
       diffEl.innerText = (diff > 0 ? '+' : '') + formatVND(diff);
       diffEl.style.color = diff < 0 ? '#ff4d4f' : '#2e7d32';
 
-      // Bars height
       const maxVal = Math.max(totalThu, totalChi, 1);
       document.getElementById('barThu').style.height = `${(totalThu / maxVal) * 100}%`;
       document.getElementById('barChi').style.height = `${(totalChi / maxVal) * 100}%`;
 
-      // Donut chart logic
       const legendEl = document.getElementById('chartLegend');
       legendEl.innerHTML = '';
       
@@ -320,7 +331,6 @@
           gradientStops.push(`${color} ${currentDeg}deg ${currentDeg + deg}deg`);
           currentDeg += deg;
 
-          // Add legend item
           const item = document.createElement('div');
           item.className = 'legend-item';
           item.innerHTML = `
@@ -339,18 +349,15 @@
       localStorage.setItem('misa_app_txs', JSON.stringify(transactions));
     }
 
-    // Toggle Eye
     document.getElementById('toggleEye').onclick = () => {
       isHide = !isHide;
       updateUI();
     };
 
-    // Modal Add Control
     const addModal = document.getElementById('addModal');
     document.getElementById('openAddModal').onclick = () => addModal.classList.add('active');
     document.getElementById('closeAddModal').onclick = () => addModal.classList.remove('active');
 
-    // Modal History Control
     const historyModal = document.getElementById('historyModal');
     document.getElementById('openHistoryBtn').onclick = () => {
       const listEl = document.getElementById('historyList');
@@ -373,7 +380,6 @@
     };
     document.getElementById('closeHistoryModal').onclick = () => historyModal.classList.remove('active');
 
-    // Switch Thu/Chi
     const btnExp = document.getElementById('btnTypeExp');
     const btnInc = document.getElementById('btnTypeInc');
     btnExp.onclick = () => {
@@ -387,7 +393,6 @@
       btnExp.className = 'type-btn';
     };
 
-    // Save transaction
     document.getElementById('saveBtn').onclick = () => {
       const amt = parseFloat(document.getElementById('inputAmount').value);
       const cat = document.getElementById('inputCategory').value;
@@ -412,7 +417,6 @@
       addModal.classList.remove('active');
     };
 
-    // Init
     updateUI();
   </script>
 </body>
