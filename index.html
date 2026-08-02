@@ -5,150 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sổ Thu Chi MISA Cloned</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-    body {
-      background-color: #f2f4f7;
-      display: flex;
-      justify-content: center;
-      min-height: 100vh;
-    }
-    .app-container {
-      width: 100%;
-      max-width: 414px;
-      background-color: #fff;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      min-height: 100vh;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: #f2f4f7; display: flex; justify-content: center; min-height: 100vh; }
+    .app-container { width: 100%; max-width: 414px; background-color: #fff; display: flex; flex-direction: column; position: relative; min-height: 100vh; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    
     /* Header */
-    .header {
-      background: linear-gradient(180deg, #1890ff 0%, #096dd9 100%);
-      color: #fff;
-      padding: 16px;
-    }
-    .status-bar {
-      display: flex;
-      justify-content: space-between;
-      font-size: 14px;
-      margin-bottom: 12px;
-    }
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .avatar {
-      width: 36px;
-      height: 36px;
-      background-color: #003a8c;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-    }
+    .header { background: linear-gradient(180deg, #1890ff 0%, #096dd9 100%); color: #fff; padding: 16px; }
+    .status-bar { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 12px; }
+    .user-info { display: flex; align-items: center; gap: 10px; }
+    .avatar { width: 36px; height: 36px; background-color: #003a8c; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    
     /* Cards */
-    .balance-card {
-      background: #fff;
-      margin: -20px 16px 16px 16px;
-      padding: 16px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      position: relative;
-      z-index: 2;
-    }
-    .balance-title {
-      font-size: 14px;
-      color: #666;
-    }
-    .balance-amount {
-      font-size: 26px;
-      font-weight: bold;
-      color: #111;
-      margin-top: 4px;
-    }
-    .section-card {
-      background: #fff;
-      margin: 0 16px 16px 16px;
-      padding: 16px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    .summary-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px dashed #eee;
-    }
+    .balance-card { background: #fff; margin: -20px 16px 16px 16px; padding: 16px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: relative; z-index: 2; }
+    .balance-title { font-size: 14px; color: #666; }
+    .balance-amount { font-size: 26px; font-weight: bold; color: #111; margin-top: 4px; }
+    .section-card { background: #fff; margin: 0 16px 16px 16px; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .summary-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee; }
     .income { color: #52c41a; font-weight: 600; }
     .expense { color: #ff4d4f; font-weight: 600; }
     
-    /* Accounts */
-    .account-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    .account-item:last-child { border-bottom: none; }
-    .account-name { font-weight: 500; }
-    .account-balance { color: #333; font-weight: 600; }
+    /* Transaction List */
+    .tx-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+    .tx-category { font-weight: 500; font-size: 14px; }
+    .tx-desc { font-size: 12px; color: #8c8c8c; }
+
+    /* Modal Form */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: flex-end; z-index: 100; }
+    .modal.active { display: flex; }
+    .modal-content { background: #fff; width: 100%; max-width: 414px; border-radius: 16px 16px 0 0; padding: 20px; animation: slideUp 0.3s ease; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; }
+    .form-control { width: 100%; padding: 10px; border: 1px solid #d9d9d9; border-radius: 8px; font-size: 14px; }
+    .type-selector { display: flex; gap: 10px; margin-bottom: 12px; }
+    .type-btn { flex: 1; padding: 8px; border: 1px solid #d9d9d9; border-radius: 8px; background: #f5f5f5; text-align: center; cursor: pointer; font-size: 14px; }
+    .type-btn.active-exp { background: #ff4d4f; color: #fff; border-color: #ff4d4f; }
+    .type-btn.active-inc { background: #52c41a; color: #fff; border-color: #52c41a; }
+    .submit-btn { width: 100%; padding: 12px; background: #1890ff; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 8px; }
 
     /* Bottom Nav */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      max-width: 414px;
-      height: 60px;
-      background: #fff;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      border-top: 1px solid #e8e8e8;
-    }
-    .nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      font-size: 11px;
-      color: #8c8c8c;
-      text-decoration: none;
-    }
+    .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 414px; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #e8e8e8; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: #8c8c8c; text-decoration: none; }
     .nav-item.active { color: #1890ff; }
-    .add-btn {
-      width: 48px;
-      height: 48px;
-      background: #1890ff;
-      color: #fff;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      margin-top: -20px;
-      box-shadow: 0 4px 10px rgba(24,144,255,0.4);
-      cursor: pointer;
-    }
+    .add-btn { width: 48px; height: 48px; background: #1890ff; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-top: -20px; box-shadow: 0 4px 10px rgba(24,144,255,0.4); cursor: pointer; }
   </style>
 </head>
 <body>
 
   <div class="app-container">
-    <!-- Header Section -->
+    <!-- Header -->
     <div class="header">
-      <div class="status-bar">
-        <span>13:03</span>
-        <span>80%</span>
-      </div>
+      <div class="status-bar"><span>13:03</span><span>80%</span></div>
       <div class="user-info">
         <div class="avatar">TT</div>
         <div>
@@ -161,7 +69,7 @@
     <!-- Balance Card -->
     <div class="balance-card">
       <div class="balance-title">Tổng số dư</div>
-      <div class="balance-amount">1.445.000 đ</div>
+      <div class="balance-amount" id="totalBalance">1.445.000 đ</div>
     </div>
 
     <!-- Tình hình thu chi -->
@@ -169,52 +77,171 @@
       <h3 style="font-size: 16px; margin-bottom: 12px;">Tình hình thu chi</h3>
       <div class="summary-row">
         <span>Thu</span>
-        <span class="income">0 đ</span>
+        <span class="income" id="totalIncome">0 đ</span>
       </div>
       <div class="summary-row">
         <span>Chi</span>
-        <span class="expense">55.000 đ</span>
+        <span class="expense" id="totalExpense">0 đ</span>
       </div>
       <div class="summary-row" style="border: none;">
         <span>Chênh lệch</span>
-        <span class="expense">-55.000 đ</span>
+        <span id="totalDiff" class="expense">0 đ</span>
       </div>
     </div>
 
-    <!-- Tài khoản của tôi -->
+    <!-- Danh sách ghi chép -->
     <div class="section-card" style="margin-bottom: 80px;">
-      <h3 style="font-size: 16px; margin-bottom: 8px;">Tài khoản chi tiêu</h3>
-      <div class="account-item">
-        <div class="account-name">💵 Tiền Mặt</div>
-        <div class="account-balance">500.000 đ</div>
-      </div>
-      <div class="account-item">
-        <div class="account-name">🏦 VCB</div>
-        <div class="account-balance">945.000 đ</div>
-      </div>
+      <h3 style="font-size: 16px; margin-bottom: 8px;">Lịch sử giao dịch</h3>
+      <div id="txList"></div>
     </div>
 
-    <!-- Thanh điều hướng phía dưới -->
+    <!-- Bottom Nav -->
     <div class="bottom-nav">
-      <a href="#" class="nav-item active">
-        <span>🏠</span>
-        <span>Tổng quan</span>
-      </a>
-      <a href="#" class="nav-item">
-        <span>💳</span>
-        <span>Tài khoản</span>
-      </a>
-      <div class="add-btn">+</div>
-      <a href="#" class="nav-item">
-        <span>📊</span>
-        <span>Báo cáo</span>
-      </a>
-      <a href="#" class="nav-item">
-        <span>⚙️</span>
-        <span>Khác</span>
-      </a>
+      <a href="#" class="nav-item active"><span>🏠</span><span>Tổng quan</span></a>
+      <a href="#" class="nav-item"><span>💳</span><span>Tài khoản</span></a>
+      <div class="add-btn" id="openModalBtn">+</div>
+      <a href="#" class="nav-item"><span>📊</span><span>Báo cáo</span></a>
+      <a href="#" class="nav-item"><span>⚙️</span><span>Khác</span></a>
     </div>
   </div>
 
+  <!-- Modal nhập giao dịch -->
+  <div class="modal" id="txModal">
+    <div class="modal-content">
+      <div style="display:flex; justify-shadow: space-between; align-items:center; margin-bottom: 12px;">
+        <h3 style="font-size:16px;">Thêm giao dịch mới</h3>
+        <span id="closeModalBtn" style="font-size:20px; cursor:pointer; padding: 0 8px;">✕</span>
+      </div>
+
+      <div class="type-selector">
+        <div class="type-btn active-exp" id="btnExpense">Chi tiền</div>
+        <div class="type-btn" id="btnIncome">Thu tiền</div>
+      </div>
+
+      <div class="form-group">
+        <label>Số tiền (VNĐ)</label>
+        <input type="number" id="inputAmount" class="form-control" placeholder="Ví dụ: 50000" pattern="[0-9]*">
+      </div>
+
+      <div class="form-group">
+        <label>Hạng mục</label>
+        <select id="inputCategory" class="form-control">
+          <option value="Ăn uống">☕ Ăn uống / Cafe</option>
+          <option value="Đi lại">⛽ Xăng xe / Đi lại</option>
+          <option value="Con cái">👶 Con cái</option>
+          <option value="Lương">💰 Lương / Thu nhập</option>
+          <option value="Khác">🛍️ Khác</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Diễn giải / Ghi chú</label>
+        <input type="text" id="inputDesc" class="form-control" placeholder="Ví dụ: Cà phê sáng">
+      </div>
+
+      <button class="submit-btn" id="saveTxBtn">Lưu giao dịch</button>
+    </div>
+  </div>
+
+  <script>
+    // Dữ liệu ban đầu
+    let initialBalance = 1500000;
+    let currentType = 'EXPENSE';
+    let transactions = JSON.parse(localStorage.getItem('misa_txs')) || [
+      { id: 1, type: 'EXPENSE', amount: 50000, category: 'Đi lại', desc: 'Xăng xe', date: '02/08/2026' },
+      { id: 2, type: 'EXPENSE', amount: 5000, category: 'Ăn uống', desc: 'Gửi xe', date: '02/08/2026' }
+    ];
+
+    const formatMoney = (amount) => new Intl.NumberFormat('vi-VN').format(amount) + ' đ';
+
+    function render() {
+      let totalInc = 0;
+      let totalExp = 0;
+      const txListEl = document.getElementById('txList');
+      txListEl.innerHTML = '';
+
+      transactions.forEach(tx => {
+        if (tx.type === 'INCOME') totalInc += tx.amount;
+        else totalExp += tx.amount;
+
+        const item = document.createElement('div');
+        item.className = 'tx-item';
+        item.innerHTML = `
+          <div>
+            <div class="tx-category">${tx.category}</div>
+            <div class="tx-desc">${tx.desc || 'Không ghi chú'} • ${tx.date}</div>
+          </div>
+          <div class="${tx.type === 'INCOME' ? 'income' : 'expense'}">
+            ${tx.type === 'INCOME' ? '+' : '-'}${formatMoney(tx.amount)}
+          </div>
+        `;
+        txListEl.appendChild(item);
+      });
+
+      const currentBalance = initialBalance + totalInc - totalExp;
+      const diff = totalInc - totalExp;
+
+      document.getElementById('totalBalance').innerText = formatMoney(currentBalance);
+      document.getElementById('totalIncome').innerText = formatMoney(totalInc);
+      document.getElementById('totalExpense').innerText = formatMoney(totalExp);
+      
+      const diffEl = document.getElementById('totalDiff');
+      diffEl.innerText = (diff > 0 ? '+' : '') + formatMoney(diff);
+      diffEl.className = diff >= 0 ? 'income' : 'expense';
+
+      localStorage.setItem('misa_txs', JSON.stringify(transactions));
+    }
+
+    // Modal Control
+    const modal = document.getElementById('txModal');
+    document.getElementById('openModalBtn').onclick = () => modal.classList.add('active');
+    document.getElementById('closeModalBtn').onclick = () => modal.classList.remove('active');
+
+    // Type Switch
+    const btnExp = document.getElementById('btnExpense');
+    const btnInc = document.getElementById('btnIncome');
+    btnExp.onclick = () => {
+      currentType = 'EXPENSE';
+      btnExp.className = 'type-btn active-exp';
+      btnInc.className = 'type-btn';
+    };
+    btnInc.onclick = () => {
+      currentType = 'INCOME';
+      btnInc.className = 'type-btn active-inc';
+      btnExp.className = 'type-btn';
+    };
+
+    // Save Transaction
+    document.getElementById('saveTxBtn').onclick = () => {
+      const amount = parseFloat(document.getElementById('inputAmount').value);
+      const category = document.getElementById('inputCategory').value;
+      const desc = document.getElementById('inputDesc').value;
+
+      if (!amount || amount <= 0) {
+        alert('Vui lòng nhập số tiền hợp lệ!');
+        return;
+      }
+
+      const newTx = {
+        id: Date.now(),
+        type: currentType,
+        amount: amount,
+        category: category,
+        desc: desc,
+        date: '02/08/2026'
+      };
+
+      transactions.unshift(newTx);
+      render();
+
+      // Clear & Close
+      document.getElementById('inputAmount').value = '';
+      document.getElementById('inputDesc').value = '';
+      modal.classList.remove('active');
+    };
+
+    // Init
+    render();
+  </script>
 </body>
-</html>   
+</html>
