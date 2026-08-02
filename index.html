@@ -3,31 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Sổ Thu Chi</title>
+  <title>Sổ Thu Chi - Đồng Bộ Realtime</title>
+  
+  <!-- Firebase SDK (v9 Compat API) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
     body { background-color: #f2f4f7; display: flex; justify-content: center; min-height: 100vh; }
     .app-container { width: 100%; max-width: 414px; background-color: #f2f5f8; display: flex; flex-direction: column; position: relative; min-height: 100vh; box-shadow: 0 0 10px rgba(0,0,0,0.1); padding-bottom: 70px; }
 
-    /* Page View Management */
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    /* Header Profile */
     .top-header { background: linear-gradient(135deg, #1d82db 0%, #106fcc 100%); padding: 16px 16px 50px 16px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
     .user-info { display: flex; align-items: center; gap: 12px; }
     .avatar-circle { width: 42px; height: 42px; background-color: #1255a1; border: 2px solid #52a5f5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; color: #fff; position: relative; }
-    .avatar-circle::after { content: 'G'; position: absolute; bottom: -2px; right: -2px; background: #ea4335; color: #fff; font-size: 8px; width: 12px; height: 12px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    .avatar-circle::after { content: '⚡'; position: absolute; bottom: -2px; right: -2px; background: #52c41a; color: #fff; font-size: 8px; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
     .user-text .greeting { font-size: 13px; opacity: 0.85; }
-    .user-text .username { font-size: 18px; font-weight: bold; margin-top: 1px; }
+    .user-text .username { font-size: 16px; font-weight: bold; margin-top: 1px; word-break: break-all; }
     .header-icons { display: flex; gap: 14px; align-items: center; }
     .icon-btn { font-size: 18px; cursor: pointer; opacity: 0.9; }
 
-    /* Standard Header for Tabs */
     .page-header { background: linear-gradient(180deg, #1890ff 0%, #096dd9 100%); padding: 20px 16px 30px 16px; color: #fff; }
     .page-title { font-size: 22px; font-weight: bold; }
 
-    /* Balance Cards */
     .balance-card { background: #fff; margin: -35px 14px 14px 14px; padding: 18px 16px; border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; z-index: 2; position: relative; }
     .balance-label { font-size: 15px; color: #555; font-weight: 500; }
     .balance-value { font-size: 26px; font-weight: 800; color: #111; margin-top: 4px; display: flex; align-items: center; gap: 8px; }
@@ -39,28 +40,22 @@
     .asset-value { font-size: 28px; font-weight: 800; margin-top: 4px; display: flex; align-items: center; gap: 8px; }
     .asset-add-btn { width: 36px; height: 36px; background: rgba(255,255,255,0.9); color: #096dd9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
 
-    /* Main Section Cards */
     .main-card { background: #fff; margin: 14px; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
     .card-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
     .card-title { font-size: 17px; font-weight: 700; color: #222; display: flex; align-items: center; gap: 6px; }
     .time-select { padding: 6px 10px; border-radius: 8px; border: 1px solid #dcdfe6; background: #fff; font-size: 14px; color: #333; outline: none; }
 
-    /* Account Items */
     .acc-item { background: #fff; border: 1px solid #f0f0f0; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; position: relative; }
-    .acc-item:last-child { margin-bottom: 0; }
     .acc-info { display: flex; align-items: center; gap: 14px; }
     .acc-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; background: #e6f7ff; }
     .acc-name { font-size: 16px; font-weight: bold; color: #222; }
     .acc-amount { font-size: 15px; color: #666; margin-top: 2px; }
-    .acc-more { color: #8c8c8c; font-size: 20px; cursor: pointer; padding: 4px 8px; }
+    .acc-more { color: #8c8c8c; font-size: 18px; cursor: pointer; padding: 4px 8px; }
 
-    /* Menu Items cho Tab Khác */
     .menu-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
-    .menu-item:last-child { border-bottom: none; }
     .menu-left { display: flex; align-items: center; gap: 12px; font-size: 15px; font-weight: 600; color: #333; }
     .menu-icon { font-size: 20px; width: 28px; text-align: center; }
 
-    /* Summary Bar Chart */
     .summary-grid { display: grid; grid-template-columns: 80px 1fr; gap: 12px; margin-bottom: 20px; align-items: center; }
     .bars-container { display: flex; justify-content: center; align-items: flex-end; gap: 12px; height: 110px; padding-bottom: 4px; }
     .bar-wrapper { display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; width: 22px; }
@@ -76,7 +71,6 @@
     .val-red { color: #d32f2f; }
     .val-dark { color: #111; }
 
-    /* Donut Chart */
     .chart-section { display: flex; align-items: center; justify-content: space-around; padding: 10px 0; border-top: 1px solid #f0f0f0; margin-top: 10px; }
     .donut-chart-box { width: 140px; height: 140px; position: relative; }
     .donut-chart { width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(#fadb14 0% 0%, #e8e8e8 0% 100%); display: flex; align-items: center; justify-content: center; }
@@ -91,7 +85,6 @@
     .btn-history-container { display: flex; justify-content: flex-end; margin-top: 16px; }
     .btn-history { border: 1px solid #d9d9d9; background: #fff; border-radius: 8px; padding: 8px 16px; font-size: 14px; color: #333; font-weight: 500; cursor: pointer; }
 
-    /* Modals */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: flex-end; z-index: 100; }
     .modal.active { display: flex; }
     .modal-content { background: #fff; width: 100%; max-width: 414px; border-radius: 16px 16px 0 0; padding: 20px; animation: slideUp 0.25s ease-out; max-height: 90vh; overflow-y: auto; }
@@ -102,18 +95,17 @@
     .form-control { width: 100%; padding: 12px; border: 1px solid #d9d9d9; border-radius: 8px; font-size: 15px; outline: none; background: #fff; }
     .submit-btn { width: 100%; padding: 14px; background: #1890ff; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 8px; }
 
-    /* Inline Add Category Panel */
     .add-category-box { background: #e6f7ff; border: 1px dashed #1890ff; border-radius: 8px; padding: 10px; margin-top: 8px; display: none; }
     .add-category-box.active { display: block; }
 
     .history-list { max-height: 300px; overflow-y: auto; margin-top: 10px; }
     .history-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
 
-    /* Cloud Sync Box */
     .cloud-box { background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 10px; padding: 14px; margin-bottom: 14px; }
     .cloud-box-title { font-size: 14px; font-weight: bold; color: #389e0d; display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
 
-    /* Bottom Navigation */
+    .sync-status-badge { font-size: 12px; padding: 4px 8px; border-radius: 12px; background: #e6f7ff; color: #1890ff; font-weight: 500; display: inline-block; margin-top: 4px; }
+
     .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 414px; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #e8e8e8; z-index: 10; }
     .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: #777; text-decoration: none; width: 20%; cursor: pointer; }
     .nav-item.active { color: #1890ff; font-weight: bold; }
@@ -133,12 +125,11 @@
           <div class="avatar-circle">TT</div>
           <div class="user-text">
             <div class="greeting">Xin chào!</div>
-            <div class="username" id="displayUsername">Trường Trần</div>
+            <div class="username" id="displayUsername">Chưa kết nối</div>
           </div>
         </div>
         <div class="header-icons">
-          <span class="icon-btn" onclick="syncCloudDrive()">🔄</span>
-          <span class="icon-btn">🔔</span>
+          <span class="icon-btn" onclick="switchTab('tabOther')">⚙️</span>
         </div>
       </div>
 
@@ -160,7 +151,6 @@
             <option>Hôm nay</option>
             <option>Tuần này</option>
             <option selected>Tháng này</option>
-            <option>Quý này</option>
             <option>Năm nay</option>
           </select>
         </div>
@@ -216,59 +206,24 @@
       </div>
     </div>
 
-    <!-- TAB 3: KHÁC (CÀI ĐẶT & GMAIL CLOUD SYNC) -->
+    <!-- TAB 3: KHÁC (ĐỒNG BỘ REALTIME FIREBASE) -->
     <div id="tabOther" class="tab-content">
       <div class="page-header">
-        <div class="page-title">Cài đặt & Khác</div>
+        <div class="page-title">Cài đặt & Đồng bộ</div>
       </div>
 
-      <!-- Khung Cấu Hình Gmail Cloud -->
       <div class="main-card">
-        <div class="card-title" style="margin-bottom:12px;">☁️ Đồng bộ Google Cloud</div>
+        <div class="card-title" style="margin-bottom:12px;">☁️ Đồng bộ Google Cloud (Realtime)</div>
         
         <div class="cloud-box">
-          <div class="cloud-box-title">📧 Tài khoản Gmail đồng bộ</div>
+          <div class="cloud-box-title">📧 Nhập Gmail dùng chung giữa các máy</div>
           <input type="email" id="inputUserEmail" class="form-control" placeholder="nhap.email@gmail.com" style="margin-bottom:8px;">
-          <button type="button" id="btnSaveEmail" style="width:100%; padding:8px; background:#52c41a; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Lưu Gmail đồng bộ</button>
+          <button type="button" id="btnSaveEmail" style="width:100%; padding:10px; background:#1890ff; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Kết nối & Đồng bộ ngay</button>
+          <div class="sync-status-badge" id="syncStatusBadge">Chưa kết nối Cloud</div>
         </div>
 
-        <div class="menu-item" id="btnSyncCloud">
-          <div class="menu-left">
-            <span class="menu-icon">🔄</span>
-            <div>
-              <div>Đồng bộ ngay với Cloud</div>
-              <div style="font-size:11px; color:#888; font-weight:normal;" id="syncStatusText">Chưa đồng bộ lần nào</div>
-            </div>
-          </div>
-          <div class="arrow-right">›</div>
-        </div>
-
-        <div class="menu-item" id="btnExportData">
-          <div class="menu-left">
-            <span class="menu-icon">💾</span>
-            <span>Xuất file sao lưu (JSON)</span>
-          </div>
-          <div class="arrow-right">›</div>
-        </div>
-
-        <div class="menu-item" onclick="document.getElementById('fileImportInput').click()">
-          <div class="menu-left">
-            <span class="menu-icon">📥</span>
-            <span>Khôi phục dữ liệu từ File</span>
-          </div>
-          <div class="arrow-right">›</div>
-        </div>
-        <input type="file" id="fileImportInput" accept=".json" style="display:none;">
-      </div>
-
-      <div class="main-card">
-        <div class="card-title" style="margin-bottom:12px;">Hệ thống</div>
-        <div class="menu-item" id="btnClearData" style="color:#ff4d4f;">
-          <div class="menu-left">
-            <span class="menu-icon">🗑️</span>
-            <span style="color:#ff4d4f;">Xóa toàn bộ dữ liệu</span>
-          </div>
-          <div class="arrow-right">›</div>
+        <div style="font-size:12px; color:#666; line-height:1.4; background:#fafafa; padding:10px; border-radius:6px;">
+          📌 <b>Lưu ý dùng song song:</b> Hãy nhập <b>cùng 1 địa chỉ Gmail</b> này trên tất cả các thiết bị. Mọi thay đổi ở máy này sẽ ngay lập tức xuất hiện ở máy kia.
         </div>
       </div>
     </div>
@@ -298,11 +253,11 @@
 
   </div>
 
-  <!-- Modal Thêm/Sửa Tài Khoản -->
+  <!-- Modal Thêm Tài Khoản -->
   <div class="modal" id="accountModal">
     <div class="modal-content">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3 style="font-size:16px;" id="accModalTitle">Thêm tài khoản</h3>
+        <h3 style="font-size:16px;">Thêm tài khoản</h3>
         <span id="closeAccountModal" style="font-size:22px; cursor:pointer;">✕</span>
       </div>
 
@@ -404,15 +359,43 @@
         <h3 style="font-size:16px;">Lịch sử ghi chép</h3>
         <span id="closeHistoryModal" style="font-size:22px; cursor:pointer;">✕</span>
       </div>
-      <div class="history-list" id="historyList"></div>
+      const firebaseConfig = {
+      apiKey: "AIzaSyC7Kccxqj9HOfn2Pb01nJAwuoHE2Y86oPs",
+      authDomain: "appthuchi-ebea8.firebaseapp.com",
+      databaseURL: "https://appthuchi-ebea8-default-rtdb.firebaseio.com",
+      projectId: "appthuchi-ebea8",
+      storageBucket: "appthuchi-ebea8.firebasestorage.app",
+      messagingSenderId: "1003569565581",
+      appId: "1:1003569565581:web:b73287937ce0dd6934b7c4",
+      measurementId: "G-YSMN9PH1JP"
+    };<div class="history-list" id="historyList"></div>
     </div>
   </div>
 
   <script>
+    // -------------------------------------------------------------
+    // CẤU HÌNH FIREBASE - THAY BẰNG THÔNG SỐ CỦA BẠN VÀO ĐÂY:
+    // -------------------------------------------------------------
+    const firebaseConfig = {
+      apiKey: "AIzaSy_THAY_BANG_KEY_CUA_BAN",
+      authDomain: "app-cua-ban.firebaseapp.com",
+      databaseURL: "https://app-cua-ban-default-rtdb.firebaseio.com",
+      projectId: "app-cua-ban",
+      storageBucket: "app-cua-ban.appspot.com",
+      messagingSenderId: "123456789",
+      appId: "1:123456789:web:xxxx"
+    };
+
+    // Khởi tạo Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Biến lưu trữ ứng dụng
     let isHide = false;
     let userEmail = localStorage.getItem('misa_app_email') || '';
+    let dbRef = null;
 
-    let categories = JSON.parse(localStorage.getItem('misa_app_categories')) || [
+    let categories = [
       { name: 'Đi lại', icon: '⛽', color: '#fadb14' },
       { name: 'Ăn uống', icon: '☕', color: '#ff4d4f' },
       { name: 'Con cái', icon: '👶', color: '#1890ff' },
@@ -420,25 +403,59 @@
       { name: 'Khác', icon: '🛍️', color: '#722ed1' }
     ];
 
-    let accounts = JSON.parse(localStorage.getItem('misa_app_accounts')) || [
-      { id: 1, name: 'Tiền Mặt', balance: 500000, icon: '💵' },
-      { id: 2, name: 'VCB', balance: 945000, icon: '🏦' }
-    ];
-
-    let transactions = JSON.parse(localStorage.getItem('misa_app_txs')) || [
-      { id: 1, type: 'CHI', amount: 50000, category: 'Đi lại', note: 'Xăng xe', accId: 2 },
-      { id: 2, type: 'CHI', amount: 5000, category: 'Ăn uống', note: 'Cà phê', accId: 1 }
-    ];
+    let accounts = [];
+    let transactions = [];
 
     const formatVND = (num) => new Intl.NumberFormat('vi-VN').format(num) + ' đ';
 
-    // Đổ email vào input nếu có sẵn
-    if (userEmail) {
-      document.getElementById('inputUserEmail').value = userEmail;
-      document.getElementById('displayUsername').innerText = userEmail.split('@')[0];
+    // Chuyển email thành key hợp lệ trên Firebase
+    function getSafeEmailKey(email) {
+      return email.replace(/[^a-zA-Z0-9]/g, '_');
     }
 
-    // Lưu Gmail đồng bộ
+    // Kết nối Firebase với Realtime Listener
+    function connectFirebase(email) {
+      if (!email) return;
+
+      const safeKey = getSafeEmailKey(email);
+      dbRef = db.ref('users/' + safeKey);
+
+      document.getElementById('syncStatusBadge').innerText = "🟢 Đã kết nối Realtime Cloud";
+      document.getElementById('syncStatusBadge').style.background = "#f6ffed";
+      document.getElementById('syncStatusBadge').style.color = "#52c41a";
+
+      // Đăng ký lắng nghe sự thay đổi Realtime từ Cloud
+      dbRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          accounts = data.accounts || [];
+          transactions = data.transactions || [];
+          if (data.categories) categories = data.categories;
+        } else {
+          // Tạo dữ liệu mặc định cho tài khoản mới
+          accounts = [
+            { id: 1, name: 'Tiền Mặt', balance: 500000, icon: '💵' },
+            { id: 2, name: 'VCB', balance: 1000000, icon: '🏦' }
+          ];
+          transactions = [];
+          saveToCloud();
+        }
+        updateUI();
+      });
+    }
+
+    // Lưu dữ liệu đẩy thẳng lên Firebase
+    function saveToCloud() {
+      if (!dbRef) return;
+      dbRef.set({
+        accounts: accounts,
+        transactions: transactions,
+        categories: categories,
+        lastUpdated: new Date().toISOString()
+      });
+    }
+
+    // Sự kiện khi đổi Gmail
     document.getElementById('btnSaveEmail').onclick = () => {
       const email = document.getElementById('inputUserEmail').value.trim();
       if (!email || !email.includes('@')) {
@@ -447,9 +464,17 @@
       }
       userEmail = email;
       localStorage.setItem('misa_app_email', userEmail);
-      document.getElementById('displayUsername').innerText = email.split('@')[0];
-      alert(`Đã kết nối tài khoản Cloud với Gmail: ${userEmail}`);
+      document.getElementById('displayUsername').innerText = userEmail;
+      
+      connectFirebase(userEmail);
+      alert(`Đã kết nối tài khoản với Gmail: ${userEmail}\nBây giờ 2 thiết bị sẽ tự đồng bộ!`);
     };
+
+    if (userEmail) {
+      document.getElementById('inputUserEmail').value = userEmail;
+      document.getElementById('displayUsername').innerText = userEmail;
+      connectFirebase(userEmail);
+    }
 
     function switchTab(tabId, element) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -495,7 +520,7 @@
       const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
       categories.push({ name, icon, color: randomColor });
-      localStorage.setItem('misa_app_categories', JSON.stringify(categories));
+      saveToCloud();
 
       renderCategorySelect();
       document.getElementById('inputCategory').value = name;
@@ -597,86 +622,15 @@
           item.className = 'legend-item';
           item.innerHTML = `
             <div class="legend-left"><span class="dot" style="background:${color}"></span><span>${cat}</span></div>
-            <span class="legend-percent">${percent.toFixed(2).replace('.', ',')}%</span>
+            <span class="legend-percent">${percent.toFixed(1)}%</span>
           `;
           legendEl.appendChild(item);
         }
 
         document.getElementById('donutChart').style.background = `conic-gradient(${gradientStops.join(', ')})`;
       }
-
-      localStorage.setItem('misa_app_accounts', JSON.stringify(accounts));
-      localStorage.setItem('misa_app_txs', JSON.stringify(transactions));
     }
 
-    /* === ĐỒNG BỘ DỮ LIỆU & GMAIL CLOUD === */
-    function syncCloudDrive() {
-      if (!userEmail) {
-        alert('Vui lòng nhập Gmail ở tab "Khác" trước khi đồng bộ!');
-        switchTab('tabOther');
-        return;
-      }
-      
-      const now = new Date();
-      const timeStr = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
-      document.getElementById('syncStatusText').innerText = `Đã đồng bộ với ${userEmail} lúc ${timeStr}`;
-      alert(`Đã đẩy toàn bộ dữ liệu lên Google Cloud của Gmail:\n${userEmail}`);
-    }
-
-    document.getElementById('btnSyncCloud').onclick = syncCloudDrive;
-
-    // Export Data (Sao lưu ra File JSON)
-    document.getElementById('btnExportData').onclick = () => {
-      const data = { email: userEmail, accounts, transactions, categories, exportDate: new Date() };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `SoThuChi_${userEmail || 'Backup'}_${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-    };
-
-    // Import Data (Khôi phục từ File JSON)
-    document.getElementById('fileImportInput').onchange = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const imported = JSON.parse(event.target.result);
-          if (imported.accounts && imported.transactions) {
-            accounts = imported.accounts;
-            transactions = imported.transactions;
-            if (imported.categories) categories = imported.categories;
-            if (imported.email) {
-              userEmail = imported.email;
-              localStorage.setItem('misa_app_email', userEmail);
-              document.getElementById('inputUserEmail').value = userEmail;
-            }
-            updateUI();
-            alert('Khôi phục dữ liệu thành công!');
-          } else {
-            alert('File dữ liệu không đúng định dạng!');
-          }
-        } catch (err) {
-          alert('Có lỗi xảy ra khi đọc file!');
-        }
-      };
-      reader.readAsText(file);
-    };
-
-    // Clear Data
-    document.getElementById('btnClearData').onclick = () => {
-      if (confirm('CẢNH BÁO: Hành động này sẽ xóa sạch toàn bộ dữ liệu trên máy bạn! Bạn có chắc không?')) {
-        localStorage.clear();
-        accounts = [];
-        transactions = [];
-        updateUI();
-        alert('Đã xóa sạch dữ liệu.');
-      }
-    };
-
-    // Dynamic UI Form theo Loại Giao Dịch
     const txTypeSelect = document.getElementById('txTypeSelect');
     const toAccGroup = document.getElementById('toAccGroup');
     const categoryGroup = document.getElementById('categoryGroup');
@@ -705,7 +659,6 @@
 
     const accountModal = document.getElementById('accountModal');
     document.getElementById('openAddAccountBtn').onclick = () => {
-      document.getElementById('accModalTitle').innerText = 'Thêm tài khoản';
       document.getElementById('inputAccName').value = '';
       document.getElementById('inputAccBalance').value = '';
       accountModal.classList.add('active');
@@ -720,19 +673,24 @@
       if (!name) { alert('Vui lòng nhập tên tài khoản!'); return; }
 
       accounts.push({ id: Date.now(), name, balance, icon });
-      updateUI();
+      saveToCloud();
       accountModal.classList.remove('active');
     };
 
     function deleteAccount(id) {
       if (confirm('Bạn có chắc chắn muốn xóa tài khoản này không?')) {
         accounts = accounts.filter(a => a.id !== id);
-        updateUI();
+        saveToCloud();
       }
     }
 
     const addModal = document.getElementById('addModal');
     document.getElementById('openAddModal').onclick = () => {
+      if (!userEmail) {
+        alert('Vui lòng nhập Gmail ở tab "Khác" để đồng bộ trước!');
+        switchTab('tabOther');
+        return;
+      }
       if (accounts.length === 0) { alert('Vui lòng tạo ít nhất 1 tài khoản trước!'); return; }
       addModal.classList.add('active');
     };
@@ -788,7 +746,8 @@
       }
 
       transactions.unshift({ id: Date.now(), type, amount: amt, category: (type==='CHUYEN_KHOAN'?'Chuyển khoản':cat), note, accId: fromAccId });
-      updateUI();
+      
+      saveToCloud();
 
       document.getElementById('inputAmount').value = '';
       document.getElementById('inputNote').value = '';
