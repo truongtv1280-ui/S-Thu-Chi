@@ -41,7 +41,7 @@
       <div class="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm space-y-2">
         <div class="flex justify-between items-center">
           <p class="text-sm text-gray-500">Số dư hiện tại</p>
-          <button onclick="toggleHideAmount()" class="text-gray-500 hover:text-sky-600">
+          <button onclick="toggleHideOverviewAmount()" class="text-gray-500 hover:text-sky-600">
             <i class="fa-solid fa-eye-slash" id="overviewEyeIcon"></i>
           </button>
         </div>
@@ -61,10 +61,7 @@
       <div class="bg-sky-600/90 backdrop-blur-md text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
         <p class="text-sm opacity-80">Tổng tài sản</p>
         <div class="flex items-center gap-2 mt-1">
-          <h2 id="totalBalance" class="text-3xl font-black">•••••• đ</h2>
-          <button onclick="toggleHideAmount()" class="text-white opacity-80 hover:opacity-100">
-            <i class="fa-solid fa-eye-slash" id="eyeIcon"></i>
-          </button>
+          <h2 id="totalBalance" class="text-3xl font-black">0 đ</h2>
         </div>
         <button onclick="openAddAccountModal()" class="absolute right-4 top-1/2 -translate-y-1/2 bg-white text-sky-600 w-10 h-10 rounded-full flex items-center justify-center font-bold shadow hover:bg-sky-50 active:scale-95 transition">
           <i class="fa-solid fa-plus text-lg"></i>
@@ -81,7 +78,7 @@
       </div>
     </section>
 
-    <!-- TAB 3: BÁO CÁO (LỌC THEO NGÀY) -->
+    <!-- TAB 3: BÁO CÁO -->
     <section id="tab-reports" class="tab-content hidden space-y-4">
       <div class="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm text-center space-y-3">
         <h3 class="font-bold text-gray-700">Thống kê Thu / Chi</h3>
@@ -284,14 +281,14 @@
       lend: ['🤝 Cho vay bạn bè', '🤝 Cho vay người thân', '❓ Cho vay khác'],
       borrow: ['🏦 Vay ngân hàng', '🤝 Vay người thân/bạn bè', '❓ Vay khác'],
       transfer: ['🔄 Chuyển khoản nội bộ'],
-      adjust: ['📝 Số dư thực tế']
+      adjust: ['📝 Điều chỉnh số dư']
     };
 
     let state = {
       accounts: [],
       transactions: [],
       userEmail: localStorage.getItem("sync_email") || "truongtv1280@gmail.com",
-      hideAmount: true, // Mặc định ẩn số dư hiện tại
+      hideOverviewBalance: true, // Chỉ ẩn ở tab Tổng quan
       currentType: 'expense',
       editingTxId: null
     };
@@ -403,24 +400,26 @@
       }
     }
 
-    // Đã chỉnh sửa: thêm forceShow để chỉ áp dụng ẩn/hiện cho Số dư
-    function formatMoney(num, forceShow = false) {
-      if (state.hideAmount && !forceShow) return "•••••• đ";
+    // Định dạng tiền tệ
+    function formatMoney(num) {
       return new Intl.NumberFormat('vi-VN').format(num) + " đ";
     }
 
-    function toggleHideAmount() {
-      state.hideAmount = !state.hideAmount;
-      const eyeClass = state.hideAmount ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
-      document.getElementById('eyeIcon').className = eyeClass;
+    function toggleHideOverviewAmount() {
+      state.hideOverviewBalance = !state.hideOverviewBalance;
+      const eyeClass = state.hideOverviewBalance ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
       document.getElementById('overviewEyeIcon').className = eyeClass;
       updateUI();
     }
 
     function updateUI() {
       const total = state.accounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
+      
+      // Tab Tổng quan: kiểm tra ẩn/hiện
+      document.getElementById('overviewBalance').innerText = state.hideOverviewBalance ? "•••••• đ" : formatMoney(total);
+      
+      // Tab Tài khoản: Luôn hiện
       document.getElementById('totalBalance').innerText = formatMoney(total);
-      document.getElementById('overviewBalance').innerText = formatMoney(total);
       document.getElementById('accountCount').innerText = state.accounts.length;
 
       const accountList = document.getElementById('accountList');
@@ -449,7 +448,6 @@
       renderReports();
     }
 
-    // Đã chỉnh sửa: Luôn hiện số tiền giao dịch (truyền true)
     function renderRecentTransactions() {
       const recentList = document.getElementById('recentList');
       if (state.transactions.length === 0) {
@@ -467,7 +465,7 @@
             </div>
             <div class="flex items-center gap-2">
               <span class="font-bold ${isPlus ? 'text-green-600' : 'text-red-600'}">
-                ${isPlus ? '+' : '-'}${formatMoney(t.amount, true)}
+                ${isPlus ? '+' : '-'}${formatMoney(t.amount)}
               </span>
               <button onclick="editTransaction(${t.id})" class="text-gray-400 hover:text-sky-600 text-xs p-1">
                 <i class="fa-solid fa-pen"></i>
@@ -481,7 +479,6 @@
       }).join('');
     }
 
-    // Đã chỉnh sửa: Luôn hiện số tiền tổng Thu / tổng Chi (truyền true)
     function renderReports() {
       const filterType = document.getElementById('reportFilterType').value;
       const dateInput = document.getElementById('reportDateInput');
@@ -514,8 +511,8 @@
         }
       });
 
-      document.getElementById('totalIncome').innerText = formatMoney(income, true);
-      document.getElementById('totalExpense').innerText = formatMoney(expense, true);
+      document.getElementById('totalIncome').innerText = formatMoney(income);
+      document.getElementById('totalExpense').innerText = formatMoney(expense);
     }
 
     function switchTab(tab) {
