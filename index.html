@@ -14,16 +14,16 @@
       user-select: none;
     }
     .active-tab {
-      color: #3b82f6;
+      color: #0284c7;
     }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans min-h-screen flex flex-col justify-between max-w-md mx-auto shadow-2xl relative">
 
   <!-- TOP HEADER -->
-  <header class="bg-blue-600 text-white p-4 text-center font-bold text-lg shadow-md flex items-center justify-between sticky top-0 z-20">
+  <header class="bg-sky-600 text-white p-4 text-center font-bold text-lg shadow-md flex items-center justify-between sticky top-0 z-20">
     <span id="headerTitle">Sổ Thu Chi</span>
-    <span id="syncBadge" class="text-xs bg-red-500 text-white px-2 py-1 rounded-full flex items-center gap-1">
+    <span id="syncBadge" class="text-xs bg-red-500 text-white px-2.5 py-1 rounded-full flex items-center gap-1 font-normal">
       <i class="fa-solid fa-wifi"></i> Chưa kết nối
     </span>
   </header>
@@ -35,7 +35,7 @@
     <section id="tab-overview" class="tab-content space-y-4">
       <div class="bg-white p-4 rounded-xl shadow-sm space-y-2">
         <p class="text-sm text-gray-500">Số dư hiện tại</p>
-        <h2 id="overviewBalance" class="text-3xl font-extrabold text-blue-600">0 đ</h2>
+        <h2 id="overviewBalance" class="text-3xl font-extrabold text-sky-600">0 đ</h2>
       </div>
 
       <div class="bg-white p-4 rounded-xl shadow-sm">
@@ -48,7 +48,7 @@
 
     <!-- TAB 2: TÀI KHOẢN -->
     <section id="tab-accounts" class="tab-content hidden space-y-4">
-      <div class="bg-blue-600 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
+      <div class="bg-sky-600 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
         <p class="text-sm opacity-80">Tổng tài sản</p>
         <div class="flex items-center gap-2 mt-1">
           <h2 id="totalBalance" class="text-3xl font-black">0 đ</h2>
@@ -56,7 +56,7 @@
             <i class="fa-solid fa-eye" id="eyeIcon"></i>
           </button>
         </div>
-        <button onclick="openAddAccountModal()" class="absolute right-4 top-1/2 -translate-y-1/2 bg-white text-blue-600 w-10 h-10 rounded-full flex items-center justify-center font-bold shadow hover:bg-blue-50 active:scale-95 transition">
+        <button onclick="openAddAccountModal()" class="absolute right-4 top-1/2 -translate-y-1/2 bg-white text-sky-600 w-10 h-10 rounded-full flex items-center justify-center font-bold shadow hover:bg-sky-50 active:scale-95 transition">
           <i class="fa-solid fa-plus text-lg"></i>
         </button>
       </div>
@@ -92,18 +92,18 @@
     <section id="tab-settings" class="tab-content hidden space-y-4">
       <div class="bg-white p-5 rounded-2xl shadow-sm space-y-4">
         <div class="flex items-center gap-2 text-gray-700 font-bold border-b pb-3">
-          <i class="fa-solid fa-cloud text-blue-500 text-xl"></i>
+          <i class="fa-solid fa-cloud text-sky-500 text-xl"></i>
           <span>Đồng bộ Realtime</span>
         </div>
 
-        <div class="bg-green-50 border border-green-200 p-4 rounded-xl space-y-3">
-          <label class="block text-xs font-bold text-green-800">
+        <div class="bg-sky-50 border border-sky-200 p-4 rounded-xl space-y-3">
+          <label class="block text-xs font-bold text-sky-800">
             <i class="fa-solid fa-envelope"></i> Nhập Gmail đồng bộ dùng chung các máy
           </label>
           <input type="email" id="syncEmail" placeholder="ví dụ: truongtv1280@gmail.com" 
-                 class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+                 class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
           
-          <button onclick="saveAndSync()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-sm shadow hover:bg-blue-700 active:scale-98 transition flex items-center justify-center gap-2">
+          <button onclick="saveAndSync()" class="w-full bg-sky-600 text-white py-3 rounded-lg font-bold text-sm shadow hover:bg-sky-700 active:scale-98 transition flex items-center justify-center gap-2">
             <i class="fa-solid fa-sync"></i> Kết nối & Đồng bộ ngay
           </button>
 
@@ -118,7 +118,7 @@
   </main>
 
   <!-- NÚT TẠO GIAO DỊCH (+) -->
-  <button onclick="openTransactionModal()" class="fixed bottom-16 left-1/2 -translate-x-1/2 bg-blue-600 text-white w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-xl hover:bg-blue-700 active:scale-90 transition z-30">
+  <button onclick="openTransactionModal()" class="fixed bottom-16 left-1/2 -translate-x-1/2 bg-sky-500 text-white w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-xl hover:bg-sky-600 active:scale-90 transition z-30">
     <i class="fa-solid fa-plus"></i>
   </button>
 
@@ -151,48 +151,68 @@
       </div>
       <div>
         <label class="block text-xs font-semibold text-gray-600 mb-1">Tên tài khoản (VCB, Tiền mặt...)</label>
-        <input type="text" id="accName" placeholder="VD: VCB" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <input type="text" id="accName" placeholder="VD: VCB" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
       </div>
       <div>
         <label class="block text-xs font-semibold text-gray-600 mb-1">Số dư ban đầu (VNĐ)</label>
-        <input type="number" id="accBalance" placeholder="0" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <input type="number" id="accBalance" placeholder="0" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
       </div>
-      <button onclick="addAccount()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-blue-700">Lưu Tài Khoản</button>
+      <button onclick="addAccount()" class="w-full bg-sky-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-sky-700">Lưu Tài Khoản</button>
     </div>
   </div>
 
-  <!-- MODAL THÊM GIAO DỊCH (CÓ DANH MỤC) -->
+  <!-- MODAL THÊM GIAO DỊCH (DROPDOWN LOẠI GIAO DỊCH GỌN GÀNG) -->
   <div id="transactionModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end justify-center hidden z-50">
     <div class="bg-white w-full max-w-md rounded-t-2xl p-5 space-y-3">
       <div class="flex justify-between items-center border-b pb-2">
-        <h3 class="font-bold text-gray-800">Thêm giao dịch</h3>
+        <!-- DROPDOWN CHỌN LOẠI GIAO DỊCH KIỂU MỚI -->
+        <div class="relative inline-block">
+          <select id="txTypeSelect" onchange="onTxTypeChange(this.value)" class="bg-sky-50 border border-sky-300 text-sky-700 font-bold py-1.5 px-3 rounded-lg text-sm appearance-none pr-8 cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500">
+            <option value="expense">⛔ Chi tiền</option>
+            <option value="income">➕ Thu tiền</option>
+            <option value="lend">💵 Cho vay</option>
+            <option value="borrow">💰 Đi vay</option>
+            <option value="transfer">🔄 Chuyển khoản</option>
+            <option value="adjust">📝 Điều chỉnh số dư</option>
+          </select>
+          <i class="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-sky-600 pointer-events-none text-xs"></i>
+        </div>
+
         <button onclick="closeTransactionModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
       </div>
-      <div class="grid grid-cols-2 gap-2">
-        <button id="typeExpenseBtn" onclick="setTxType('expense')" class="py-2 rounded-lg font-bold text-sm bg-red-100 text-red-600 border border-red-300">Chi tiền</button>
-        <button id="typeIncomeBtn" onclick="setTxType('income')" class="py-2 rounded-lg font-bold text-sm bg-gray-100 text-gray-600">Thu tiền</button>
-      </div>
+
       <div>
         <label class="block text-xs font-semibold text-gray-600 mb-1">Số tiền</label>
-        <input type="number" id="txAmount" placeholder="0" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-lg">
+        <input type="number" id="txAmount" placeholder="0" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold text-lg">
       </div>
-      <div>
+
+      <!-- DANH MỤC -->
+      <div id="categoryContainer">
         <label class="block text-xs font-semibold text-gray-600 mb-1">Danh mục</label>
-        <select id="txCategorySelect" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
-          <!-- Danh mục render theo loại Thu/Chi -->
+        <select id="txCategorySelect" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
         </select>
       </div>
+
+      <!-- CHỌN TÀI KHOẢN -->
       <div>
-        <label class="block text-xs font-semibold text-gray-600 mb-1">Tài khoản</label>
-        <select id="txAccountSelect" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <!-- Options load từ tài khoản -->
+        <label id="accLabel" class="block text-xs font-semibold text-gray-600 mb-1">Tài khoản</label>
+        <select id="txAccountSelect" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
         </select>
       </div>
-      <div>
-        <label class="block text-xs font-semibold text-gray-600 mb-1">Ghi chú thêm (Không bắt buộc)</label>
-        <input type="text" id="txNote" placeholder="VD: Ăn phở sáng, Cafe..." class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+      <!-- TÀI KHOẢN ĐẾN (DÙNG CHO CHUYỂN KHOẢN) -->
+      <div id="targetAccContainer" class="hidden">
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Đến tài khoản</label>
+        <select id="txTargetAccountSelect" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+        </select>
       </div>
-      <button onclick="saveTransaction()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-blue-700 mt-2">Xác nhận Giao dịch</button>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Diễn giải / Ghi chú</label>
+        <input type="text" id="txNote" placeholder="VD: Xăng xe, Ăn uống..." class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+      </div>
+
+      <button onclick="saveTransaction()" class="w-full bg-sky-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-sky-700 mt-2">Xác nhận Giao dịch</button>
     </div>
   </div>
 
@@ -217,10 +237,13 @@
     }
     const db = firebase.database();
 
-    // Danh mục mặc định
-    const categories = {
-      expense: ['🍲 Ăn uống', '☕ Cafe/Trà sữa', '🛒 Mua sắm', '🚗 Di chuyển', '🏠 Nhà cửa/Điện nước', '🎬 Giải trí', '💊 Sức khỏe', '❓ Chi khác'],
-      income: ['💵 Lương', '🎁 Thưởng', '📈 Đầu tư', '💰 Bán hàng', '❓ Thu khác']
+    const categoriesMap = {
+      expense: ['⛽ Xăng xe', '🍲 Ăn uống', '🛒 Mua sắm', '🏠 Dịch vụ gia đình', '🎬 Giải trí', '💊 Sức khỏe', '❓ Chi khác'],
+      income: ['💵 Lương', '🎁 Thưởng', '📈 Đầu tư', '💰 Bán hàng', '❓ Thu khác'],
+      lend: ['🤝 Cho vay bạn bè', '🤝 Cho vay người thân', '❓ Cho vay khác'],
+      borrow: ['🏦 Vay ngân hàng', '🤝 Vay người thân/bạn bè', '❓ Vay khác'],
+      transfer: ['🔄 Chuyển khoản nội bộ'],
+      adjust: ['📝 Số dư thực tế']
     };
 
     let state = {
@@ -228,7 +251,7 @@
       transactions: [],
       userEmail: localStorage.getItem("sync_email") || "truongtv1280@gmail.com",
       hideAmount: false,
-      txType: 'expense'
+      currentType: 'expense'
     };
 
     let activeRef = null;
@@ -298,11 +321,11 @@
       const syncStatus = document.getElementById('syncStatus');
 
       if (isConnected) {
-        badge.className = "text-xs bg-green-500 text-white px-2 py-1 rounded-full flex items-center gap-1";
+        badge.className = "text-xs bg-green-500 text-white px-2.5 py-1 rounded-full flex items-center gap-1 font-normal";
         badge.innerHTML = `<i class="fa-solid fa-wifi"></i> Đã đồng bộ`;
         syncStatus.classList.remove('hidden');
       } else {
-        badge.className = "text-xs bg-red-500 text-white px-2 py-1 rounded-full flex items-center gap-1";
+        badge.className = "text-xs bg-red-500 text-white px-2.5 py-1 rounded-full flex items-center gap-1 font-normal";
         badge.innerHTML = `<i class="fa-solid fa-wifi"></i> Chưa kết nối`;
         syncStatus.classList.add('hidden');
       }
@@ -326,7 +349,7 @@
         accountList.innerHTML = state.accounts.map((acc, index) => `
           <div class="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+              <div class="w-10 h-10 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
                 <i class="fa-solid fa-building-columns"></i>
               </div>
               <div>
@@ -343,8 +366,8 @@
 
       let income = 0, expense = 0;
       state.transactions.forEach(t => {
-        if (t.type === 'income') income += Number(t.amount);
-        if (t.type === 'expense') expense += Number(t.amount);
+        if (t.type === 'income' || t.type === 'borrow') income += Number(t.amount);
+        if (t.type === 'expense' || t.type === 'lend') expense += Number(t.amount);
       });
       document.getElementById('totalIncome').innerText = formatMoney(income);
       document.getElementById('totalExpense').innerText = formatMoney(expense);
@@ -353,17 +376,20 @@
       if (state.transactions.length === 0) {
         recentList.innerHTML = `<li class="text-gray-400 text-center py-4">Chưa có giao dịch nào</li>`;
       } else {
-        recentList.innerHTML = state.transactions.slice(-10).reverse().map(t => `
-          <li class="flex justify-between items-center border-b pb-2">
-            <div>
-              <p class="font-bold text-gray-800">${t.category || (t.type==='income'?'Thu tiền':'Chi tiền')}</p>
-              <p class="text-xs text-gray-400">${t.accName} ${t.note ? '• ' + t.note : ''} • ${t.date}</p>
-            </div>
-            <span class="font-bold ${t.type==='income' ? 'text-green-600' : 'text-red-600'}">
-              ${t.type==='income' ? '+' : '-'}${formatMoney(t.amount)}
-            </span>
-          </li>
-        `).join('');
+        recentList.innerHTML = state.transactions.slice(-10).reverse().map(t => {
+          const isPlus = t.type === 'income' || t.type === 'borrow';
+          return `
+            <li class="flex justify-between items-center border-b pb-2">
+              <div>
+                <p class="font-bold text-gray-800">${t.category || t.type}</p>
+                <p class="text-xs text-gray-400">${t.accName} ${t.note ? '• ' + t.note : ''} • ${t.date}</p>
+              </div>
+              <span class="font-bold ${isPlus ? 'text-green-600' : 'text-red-600'}">
+                ${isPlus ? '+' : '-'}${formatMoney(t.amount)}
+              </span>
+            </li>
+          `;
+        }).join('');
       }
     }
 
@@ -422,10 +448,25 @@
       }
     }
 
-    function renderCategories() {
+    function onTxTypeChange(type) {
+      state.currentType = type;
       const catSelect = document.getElementById('txCategorySelect');
-      const currentList = categories[state.txType];
-      catSelect.innerHTML = currentList.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+      const targetContainer = document.getElementById('targetAccContainer');
+      const catContainer = document.getElementById('categoryContainer');
+      const accLabel = document.getElementById('accLabel');
+
+      if (type === 'transfer') {
+        targetContainer.classList.remove('hidden');
+        catContainer.classList.add('hidden');
+        accLabel.innerText = "Từ tài khoản";
+      } else {
+        targetContainer.classList.add('hidden');
+        catContainer.classList.remove('hidden');
+        accLabel.innerText = "Tài khoản";
+        
+        const currentList = categoriesMap[type] || [];
+        catSelect.innerHTML = currentList.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+      }
     }
 
     function openTransactionModal() {
@@ -434,8 +475,15 @@
         return;
       }
       const select = document.getElementById('txAccountSelect');
-      select.innerHTML = state.accounts.map((acc, index) => `<option value="${index}">${acc.name} (${formatMoney(acc.balance)})</option>`).join('');
-      renderCategories();
+      const targetSelect = document.getElementById('txTargetAccountSelect');
+      
+      const options = state.accounts.map((acc, index) => `<option value="${index}">${acc.name} (${formatMoney(acc.balance)})</option>`).join('');
+      select.innerHTML = options;
+      targetSelect.innerHTML = options;
+
+      document.getElementById('txTypeSelect').value = 'expense';
+      onTxTypeChange('expense');
+
       document.getElementById('transactionModal').classList.remove('hidden');
     }
 
@@ -445,25 +493,10 @@
       document.getElementById('txNote').value = '';
     }
 
-    function setTxType(type) {
-      state.txType = type;
-      const expBtn = document.getElementById('typeExpenseBtn');
-      const incBtn = document.getElementById('typeIncomeBtn');
-
-      if (type === 'expense') {
-        expBtn.className = "py-2 rounded-lg font-bold text-sm bg-red-100 text-red-600 border border-red-300";
-        incBtn.className = "py-2 rounded-lg font-bold text-sm bg-gray-100 text-gray-600";
-      } else {
-        incBtn.className = "py-2 rounded-lg font-bold text-sm bg-green-100 text-green-600 border border-green-300";
-        expBtn.className = "py-2 rounded-lg font-bold text-sm bg-gray-100 text-gray-600";
-      }
-      renderCategories();
-    }
-
     function saveTransaction() {
       const amount = parseFloat(document.getElementById('txAmount').value);
       const accIndex = parseInt(document.getElementById('txAccountSelect').value);
-      const category = document.getElementById('txCategorySelect').value;
+      const type = state.currentType;
       const note = document.getElementById('txNote').value.trim();
 
       if (!amount || amount <= 0) {
@@ -472,20 +505,54 @@
       }
 
       const acc = state.accounts[accIndex];
-      if (state.txType === 'expense') {
-        acc.balance -= amount;
-      } else {
-        acc.balance += amount;
-      }
 
-      state.transactions.push({
-        type: state.txType,
-        amount: amount,
-        category: category,
-        accName: acc.name,
-        note: note,
-        date: new Date().toLocaleDateString('vi-VN')
-      });
+      if (type === 'transfer') {
+        const targetIndex = parseInt(document.getElementById('txTargetAccountSelect').value);
+        if (accIndex === targetIndex) {
+          alert("Tài khoản nhận phải khác tài khoản chuyển!");
+          return;
+        }
+        const targetAcc = state.accounts[targetIndex];
+        acc.balance -= amount;
+        targetAcc.balance += amount;
+
+        state.transactions.push({
+          type: type,
+          amount: amount,
+          category: '🔄 Chuyển khoản',
+          accName: `${acc.name} ➔ ${targetAcc.name}`,
+          note: note,
+          date: new Date().toLocaleDateString('vi-VN')
+        });
+
+      } else if (type === 'adjust') {
+        acc.balance = amount;
+        state.transactions.push({
+          type: type,
+          amount: amount,
+          category: '📝 Điều chỉnh số dư',
+          accName: acc.name,
+          note: note,
+          date: new Date().toLocaleDateString('vi-VN')
+        });
+
+      } else {
+        const category = document.getElementById('txCategorySelect').value;
+        if (type === 'expense' || type === 'lend') {
+          acc.balance -= amount;
+        } else {
+          acc.balance += amount;
+        }
+
+        state.transactions.push({
+          type: type,
+          amount: amount,
+          category: category,
+          accName: acc.name,
+          note: note,
+          date: new Date().toLocaleDateString('vi-VN')
+        });
+      }
 
       pushDataToCloud();
       closeTransactionModal();
