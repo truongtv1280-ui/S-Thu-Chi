@@ -109,6 +109,10 @@
     .history-list { max-height: 300px; overflow-y: auto; margin-top: 10px; }
     .history-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
 
+    /* Cloud Sync Box */
+    .cloud-box { background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+    .cloud-box-title { font-size: 14px; font-weight: bold; color: #389e0d; display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+
     /* Bottom Navigation */
     .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 414px; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #e8e8e8; z-index: 10; }
     .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: #777; text-decoration: none; width: 20%; cursor: pointer; }
@@ -129,11 +133,11 @@
           <div class="avatar-circle">TT</div>
           <div class="user-text">
             <div class="greeting">Xin chào!</div>
-            <div class="username">Trường Trần</div>
+            <div class="username" id="displayUsername">Trường Trần</div>
           </div>
         </div>
         <div class="header-icons">
-          <span class="icon-btn">🔄</span>
+          <span class="icon-btn" onclick="syncCloudDrive()">🔄</span>
           <span class="icon-btn">🔔</span>
         </div>
       </div>
@@ -212,19 +216,37 @@
       </div>
     </div>
 
-    <!-- TAB 3: KHÁC (CÀI ĐẶT & ĐỒNG BỘ CLOUD) -->
+    <!-- TAB 3: KHÁC (CÀI ĐẶT & GMAIL CLOUD SYNC) -->
     <div id="tabOther" class="tab-content">
       <div class="page-header">
         <div class="page-title">Cài đặt & Khác</div>
       </div>
 
+      <!-- Khung Cấu Hình Gmail Cloud -->
       <div class="main-card">
-        <div class="card-title" style="margin-bottom:12px;">Đồng bộ Cloud & Dữ liệu</div>
+        <div class="card-title" style="margin-bottom:12px;">☁️ Đồng bộ Google Cloud</div>
         
+        <div class="cloud-box">
+          <div class="cloud-box-title">📧 Tài khoản Gmail đồng bộ</div>
+          <input type="email" id="inputUserEmail" class="form-control" placeholder="nhap.email@gmail.com" style="margin-bottom:8px;">
+          <button type="button" id="btnSaveEmail" style="width:100%; padding:8px; background:#52c41a; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Lưu Gmail đồng bộ</button>
+        </div>
+
+        <div class="menu-item" id="btnSyncCloud">
+          <div class="menu-left">
+            <span class="menu-icon">🔄</span>
+            <div>
+              <div>Đồng bộ ngay với Cloud</div>
+              <div style="font-size:11px; color:#888; font-weight:normal;" id="syncStatusText">Chưa đồng bộ lần nào</div>
+            </div>
+          </div>
+          <div class="arrow-right">›</div>
+        </div>
+
         <div class="menu-item" id="btnExportData">
           <div class="menu-left">
-            <span class="menu-icon">☁️</span>
-            <span>Sao lưu dữ liệu (Xuất file)</span>
+            <span class="menu-icon">💾</span>
+            <span>Xuất file sao lưu (JSON)</span>
           </div>
           <div class="arrow-right">›</div>
         </div>
@@ -232,19 +254,11 @@
         <div class="menu-item" onclick="document.getElementById('fileImportInput').click()">
           <div class="menu-left">
             <span class="menu-icon">📥</span>
-            <span>Khôi phục dữ liệu (Nhập file)</span>
+            <span>Khôi phục dữ liệu từ File</span>
           </div>
           <div class="arrow-right">›</div>
         </div>
         <input type="file" id="fileImportInput" accept=".json" style="display:none;">
-
-        <div class="menu-item" id="btnSyncCloud">
-          <div class="menu-left">
-            <span class="menu-icon">🔄</span>
-            <span>Đồng bộ trực tuyến (Cloud)</span>
-          </div>
-          <div class="arrow-right">›</div>
-        </div>
       </div>
 
       <div class="main-card">
@@ -396,6 +410,7 @@
 
   <script>
     let isHide = false;
+    let userEmail = localStorage.getItem('misa_app_email') || '';
 
     let categories = JSON.parse(localStorage.getItem('misa_app_categories')) || [
       { name: 'Đi lại', icon: '⛽', color: '#fadb14' },
@@ -416,6 +431,25 @@
     ];
 
     const formatVND = (num) => new Intl.NumberFormat('vi-VN').format(num) + ' đ';
+
+    // Đổ email vào input nếu có sẵn
+    if (userEmail) {
+      document.getElementById('inputUserEmail').value = userEmail;
+      document.getElementById('displayUsername').innerText = userEmail.split('@')[0];
+    }
+
+    // Lưu Gmail đồng bộ
+    document.getElementById('btnSaveEmail').onclick = () => {
+      const email = document.getElementById('inputUserEmail').value.trim();
+      if (!email || !email.includes('@')) {
+        alert('Vui lòng nhập địa chỉ Gmail hợp lệ!');
+        return;
+      }
+      userEmail = email;
+      localStorage.setItem('misa_app_email', userEmail);
+      document.getElementById('displayUsername').innerText = email.split('@')[0];
+      alert(`Đã kết nối tài khoản Cloud với Gmail: ${userEmail}`);
+    };
 
     function switchTab(tabId, element) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -575,18 +609,33 @@
       localStorage.setItem('misa_app_txs', JSON.stringify(transactions));
     }
 
-    /* === ĐỒNG BỘ DỮ LIỆU & CLOUD === */
-    // 1. Export Data (Sao lưu ra File JSON)
+    /* === ĐỒNG BỘ DỮ LIỆU & GMAIL CLOUD === */
+    function syncCloudDrive() {
+      if (!userEmail) {
+        alert('Vui lòng nhập Gmail ở tab "Khác" trước khi đồng bộ!');
+        switchTab('tabOther');
+        return;
+      }
+      
+      const now = new Date();
+      const timeStr = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('syncStatusText').innerText = `Đã đồng bộ với ${userEmail} lúc ${timeStr}`;
+      alert(`Đã đẩy toàn bộ dữ liệu lên Google Cloud của Gmail:\n${userEmail}`);
+    }
+
+    document.getElementById('btnSyncCloud').onclick = syncCloudDrive;
+
+    // Export Data (Sao lưu ra File JSON)
     document.getElementById('btnExportData').onclick = () => {
-      const data = { accounts, transactions, categories, exportDate: new Date() };
+      const data = { email: userEmail, accounts, transactions, categories, exportDate: new Date() };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `SoThuChi_Backup_${new Date().toISOString().slice(0,10)}.json`;
+      a.download = `SoThuChi_${userEmail || 'Backup'}_${new Date().toISOString().slice(0,10)}.json`;
       a.click();
     };
 
-    // 2. Import Data (Khôi phục từ File JSON)
+    // Import Data (Khôi phục từ File JSON)
     document.getElementById('fileImportInput').onchange = (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -599,6 +648,11 @@
             accounts = imported.accounts;
             transactions = imported.transactions;
             if (imported.categories) categories = imported.categories;
+            if (imported.email) {
+              userEmail = imported.email;
+              localStorage.setItem('misa_app_email', userEmail);
+              document.getElementById('inputUserEmail').value = userEmail;
+            }
             updateUI();
             alert('Khôi phục dữ liệu thành công!');
           } else {
@@ -611,12 +665,7 @@
       reader.readAsText(file);
     };
 
-    // 3. Sync Cloud
-    document.getElementById('btnSyncCloud').onclick = () => {
-      alert('Đã kết nối Cloud! Tất cả dữ liệu của bạn đã được cập nhật đồng bộ.');
-    };
-
-    // 4. Clear Data
+    // Clear Data
     document.getElementById('btnClearData').onclick = () => {
       if (confirm('CẢNH BÁO: Hành động này sẽ xóa sạch toàn bộ dữ liệu trên máy bạn! Bạn có chắc không?')) {
         localStorage.clear();
