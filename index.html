@@ -291,7 +291,7 @@
       accounts: [],
       transactions: [],
       userEmail: localStorage.getItem("sync_email") || "truongtv1280@gmail.com",
-      hideAmount: true, // MẶC ĐỊNH ẨN SỐ DƯ
+      hideAmount: true, // Mặc định ẩn số dư hiện tại
       currentType: 'expense',
       editingTxId: null
     };
@@ -403,8 +403,9 @@
       }
     }
 
-    function formatMoney(num) {
-      if (state.hideAmount) return "•••••• đ";
+    // Đã chỉnh sửa: thêm forceShow để chỉ áp dụng ẩn/hiện cho Số dư
+    function formatMoney(num, forceShow = false) {
+      if (state.hideAmount && !forceShow) return "•••••• đ";
       return new Intl.NumberFormat('vi-VN').format(num) + " đ";
     }
 
@@ -448,6 +449,7 @@
       renderReports();
     }
 
+    // Đã chỉnh sửa: Luôn hiện số tiền giao dịch (truyền true)
     function renderRecentTransactions() {
       const recentList = document.getElementById('recentList');
       if (state.transactions.length === 0) {
@@ -465,7 +467,7 @@
             </div>
             <div class="flex items-center gap-2">
               <span class="font-bold ${isPlus ? 'text-green-600' : 'text-red-600'}">
-                ${isPlus ? '+' : '-'}${formatMoney(t.amount)}
+                ${isPlus ? '+' : '-'}${formatMoney(t.amount, true)}
               </span>
               <button onclick="editTransaction(${t.id})" class="text-gray-400 hover:text-sky-600 text-xs p-1">
                 <i class="fa-solid fa-pen"></i>
@@ -479,6 +481,7 @@
       }).join('');
     }
 
+    // Đã chỉnh sửa: Luôn hiện số tiền tổng Thu / tổng Chi (truyền true)
     function renderReports() {
       const filterType = document.getElementById('reportFilterType').value;
       const dateInput = document.getElementById('reportDateInput');
@@ -511,8 +514,8 @@
         }
       });
 
-      document.getElementById('totalIncome').innerText = formatMoney(income);
-      document.getElementById('totalExpense').innerText = formatMoney(expense);
+      document.getElementById('totalIncome').innerText = formatMoney(income, true);
+      document.getElementById('totalExpense').innerText = formatMoney(expense, true);
     }
 
     function switchTab(tab) {
@@ -649,7 +652,7 @@
 
       document.getElementById('txAmount').value = tx.amount;
       document.getElementById('txNote').value = tx.note || '';
-      document.getElementById('accountSelectContainer').classList.add('hidden'); // Khóa đổi tài khoản khi sửa
+      document.getElementById('accountSelectContainer').classList.add('hidden');
 
       if (tx.type !== 'transfer') {
         document.getElementById('txCategorySelect').value = tx.category;
@@ -666,12 +669,11 @@
         return;
       }
 
-      // XỬ LÝ CHỈNH SỬA
       if (state.editingTxId) {
         const txIndex = state.transactions.findIndex(t => t.id === state.editingTxId);
         if (txIndex !== -1) {
           const oldTx = state.transactions[txIndex];
-          revertTxBalance(oldTx); // Hoàn lại tiền cũ trước
+          revertTxBalance(oldTx);
 
           const acc = state.accounts.find(a => a.name === oldTx.accName);
           const category = type === 'transfer' ? '🔄 Chuyển khoản' : document.getElementById('txCategorySelect').value;
@@ -690,7 +692,6 @@
           };
         }
       } 
-      // XỬ LÝ TẠO MỚI
       else {
         const accIndex = parseInt(document.getElementById('txAccountSelect').value);
         const acc = state.accounts[accIndex];
