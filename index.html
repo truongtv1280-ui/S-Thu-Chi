@@ -88,13 +88,17 @@
     /* Modals */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: flex-end; z-index: 100; }
     .modal.active { display: flex; }
-    .modal-content { background: #fff; width: 100%; max-width: 414px; border-radius: 16px 16px 0 0; padding: 20px; animation: slideUp 0.25s ease-out; }
+    .modal-content { background: #fff; width: 100%; max-width: 414px; border-radius: 16px 16px 0 0; padding: 20px; animation: slideUp 0.25s ease-out; max-height: 90vh; overflow-y: auto; }
     @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     
     .form-group { margin-bottom: 14px; }
     .form-group label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; font-weight: 500; }
     .form-control { width: 100%; padding: 12px; border: 1px solid #d9d9d9; border-radius: 8px; font-size: 15px; outline: none; background: #fff; }
     .submit-btn { width: 100%; padding: 14px; background: #1890ff; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 8px; }
+
+    /* Inline Add Category Panel */
+    .add-category-box { background: #e6f7ff; border: 1px dashed #1890ff; border-radius: 8px; padding: 10px; margin-top: 8px; display: none; }
+    .add-category-box.active { display: block; }
 
     .history-list { max-height: 300px; overflow-y: auto; margin-top: 10px; }
     .history-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
@@ -298,15 +302,31 @@
         <select id="inputToAccSelect" class="form-control"></select>
       </div>
 
+      <!-- Hạng mục -->
       <div class="form-group" id="categoryGroup">
         <label>Hạng mục</label>
-        <select id="inputCategory" class="form-control">
-          <option value="Đi lại">⛽ Đi lại / Xăng xe</option>
-          <option value="Ăn uống">☕ Ăn uống</option>
-          <option value="Con cái">👶 Con cái</option>
-          <option value="Lương">💰 Lương / Thu nhập</option>
-          <option value="Khác">🛍️ Khác</option>
-        </select>
+        <select id="inputCategory" class="form-control"></select>
+
+        <!-- Khung thêm hạng mục mới -->
+        <div class="add-category-box" id="addCategoryBox">
+          <div style="font-size:12px; font-weight:bold; color:#1890ff; margin-bottom:6px;">TẠO HẠNG MỤC MỚI</div>
+          <div style="display:flex; gap:8px; margin-bottom:8px;">
+            <select id="newCatIcon" class="form-control" style="width:70px; padding:8px;">
+              <option value="🛒">🛒</option>
+              <option value="🎬">🎬</option>
+              <option value="🎁">🎁</option>
+              <option value="💊">💊</option>
+              <option value="🏠">🏠</option>
+              <option value="🎓">🎓</option>
+              <option value="⚡">⚡</option>
+            </select>
+            <input type="text" id="newCatName" class="form-control" placeholder="Tên hạng mục..." style="padding:8px;">
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button type="button" id="saveCatBtn" style="flex:1; padding:8px; background:#1890ff; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Thêm</button>
+            <button type="button" id="cancelCatBtn" style="padding:8px; background:#ccc; color:#333; border:none; border-radius:6px; cursor:pointer;">Hủy</button>
+          </div>
+        </div>
       </div>
 
       <div class="form-group">
@@ -330,8 +350,16 @@
   </div>
 
   <script>
-    const categoryColors = { 'Đi lại': '#fadb14', 'Ăn uống': '#ff4d4f', 'Con cái': '#1890ff', 'Lương': '#52c41a', 'Khác': '#722ed1' };
     let isHide = false;
+
+    // Danh sách Hạng Mục Mặc Định & Tự Tạo
+    let categories = JSON.parse(localStorage.getItem('misa_app_categories')) || [
+      { name: 'Đi lại', icon: '⛽', color: '#fadb14' },
+      { name: 'Ăn uống', icon: '☕', color: '#ff4d4f' },
+      { name: 'Con cái', icon: '👶', color: '#1890ff' },
+      { name: 'Lương', icon: '💰', color: '#52c41a' },
+      { name: 'Khác', icon: '🛍️', color: '#722ed1' }
+    ];
 
     // Danh sách Tài Khoản
     let accounts = JSON.parse(localStorage.getItem('misa_app_accounts')) || [
@@ -353,6 +381,59 @@
       document.getElementById(tabId).classList.add('active');
       if(element) element.classList.add('active');
     }
+
+    function renderCategorySelect() {
+      const catSelect = document.getElementById('inputCategory');
+      catSelect.innerHTML = '';
+
+      categories.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.name;
+        opt.innerText = `${c.icon} ${c.name}`;
+        catSelect.appendChild(opt);
+      });
+
+      // Dòng Tạo Mới
+      const createOpt = document.createElement('option');
+      createOpt.value = '__CREATE_NEW__';
+      createOpt.innerText = '➕ Tạo hạng mục mới...';
+      createOpt.style.fontWeight = 'bold';
+      createOpt.style.color = '#1890ff';
+      catSelect.appendChild(createOpt);
+    }
+
+    // Lắng nghe chọn Hạng mục
+    document.getElementById('inputCategory').onchange = (e) => {
+      const addBox = document.getElementById('addCategoryBox');
+      if (e.target.value === '__CREATE_NEW__') {
+        addBox.classList.add('active');
+      } else {
+        addBox.classList.remove('active');
+      }
+    };
+
+    // Thêm Hạng Mục Mới
+    document.getElementById('saveCatBtn').onclick = () => {
+      const name = document.getElementById('newCatName').value.trim();
+      const icon = document.getElementById('newCatIcon').value;
+      if (!name) { alert('Vui lòng nhập tên hạng mục!'); return; }
+
+      const colors = ['#f5222d', '#fa541c', '#fa8c16', '#faad14', '#13c2c2', '#52c41a', '#1890ff', '#722ed1', '#eb2f96'];
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+      categories.push({ name, icon, color: randomColor });
+      localStorage.setItem('misa_app_categories', JSON.stringify(categories));
+
+      renderCategorySelect();
+      document.getElementById('inputCategory').value = name;
+      document.getElementById('addCategoryBox').classList.remove('active');
+      document.getElementById('newCatName').value = '';
+    };
+
+    document.getElementById('cancelCatBtn').onclick = () => {
+      document.getElementById('addCategoryBox').classList.remove('active');
+      document.getElementById('inputCategory').selectedIndex = 0;
+    };
 
     function updateUI() {
       const totalAssets = accounts.reduce((sum, acc) => sum + acc.balance, 0);
@@ -394,6 +475,8 @@
         toAccSelectEl.appendChild(opt.cloneNode(true));
       });
 
+      renderCategorySelect();
+
       // Báo cáo Thu Chi
       let totalThu = 0;
       let totalChi = 0;
@@ -434,7 +517,8 @@
         for (const [cat, val] of Object.entries(expByCat)) {
           const percent = (val / totalChi) * 100;
           const deg = (percent / 100) * 360;
-          const color = categoryColors[cat] || '#722ed1';
+          const catObj = categories.find(c => c.name === cat) || { color: '#722ed1' };
+          const color = catObj.color;
 
           gradientStops.push(`${color} ${currentDeg}deg ${currentDeg + deg}deg`);
           currentDeg += deg;
@@ -548,12 +632,13 @@
     document.getElementById('saveBtn').onclick = () => {
       const type = txTypeSelect.value;
       const amt = parseFloat(document.getElementById('inputAmount').value);
-      const cat = document.getElementById('inputCategory').value;
+      let cat = document.getElementById('inputCategory').value;
       const note = document.getElementById('inputNote').value;
       const fromAccId = parseInt(document.getElementById('inputAccSelect').value);
       const toAccId = parseInt(document.getElementById('inputToAccSelect').value);
 
       if (isNaN(amt) || amt <= 0) { alert('Vui lòng nhập số tiền hợp lệ!'); return; }
+      if (cat === '__CREATE_NEW__') { alert('Vui lòng hoàn tất tạo hạng mục hoặc chọn hạng mục có sẵn!'); return; }
 
       const fromAcc = accounts.find(a => a.id === fromAccId);
 
