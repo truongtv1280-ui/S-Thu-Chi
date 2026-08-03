@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <!-- Firebase SDKs (v9/v10 Compat Mode) -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -59,9 +59,9 @@
 
                 <!-- Tab 1: Google -->
                 <div x-show="authTab === 'google'" class="space-y-3 pt-2">
-                    <button @click="loginWithGoogle()" class="w-full bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-xl shadow-sm hover:bg-gray-50 flex items-center justify-center gap-3 transition">
+                    <button @click="loginWithGoogle()" :disabled="isLoggingIn" class="w-full bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-xl shadow-sm hover:bg-gray-50 flex items-center justify-center gap-3 transition disabled:opacity-50">
                         <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google">
-                        <span>Đăng nhập nhanh với Google</span>
+                        <span x-text="isLoggingIn ? 'Đang kết nối...' : 'Đăng nhập nhanh với Google'"></span>
                     </button>
                 </div>
 
@@ -221,7 +221,6 @@
 
     <!-- LOGIC JAVASCRIPT -->
     <script>
-        // Cấu hình Firebase từ dự án appthuchimoi
         const firebaseConfig = {
             apiKey: "AIzaSyD60xItsgAdFomunCdhypi26yyI5xrp0P0",
             authDomain: "appthuchimoi.firebaseapp.com",
@@ -243,6 +242,7 @@
                 authTab: 'google',
                 emailInput: '',
                 passwordInput: '',
+                isLoggingIn: false,
                 accounts: [],
                 transactions: [],
                 showAccModal: false,
@@ -251,8 +251,16 @@
                 newTx: { type: 'expense', accountId: '', amount: 0, note: '' },
 
                 init() {
+                    // Kiểm tra kết quả trả về từ Redirect Google (dành cho điện thoại)
+                    auth.getRedirectResult().catch(err => {
+                        if (err.code && err.code !== 'auth/cancelled-popup-request') {
+                            alert("Lỗi đăng nhập: " + err.message);
+                        }
+                    });
+
                     auth.onAuthStateChanged(u => {
                         this.user = u;
+                        this.isLoggingIn = false;
                         if (u) {
                             this.loadData();
                         } else {
@@ -263,8 +271,26 @@
                 },
 
                 loginWithGoogle() {
+                    if (this.isLoggingIn) return;
+                    this.isLoggingIn = true;
+
                     const provider = new firebase.auth.GoogleAuthProvider();
-                    auth.signInWithPopup(provider).catch(err => alert("Lỗi đăng nhập Google: " + err.message));
+                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+                    if (isMobile) {
+                        // Trên di động: dùng chuyển trang (Redirect)
+                        auth.signInWithRedirect(provider);
+                    } else {
+                        // Trên máy tính: dùng cửa sổ bật lên (Popup)
+                        auth.signInWithPopup(provider)
+                            .then(() => { this.isLoggingIn = false; })
+                            .catch(err => {
+                                this.isLoggingIn = false;
+                                if (err.code !== 'auth/cancelled-popup-request' && err.code !== 'auth/popup-closed-by-user') {
+                                    alert("Lỗi đăng nhập Google: " + err.message);
+                                }
+                            });
+                    }
                 },
 
                 loginWithEmail() {
