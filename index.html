@@ -1,783 +1,394 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Sổ Thu Chi</title>
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Font Awesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    body {
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      background-attachment: fixed;
-      transition: background-image 0.3s ease-in-out;
-    }
-    .active-tab {
-      color: #0284c7;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sổ Thu Chi Cá Nhân</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Firebase SDKs (v9/v10 Compat Mode) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 </head>
-<body id="appBody" class="bg-gray-100 text-gray-800 font-sans min-h-screen flex flex-col justify-between max-w-md mx-auto shadow-2xl relative">
+<body class="bg-gray-100 min-h-screen text-gray-800 pb-24" x-data="app()">
 
-  <!-- TOP HEADER -->
-  <header class="bg-sky-600/90 backdrop-blur-md text-white p-4 text-center font-bold text-lg shadow-md flex items-center justify-between sticky top-0 z-20">
-    <span id="headerTitle">Sổ Thu Chi</span>
-    <span id="syncBadge" class="text-xs bg-red-500 text-white px-2.5 py-1 rounded-full flex items-center gap-1 font-normal">
-      <i class="fa-solid fa-wifi"></i> Chưa kết nối
-    </span>
-  </header>
-
-  <!-- CONTENT AREA -->
-  <main class="flex-1 overflow-y-auto p-4 pb-24 space-y-4">
-
-    <!-- TAB 1: TỔNG QUAN -->
-    <section id="tab-overview" class="tab-content space-y-4">
-      <div class="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm space-y-2">
-        <div class="flex justify-between items-center">
-          <p class="text-sm text-gray-500">Số dư hiện tại</p>
-          <button onclick="toggleHideOverviewAmount()" class="text-gray-500 hover:text-sky-600">
-            <i class="fa-solid fa-eye-slash" id="overviewEyeIcon"></i>
-          </button>
+    <!-- Header -->
+    <header class="bg-sky-600 text-white p-4 shadow-md sticky top-0 z-30">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                <i class="fa-solid fa-wallet"></i> Sổ Thu Chi
+            </h1>
+            <template x-if="user">
+                <div class="flex items-center gap-2">
+                    <img :src="user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.email)" class="w-8 h-8 rounded-full border-2 border-white" title="Avatar">
+                    <button @click="logout()" class="text-xs bg-sky-700 hover:bg-sky-800 px-2 py-1 rounded text-white" title="Đăng xuất">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </template>
         </div>
-        <h2 id="overviewBalance" class="text-3xl font-extrabold text-sky-600">•••••• đ</h2>
-      </div>
+    </header>
 
-      <div class="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm">
-        <h3 class="font-bold text-gray-700 mb-3 text-sm border-b pb-2">Lịch sử giao dịch mới nhất</h3>
-        <ul id="recentList" class="space-y-3 text-sm">
-          <li class="text-gray-400 text-center py-4">Chưa có giao dịch nào</li>
-        </ul>
-      </div>
-    </section>
+    <main class="max-w-md mx-auto p-4 space-y-4">
 
-    <!-- TAB 2: TÀI KHOẢN -->
-    <section id="tab-accounts" class="tab-content hidden space-y-4">
-      <div class="bg-sky-600/90 backdrop-blur-md text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
-        <p class="text-sm opacity-80">Tổng tài sản</p>
-        <div class="flex items-center gap-2 mt-1">
-          <h2 id="totalBalance" class="text-3xl font-black">0 đ</h2>
-        </div>
-        <button onclick="openAddAccountModal()" class="absolute right-4 top-1/2 -translate-y-1/2 bg-white text-sky-600 w-10 h-10 rounded-full flex items-center justify-center font-bold shadow hover:bg-sky-50 active:scale-95 transition">
-          <i class="fa-solid fa-plus text-lg"></i>
-        </button>
-      </div>
+        <!-- MÀN HÌNH CHƯA ĐĂNG NHẬP -->
+        <template x-if="!user">
+            <div class="bg-white p-6 rounded-2xl shadow-sm space-y-4 mt-4">
+                <div class="text-center space-y-2">
+                    <div class="w-14 h-14 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-gray-800">Đăng Nhập Hoặc Đăng Ký</h2>
+                    <p class="text-xs text-gray-500">Dữ liệu thu chi của bạn sẽ được đồng bộ an toàn theo tài khoản.</p>
+                </div>
 
-      <div>
-        <div class="flex justify-between items-center mb-2 px-1">
-          <span class="text-sm font-bold text-gray-700 bg-white/80 px-2 py-1 rounded">Tài khoản chi tiêu (<span id="accountCount">0</span>)</span>
-        </div>
-        <div id="accountList" class="space-y-3">
-          <!-- Tài khoản render động -->
-        </div>
-      </div>
-    </section>
+                <!-- Chuyển Tab Đăng nhập -->
+                <div class="grid grid-cols-2 gap-1 bg-gray-100 p-1 rounded-xl text-xs font-semibold">
+                    <button @click="authTab = 'google'" :class="authTab === 'google' ? 'bg-white text-sky-600 shadow-sm' : 'text-gray-500'" class="py-2 rounded-lg transition">
+                        <i class="fa-brands fa-google mr-1"></i> Google
+                    </button>
+                    <button @click="authTab = 'email'" :class="authTab === 'email' ? 'bg-white text-sky-600 shadow-sm' : 'text-gray-500'" class="py-2 rounded-lg transition">
+                        <i class="fa-solid fa-envelope mr-1"></i> Email
+                    </button>
+                </div>
 
-    <!-- TAB 3: BÁO CÁO -->
-    <section id="tab-reports" class="tab-content hidden space-y-4">
-      <div class="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm text-center space-y-3">
-        <h3 class="font-bold text-gray-700">Thống kê Thu / Chi</h3>
-        
-        <!-- Bộ lọc thời gian -->
-        <div class="flex items-center justify-center gap-2 text-xs">
-          <select id="reportFilterType" onchange="renderReports()" class="border border-gray-300 rounded-lg p-2 font-medium bg-white focus:outline-none focus:ring-2 focus:ring-sky-500">
-            <option value="all">Tất cả thời gian</option>
-            <option value="today">Hôm nay</option>
-            <option value="date">Chọn ngày cụ thể</option>
-            <option value="month">Theo tháng này</option>
-          </select>
-          <input type="date" id="reportDateInput" onchange="renderReports()" class="border border-gray-300 rounded-lg p-1.5 hidden text-xs focus:outline-none focus:ring-2 focus:ring-sky-500">
-        </div>
+                <!-- Tab 1: Google -->
+                <div x-show="authTab === 'google'" class="space-y-3 pt-2">
+                    <button @click="loginWithGoogle()" class="w-full bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-xl shadow-sm hover:bg-gray-50 flex items-center justify-center gap-3 transition">
+                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google">
+                        <span>Đăng nhập nhanh với Google</span>
+                    </button>
+                </div>
 
-        <div class="grid grid-cols-2 gap-4 my-2">
-          <div class="bg-green-50/90 p-3 rounded-lg border border-green-100">
-            <p class="text-xs text-green-600 font-medium">Tổng Thu</p>
-            <p id="totalIncome" class="text-lg font-bold text-green-700 mt-1">0 đ</p>
-          </div>
-          <div class="bg-red-50/90 p-3 rounded-lg border border-red-100">
-            <p class="text-xs text-red-600 font-medium">Tổng Chi</p>
-            <p id="totalExpense" class="text-lg font-bold text-red-700 mt-1">0 đ</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 4: KHÁC (CÀI ĐẶT & ĐỒNG BỘ) -->
-    <section id="tab-settings" class="tab-content hidden space-y-4">
-      <div class="bg-white/90 backdrop-blur-sm p-5 rounded-2xl shadow-sm space-y-4">
-        <div class="flex items-center gap-2 text-gray-700 font-bold border-b pb-3">
-          <i class="fa-solid fa-cloud text-sky-500 text-xl"></i>
-          <span>Đồng bộ Realtime</span>
-        </div>
-
-        <div class="bg-sky-50 border border-sky-200 p-4 rounded-xl space-y-3">
-          <label class="block text-xs font-bold text-sky-800">
-            <i class="fa-solid fa-envelope"></i> Nhập Gmail để lưu dữ liệu của bạn
-          </label>
-          <input type="email" id="syncEmail" placeholder="Nhập Gmail cá nhân của bạn..." 
-                 class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
-          
-          <button onclick="saveAndSync()" class="w-full bg-sky-600 text-white py-3 rounded-lg font-bold text-sm shadow hover:bg-sky-700 active:scale-98 transition flex items-center justify-center gap-2">
-            <i class="fa-solid fa-sync"></i> Kết nối & Đồng bộ ngay
-          </button>
-
-          <p id="syncStatus" class="text-xs font-bold text-green-700 flex items-center gap-1 hidden">
-            <span class="w-2 h-2 rounded-full bg-green-500 inline-block animate-ping"></span>
-            Đã kết nối Realtime Cloud
-          </p>
-        </div>
-      </div>
-
-      <div class="bg-white/90 backdrop-blur-sm p-5 rounded-2xl shadow-sm space-y-4">
-        <div class="flex items-center gap-2 text-gray-700 font-bold border-b pb-3">
-          <i class="fa-solid fa-image text-purple-500 text-xl"></i>
-          <span>Đổi Hình Nền</span>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-2">Chọn mẫu hình nền iPhone / Cảnh đẹp:</label>
-          <div class="grid grid-cols-4 gap-2">
-            <button onclick="changeBg('default')" class="h-16 rounded-lg bg-gray-200 border-2 border-transparent hover:border-sky-500 flex items-center justify-center text-xs font-bold text-gray-600">Mặc định</button>
-            <button onclick="changeBg('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600')" class="h-16 rounded-lg bg-cover bg-center border-2 border-transparent hover:border-sky-500 shadow-sm" style="background-image: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=200')"></button>
-            <button onclick="changeBg('https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=600')" class="h-16 rounded-lg bg-cover bg-center border-2 border-transparent hover:border-sky-500 shadow-sm" style="background-image: url('https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=200')"></button>
-            <button onclick="changeBg('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=600')" class="h-16 rounded-lg bg-cover bg-center border-2 border-transparent hover:border-sky-500 shadow-sm" style="background-image: url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=200')"></button>
-          </div>
-        </div>
-
-        <div class="pt-2">
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Hoặc tải ảnh từ iPhone/Máy tính:</label>
-          <input type="file" id="bgCustomInput" accept="image/*" onchange="uploadCustomBg(event)" class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 cursor-pointer">
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- NÚT TẠO GIAO DỊCH (+) -->
-  <button onclick="openTransactionModal()" class="fixed bottom-16 left-1/2 -translate-x-1/2 bg-sky-500 text-white w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-xl hover:bg-sky-600 active:scale-90 transition z-30">
-    <i class="fa-solid fa-plus"></i>
-  </button>
-
-  <!-- BOTTOM NAVIGATION BAR -->
-  <nav class="bg-white/95 backdrop-blur-md border-t border-gray-200 fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md grid grid-cols-4 py-2 z-20 text-center text-xs">
-    <button onclick="switchTab('overview')" id="nav-overview" class="flex flex-col items-center gap-1 active-tab">
-      <i class="fa-solid fa-house text-lg"></i>
-      <span>Tổng quan</span>
-    </button>
-    <button onclick="switchTab('accounts')" id="nav-accounts" class="flex flex-col items-center gap-1 text-gray-500">
-      <i class="fa-solid fa-wallet text-lg"></i>
-      <span>Tài khoản</span>
-    </button>
-    <button onclick="switchTab('reports')" id="nav-reports" class="flex flex-col items-center gap-1 text-gray-500">
-      <i class="fa-solid fa-chart-column text-lg"></i>
-      <span>Báo cáo</span>
-    </button>
-    <button onclick="switchTab('settings')" id="nav-settings" class="flex flex-col items-center gap-1 text-gray-500">
-      <i class="fa-solid fa-border-all text-lg"></i>
-      <span>Khác</span>
-    </button>
-  </nav>
-
-  <!-- MODAL TẠO TÀI KHOẢN -->
-  <div id="accountModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end justify-center hidden z-50">
-    <div class="bg-white w-full max-w-md rounded-t-2xl p-5 space-y-4">
-      <div class="flex justify-between items-center border-b pb-2">
-        <h3 class="font-bold text-gray-800">Thêm tài khoản mới</h3>
-        <button onclick="closeAddAccountModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-gray-600 mb-1">Tên tài khoản (VCB, Tiền mặt...)</label>
-        <input type="text" id="accName" placeholder="VD: VCB" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-gray-600 mb-1">Số dư ban đầu (VNĐ)</label>
-        <input type="number" id="accBalance" placeholder="0" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-      </div>
-      <button onclick="addAccount()" class="w-full bg-sky-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-sky-700">Lưu Tài Khoản</button>
-    </div>
-  </div>
-
-  <!-- MODAL THÊM / SỬA GIAO DỊCH -->
-  <div id="transactionModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end justify-center hidden z-50">
-    <div class="bg-white w-full max-w-md rounded-t-2xl p-5 space-y-3">
-      
-      <div class="flex items-center justify-between border-b pb-3 relative">
-        <div class="w-6"></div>
-        <div class="relative flex-1 text-center">
-          <select id="txTypeSelect" onchange="onTxTypeChange(this.value)" class="bg-sky-50 border border-sky-300 text-sky-700 font-bold py-1.5 pl-4 pr-8 rounded-lg text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500 inline-block text-center">
-            <option value="expense">⛔ Chi tiền</option>
-            <option value="income">➕ Thu tiền</option>
-            <option value="lend">💵 Cho vay</option>
-            <option value="borrow">💰 Đi vay</option>
-            <option value="transfer">🔄 Chuyển khoản</option>
-            <option value="adjust">📝 Điều chỉnh số dư</option>
-          </select>
-          <i class="fa-solid fa-chevron-down text-sky-600 pointer-events-none text-xs ml-[-20px] inline-block"></i>
-        </div>
-        <button onclick="closeTransactionModal()" class="text-gray-400 hover:text-gray-600 w-6 text-right"><i class="fa-solid fa-xmark text-xl"></i></button>
-      </div>
-
-      <div>
-        <label class="block text-xs font-semibold text-gray-600 mb-1">Số tiền</label>
-        <input type="number" id="txAmount" placeholder="0" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 font-bold text-lg">
-      </div>
-
-      <div id="categoryContainer">
-        <label class="block text-xs font-semibold text-gray-600 mb-1">Danh mục</label>
-        <select id="txCategorySelect" onchange="handleCategoryChange(this.value)" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
-        </select>
-      </div>
-
-      <div id="accountSelectContainer">
-        <label id="accLabel" class="block text-xs font-semibold text-gray-600 mb-1">Tài khoản</label>
-        <select id="txAccountSelect" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-        </select>
-      </div>
-
-      <div id="targetAccContainer" class="hidden">
-        <label class="block text-xs font-semibold text-gray-600 mb-1">Đến tài khoản</label>
-        <select id="txTargetAccountSelect" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-xs font-semibold text-gray-600 mb-1">Diễn giải / Ghi chú</label>
-        <input type="text" id="txNote" placeholder="VD: Xăng xe, Ăn uống..." class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
-      </div>
-
-      <button id="saveTxBtn" onclick="saveTransaction()" class="w-full bg-sky-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-sky-700 mt-2">Xác nhận Giao dịch</button>
-    </div>
-  </div>
-
-  <!-- FIREBASE SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyC7Kccxqj9HOfn2Pb01nJAwuoHE2Y86oPs",
-      authDomain: "appthuchi-ebea8.firebaseapp.com",
-      databaseURL: "https://appthuchi-ebea8-default-rtdb.firebaseio.com",
-      projectId: "appthuchi-ebea8",
-      storageBucket: "appthuchi-ebea8.firebasestorage.app",
-      messagingSenderId: "1003569565581",
-      appId: "1:1003569565581:web:b73287937ce0dd6934b7c4",
-      measurementId: "G-YSMN9PH1JP"
-    };
-
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-    const db = firebase.database();
-
-    const defaultCategories = {
-      expense: ['☕ Cafe/Trà sữa', '⛽ Xăng xe', '🍲 Ăn uống', '🛒 Mua sắm', '🏠 Dịch vụ gia đình', '🎬 Giải trí', '💊 Sức khỏe', '❓ Chi khác'],
-      income: ['💵 Lương', '🎁 Thưởng', '📈 Đầu tư', '💰 Bán hàng', '❓ Thu khác'],
-      lend: ['🤝 Cho vay bạn bè', '🤝 Cho vay người thân', '❓ Cho vay khác'],
-      borrow: ['🏦 Vay ngân hàng', '🤝 Vay người thân/bạn bè', '❓ Vay khác'],
-      transfer: ['🔄 Chuyển khoản nội bộ'],
-      adjust: ['📝 Điều chỉnh số dư']
-    };
-
-    let categoriesMap = JSON.parse(JSON.stringify(defaultCategories));
-
-    let state = {
-      accounts: [],
-      transactions: [],
-      userEmail: localStorage.getItem("sync_email") || "",
-      hideOverviewBalance: true,
-      currentType: 'expense',
-      editingTxId: null
-    };
-
-    let activeRef = null;
-
-    window.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('syncEmail').value = state.userEmail;
-      if (state.userEmail) {
-        initFirebaseSync();
-      }
-      loadSavedBg();
-    });
-
-    function changeBg(url) {
-      const body = document.getElementById('appBody');
-      if (url === 'default') {
-        body.style.backgroundImage = 'none';
-        localStorage.removeItem('app_bg');
-      } else {
-        body.style.backgroundImage = `url('${url}')`;
-        localStorage.setItem('app_bg', url);
-      }
-    }
-
-    function uploadCustomBg(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          changeBg(e.target.result);
-        };
-        reader.readAsDataURL(file);
-      }
-    }
-
-    function loadSavedBg() {
-      const savedBg = localStorage.getItem('app_bg');
-      if (savedBg) {
-        document.getElementById('appBody').style.backgroundImage = `url('${savedBg}')`;
-      }
-    }
-
-    function cleanEmailKey(email) {
-      return email.replace(/[@.]/g, "_");
-    }
-
-    function initFirebaseSync() {
-      const email = state.userEmail.trim();
-      if (!email) return;
-
-      const userKey = cleanEmailKey(email);
-      if (activeRef) activeRef.off();
-
-      activeRef = db.ref('users/' + userKey);
-      
-      activeRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          state.accounts = data.accounts || [];
-          state.transactions = data.transactions || [];
-          if (data.categories) {
-            categoriesMap = data.categories;
-          }
-        }
-        updateUI();
-        updateSyncStatus(true);
-      }, (error) => {
-        console.error(error);
-        updateSyncStatus(false);
-      });
-    }
-
-    function pushDataToCloud() {
-      const email = state.userEmail.trim();
-      if (!email) return;
-
-      const userKey = cleanEmailKey(email);
-      db.ref('users/' + userKey).set({
-        accounts: state.accounts,
-        transactions: state.transactions,
-        categories: categoriesMap,
-        updatedAt: new Date().toISOString()
-      });
-    }
-
-    function saveAndSync() {
-      const emailInput = document.getElementById('syncEmail').value.trim();
-      if (!emailInput) {
-        alert("Vui lòng nhập Email!");
-        return;
-      }
-      state.userEmail = emailInput;
-      localStorage.setItem("sync_email", emailInput);
-      initFirebaseSync();
-      alert("Đã kết nối đồng bộ thành công!");
-    }
-
-    function updateSyncStatus(isConnected) {
-      const badge = document.getElementById('syncBadge');
-      const syncStatus = document.getElementById('syncStatus');
-
-      if (isConnected) {
-        badge.className = "text-xs bg-green-500 text-white px-2.5 py-1 rounded-full flex items-center gap-1 font-normal";
-        badge.innerHTML = `<i class="fa-solid fa-wifi"></i> Đã đồng bộ`;
-        syncStatus.classList.remove('hidden');
-      } else {
-        badge.className = "text-xs bg-red-500 text-white px-2.5 py-1 rounded-full flex items-center gap-1 font-normal";
-        badge.innerHTML = `<i class="fa-solid fa-wifi"></i> Chưa kết nối`;
-        syncStatus.classList.add('hidden');
-      }
-    }
-
-    function formatMoney(num) {
-      return new Intl.NumberFormat('vi-VN').format(num) + " đ";
-    }
-
-    function toggleHideOverviewAmount() {
-      state.hideOverviewBalance = !state.hideOverviewBalance;
-      const eyeClass = state.hideOverviewBalance ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
-      document.getElementById('overviewEyeIcon').className = eyeClass;
-      updateUI();
-    }
-
-    function updateUI() {
-      const total = state.accounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
-      
-      document.getElementById('overviewBalance').innerText = state.hideOverviewBalance ? "•••••• đ" : formatMoney(total);
-      document.getElementById('totalBalance').innerText = formatMoney(total);
-      document.getElementById('accountCount').innerText = state.accounts.length;
-
-      const accountList = document.getElementById('accountList');
-      if (state.accounts.length === 0) {
-        accountList.innerHTML = `<div class="bg-white/90 backdrop-blur-sm p-4 rounded-xl text-center text-gray-400 text-sm">Chưa có tài khoản nào</div>`;
-      } else {
-        accountList.innerHTML = state.accounts.map((acc, index) => `
-          <div class="bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm flex justify-between items-center">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
-                <i class="fa-solid fa-building-columns"></i>
-              </div>
-              <div>
-                <p class="font-bold text-gray-800">${acc.name}</p>
-                <p class="text-xs text-gray-500">${formatMoney(acc.balance)}</p>
-              </div>
+                <!-- Tab 2: Email & Mật khẩu -->
+                <div x-show="authTab === 'email'" class="space-y-3 pt-2">
+                    <div>
+                        <label class="text-xs font-medium text-gray-600 block mb-1">Email</label>
+                        <input type="email" x-model="emailInput" placeholder="nhapemail@gmail.com" class="w-full border rounded-xl p-2.5 text-sm focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium text-gray-600 block mb-1">Mật khẩu</label>
+                        <input type="password" x-model="passwordInput" placeholder="Mật khẩu (ít nhất 6 ký tự)" class="w-full border rounded-xl p-2.5 text-sm focus:outline-none focus:border-sky-500">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <button @click="loginWithEmail()" class="w-full bg-sky-600 text-white font-semibold py-2.5 px-3 rounded-xl text-xs hover:bg-sky-700 transition">
+                            Đăng nhập
+                        </button>
+                        <button @click="registerWithEmail()" class="w-full bg-gray-100 border border-gray-300 text-gray-700 font-semibold py-2.5 px-3 rounded-xl text-xs hover:bg-gray-200 transition">
+                            Tạo tài khoản mới
+                        </button>
+                    </div>
+                </div>
             </div>
-            <button onclick="deleteAccount(${index})" class="text-gray-300 hover:text-red-500 p-2">
-              <i class="fa-solid fa-trash-can"></i>
-            </button>
-          </div>
-        `).join('');
-      }
+        </template>
 
-      renderRecentTransactions();
-      renderReports();
-    }
+        <!-- MÀN HÌNH ĐÃ ĐĂNG NHẬP -->
+        <template x-if="user">
+            <div class="space-y-4">
 
-    function renderRecentTransactions() {
-      const recentList = document.getElementById('recentList');
-      if (state.transactions.length === 0) {
-        recentList.innerHTML = `<li class="text-gray-400 text-center py-4">Chưa có giao dịch nào</li>`;
-        return;
-      }
+                <!-- TỔNG SỐ DƯ -->
+                <div class="bg-gradient-to-br from-sky-500 to-sky-700 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-4 -bottom-4 text-white/10 text-8xl">
+                        <i class="fa-solid fa-coins"></i>
+                    </div>
+                    <div class="relative z-10">
+                        <p class="text-xs text-sky-100 font-medium uppercase tracking-wider mb-1">Tổng Số Dư Hiện Có</p>
+                        <h2 class="text-3xl font-extrabold" x-text="formatMoney(calculateTotalBalance())">0 ₫</h2>
+                        <div class="mt-4 pt-3 border-t border-sky-400/40 flex justify-between text-xs text-sky-100">
+                            <span>Tài khoản ví: <strong x-text="accounts.length">0</strong></span>
+                            <span class="truncate max-w-[200px]" x-text="user.email"></span>
+                        </div>
+                    </div>
+                </div>
 
-      recentList.innerHTML = state.transactions.slice().reverse().map((t) => {
-        const isPlus = t.type === 'income' || t.type === 'borrow';
-        return `
-          <li class="flex justify-between items-center border-b pb-2 group">
+                <!-- DANH SÁCH TÀI KHOẢN VÍ -->
+                <div class="bg-white p-4 rounded-2xl shadow-sm space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
+                            <i class="fa-solid fa-building-columns text-sky-600"></i> Danh Sách Ví / Tài Khoản
+                        </h3>
+                        <button @click="openAccountModal()" class="text-xs bg-sky-50 text-sky-600 hover:bg-sky-100 font-semibold px-3 py-1.5 rounded-lg transition">
+                            + Thêm ví
+                        </button>
+                    </div>
+
+                    <div class="divide-y divide-gray-100">
+                        <template x-for="acc in accounts" :key="acc.id">
+                            <div class="py-2.5 flex justify-between items-center">
+                                <div>
+                                    <p class="font-semibold text-gray-800 text-sm" x-text="acc.name"></p>
+                                    <p class="text-xs text-gray-400" x-text="acc.type || 'Ví tiền'"></p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-sm" :class="acc.balance >= 0 ? 'text-gray-800' : 'text-red-500'" x-text="formatMoney(acc.balance)"></span>
+                                    <button @click="deleteAccount(acc.id)" class="text-gray-300 hover:text-red-500 text-xs p-1">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                        <template x-if="accounts.length === 0">
+                            <p class="text-xs text-gray-400 text-center py-4">Chưa có tài khoản nào. Nhấn "+ Thêm ví" để bắt đầu.</p>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- LỊCH SỬ GIAO DỊCH -->
+                <div class="bg-white p-4 rounded-2xl shadow-sm space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
+                            <i class="fa-solid fa-list-check text-sky-600"></i> Giao Dịch Gần Đây
+                        </h3>
+                        <button @click="openTxModal()" class="text-xs bg-emerald-50 text-emerald-600 hover:bg-emerald-100 font-semibold px-3 py-1.5 rounded-lg transition">
+                            + Thêm thu/chi
+                        </button>
+                    </div>
+
+                    <div class="divide-y divide-gray-100">
+                        <template x-for="tx in sortedTransactions" :key="tx.id">
+                            <div class="py-2.5 flex justify-between items-center">
+                                <div class="space-y-0.5">
+                                    <p class="font-semibold text-gray-800 text-sm" x-text="tx.note || getTypeName(tx.type)"></p>
+                                    <p class="text-[11px] text-gray-400" x-text="formatDate(tx.date) + ' • ' + getAccountName(tx.accountId)"></p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-sm" :class="tx.type === 'income' ? 'text-emerald-600' : 'text-red-500'"
+                                          x-text="(tx.type === 'income' ? '+' : '-') + formatMoney(tx.amount)"></span>
+                                    <button @click="deleteTransaction(tx.id)" class="text-gray-300 hover:text-red-500 text-xs p-1">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                        <template x-if="transactions.length === 0">
+                            <p class="text-xs text-gray-400 text-center py-4">Chưa có giao dịch nào.</p>
+                        </template>
+                    </div>
+                </div>
+
+            </div>
+        </template>
+
+    </main>
+
+    <!-- MODAL THÊM TÀI KHOẢN -->
+    <div x-show="showAccModal" class="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4" x-cloak>
+        <div class="bg-white w-full max-w-md rounded-2xl p-5 space-y-4">
+            <h3 class="font-bold text-gray-800">Thêm Ví / Tài Khoản Mới</h3>
+            <input type="text" x-model="newAcc.name" placeholder="Tên ví (Ví dụ: Tiền mặt, ATM Vietcombank)" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500">
+            <input type="number" x-model.number="newAcc.balance" placeholder="Số dư ban đầu" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500">
+            <div class="flex gap-2">
+                <button @click="showAccModal = false" class="w-1/2 py-2.5 bg-gray-100 rounded-xl text-sm font-semibold text-gray-600">Hủy</button>
+                <button @click="addAccount()" class="w-1/2 py-2.5 bg-sky-600 rounded-xl text-sm font-semibold text-white">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL THÊM GIAO DỊCH -->
+    <div x-show="showTxModal" class="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4" x-cloak>
+        <div class="bg-white w-full max-w-md rounded-2xl p-5 space-y-4">
+            <h3 class="font-bold text-gray-800">Thêm Giao Dịch</h3>
+            
+            <div class="grid grid-cols-2 gap-2">
+                <button @click="newTx.type = 'expense'" :class="newTx.type === 'expense' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700'" class="py-2 rounded-xl font-semibold text-sm">Chi tiền (-)</button>
+                <button @click="newTx.type = 'income'" :class="newTx.type === 'income' ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-700'" class="py-2 rounded-xl font-semibold text-sm">Thu tiền (+)</button>
+            </div>
+
             <div>
-              <p class="font-bold text-gray-800">${t.category || t.type}</p>
-              <p class="text-xs text-gray-400">${t.accName} ${t.note ? '• ' + t.note : ''} • ${t.date}</p>
+                <label class="text-xs text-gray-500 font-medium mb-1 block">Tài khoản ví</label>
+                <select x-model="newTx.accountId" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500">
+                    <template x-for="acc in accounts" :key="acc.id">
+                        <option :value="acc.id" x-text="acc.name"></option>
+                    </template>
+                </select>
             </div>
-            <div class="flex items-center gap-2">
-              <span class="font-bold ${isPlus ? 'text-green-600' : 'text-red-600'}">
-                ${isPlus ? '+' : '-'}${formatMoney(t.amount)}
-              </span>
-              <button onclick="editTransaction(${t.id})" class="text-gray-400 hover:text-sky-600 text-xs p-1">
-                <i class="fa-solid fa-pen"></i>
-              </button>
-              <button onclick="deleteTransaction(${t.id})" class="text-gray-400 hover:text-red-500 text-xs p-1">
-                <i class="fa-solid fa-trash-can"></i>
-              </button>
+
+            <input type="number" x-model.number="newTx.amount" placeholder="Số tiền" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500">
+            <input type="text" x-model="newTx.note" placeholder="Ghi chú (Ví dụ: Ăn sáng, Lương tháng)" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500">
+
+            <div class="flex gap-2">
+                <button @click="showTxModal = false" class="w-1/2 py-2.5 bg-gray-100 rounded-xl text-sm font-semibold text-gray-600">Hủy</button>
+                <button @click="addTransaction()" class="w-1/2 py-2.5 bg-sky-600 rounded-xl text-sm font-semibold text-white">Lưu Giao Dịch</button>
             </div>
-          </li>
-        `;
-      }).join('');
-    }
+        </div>
+    </div>
 
-    function renderReports() {
-      const filterType = document.getElementById('reportFilterType').value;
-      const dateInput = document.getElementById('reportDateInput');
+    <!-- LOGIC JAVASCRIPT -->
+    <script>
+        // Cấu hình Firebase từ dự án appthuchimoi
+        const firebaseConfig = {
+            apiKey: "AIzaSyD60xItsgAdFomunCdhypi26yyI5xrp0P0",
+            authDomain: "appthuchimoi.firebaseapp.com",
+            databaseURL: "https://appthuchimoi-default-rtdb.firebaseio.com",
+            projectId: "appthuchimoi",
+            storageBucket: "appthuchimoi.firebasestorage.app",
+            messagingSenderId: "77316598744",
+            appId: "1:77316598744:web:e0da4f203841cdfcee60ad",
+            measurementId: "G-LDYPBV32N6"
+        };
 
-      if (filterType === 'date') {
-        dateInput.classList.remove('hidden');
-      } else {
-        dateInput.classList.add('hidden');
-      }
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
 
-      const now = new Date();
-      const todayStr = now.toLocaleDateString('vi-VN');
-      const currentMonthYear = `${now.getMonth() + 1}/${now.getFullYear()}`;
+        function app() {
+            return {
+                user: null,
+                authTab: 'google',
+                emailInput: '',
+                passwordInput: '',
+                accounts: [],
+                transactions: [],
+                showAccModal: false,
+                showTxModal: false,
+                newAcc: { name: '', balance: 0 },
+                newTx: { type: 'expense', accountId: '', amount: 0, note: '' },
 
-      let income = 0, expense = 0;
+                init() {
+                    auth.onAuthStateChanged(u => {
+                        this.user = u;
+                        if (u) {
+                            this.loadData();
+                        } else {
+                            this.accounts = [];
+                            this.transactions = [];
+                        }
+                    });
+                },
 
-      state.transactions.forEach(t => {
-        let match = false;
-        if (filterType === 'all') match = true;
-        else if (filterType === 'today') match = (t.date === todayStr);
-        else if (filterType === 'month') match = t.date.endsWith(currentMonthYear);
-        else if (filterType === 'date' && dateInput.value) {
-          const selectedDate = new Date(dateInput.value).toLocaleDateString('vi-VN');
-          match = (t.date === selectedDate);
+                loginWithGoogle() {
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    auth.signInWithPopup(provider).catch(err => alert("Lỗi đăng nhập Google: " + err.message));
+                },
+
+                loginWithEmail() {
+                    if (!this.emailInput || !this.passwordInput) return alert("Vui lòng nhập đầy đủ Email và Mật khẩu!");
+                    auth.signInWithEmailAndPassword(this.emailInput, this.passwordInput)
+                        .catch(err => alert("Lỗi đăng nhập: " + err.message));
+                },
+
+                registerWithEmail() {
+                    if (!this.emailInput || !this.passwordInput) return alert("Vui lòng nhập đầy đủ Email và Mật khẩu!");
+                    if (this.passwordInput.length < 6) return alert("Mật khẩu phải có ít nhất 6 ký tự!");
+                    auth.createUserWithEmailAndPassword(this.emailInput, this.passwordInput)
+                        .then(() => alert("Tạo tài khoản thành công!"))
+                        .catch(err => alert("Lỗi tạo tài khoản: " + err.message));
+                },
+
+                logout() {
+                    auth.signOut();
+                },
+
+                loadData() {
+                    if (!this.user) return;
+                    db.ref('users/' + this.user.uid).on('value', snapshot => {
+                        const data = snapshot.val();
+                        if (data) {
+                            this.accounts = data.accounts ? Object.values(data.accounts) : [];
+                            this.transactions = data.transactions ? Object.values(data.transactions) : [];
+                        } else {
+                            this.accounts = [];
+                            this.transactions = [];
+                        }
+                    });
+                },
+
+                calculateTotalBalance() {
+                    return this.accounts.reduce((sum, acc) => sum + Number(acc.balance || 0), 0);
+                },
+
+                openAccountModal() {
+                    this.newAcc = { name: '', balance: '' };
+                    this.showAccModal = true;
+                },
+
+                addAccount() {
+                    if (!this.newAcc.name) return alert("Vui lòng nhập tên ví!");
+                    const id = db.ref().child('users').push().key;
+                    const accountData = {
+                        id: id,
+                        name: this.newAcc.name,
+                        balance: Number(this.newAcc.balance) || 0
+                    };
+                    db.ref(`users/${this.user.uid}/accounts/${id}`).set(accountData);
+                    this.showAccModal = false;
+                },
+
+                deleteAccount(id) {
+                    if (confirm("Bạn có chắc chắn muốn xóa ví này?")) {
+                        db.ref(`users/${this.user.uid}/accounts/${id}`).remove();
+                    }
+                },
+
+                openTxModal() {
+                    if (this.accounts.length === 0) return alert("Bạn cần tạo ít nhất 1 ví tài khoản trước!");
+                    this.newTx = { type: 'expense', accountId: this.accounts[0].id, amount: '', note: '' };
+                    this.showTxModal = true;
+                },
+
+                addTransaction() {
+                    if (!this.newTx.amount || this.newTx.amount <= 0) return alert("Vui lòng nhập số tiền hợp lệ!");
+                    
+                    const id = db.ref().child('users').push().key;
+                    const amount = Number(this.newTx.amount);
+                    const txData = {
+                        id: id,
+                        type: this.newTx.type,
+                        accountId: this.newTx.accountId,
+                        amount: amount,
+                        note: this.newTx.note,
+                        date: new Date().toISOString()
+                    };
+
+                    const targetAcc = this.accounts.find(a => a.id === this.newTx.accountId);
+                    if (targetAcc) {
+                        const newBalance = this.newTx.type === 'income' 
+                            ? Number(targetAcc.balance) + amount 
+                            : Number(targetAcc.balance) - amount;
+                        
+                        db.ref(`users/${this.user.uid}/accounts/${targetAcc.id}/balance`).set(newBalance);
+                    }
+
+                    db.ref(`users/${this.user.uid}/transactions/${id}`).set(txData);
+                    this.showTxModal = false;
+                },
+
+                deleteTransaction(id) {
+                    if (confirm("Xóa giao dịch này?")) {
+                        db.ref(`users/${this.user.uid}/transactions/${id}`).remove();
+                    }
+                },
+
+                get sortedTransactions() {
+                    return [...this.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+                },
+
+                getAccountName(accId) {
+                    const acc = this.accounts.find(a => a.id === accId);
+                    return acc ? acc.name : 'Ví không xác định';
+                },
+
+                getTypeName(type) {
+                    return type === 'income' ? 'Thu nhập' : 'Chi tiêu';
+                },
+
+                formatMoney(amount) {
+                    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
+                },
+
+                formatDate(dateStr) {
+                    if (!dateStr) return '';
+                    const d = new Date(dateStr);
+                    return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+                }
+            }
         }
-
-        if (match) {
-          if (t.type === 'income' || t.type === 'borrow') income += Number(t.amount);
-          if (t.type === 'expense' || t.type === 'lend') expense += Number(t.amount);
-        }
-      });
-
-      document.getElementById('totalIncome').innerText = formatMoney(income);
-      document.getElementById('totalExpense').innerText = formatMoney(expense);
-    }
-
-    function switchTab(tab) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      document.querySelectorAll('nav button').forEach(el => {
-        el.classList.remove('active-tab');
-        el.classList.add('text-gray-500');
-      });
-
-      document.getElementById(`tab-${tab}`).classList.remove('hidden');
-      document.getElementById(`nav-${tab}`).classList.add('active-tab');
-      document.getElementById(`nav-${tab}`).classList.remove('text-gray-500');
-
-      const titles = {
-        overview: 'Sổ Thu Chi',
-        accounts: 'Tài khoản',
-        reports: 'Báo cáo',
-        settings: 'Cài đặt & Đồng bộ'
-      };
-      document.getElementById('headerTitle').innerText = titles[tab];
-    }
-
-    function openAddAccountModal() {
-      document.getElementById('accountModal').classList.remove('hidden');
-    }
-    function closeAddAccountModal() {
-      document.getElementById('accountModal').classList.add('hidden');
-      document.getElementById('accName').value = '';
-      document.getElementById('accBalance').value = '';
-    }
-    function addAccount() {
-      const name = document.getElementById('accName').value.trim();
-      const balance = parseFloat(document.getElementById('accBalance').value) || 0;
-
-      if (!name) {
-        alert("Vui lòng nhập tên tài khoản!");
-        return;
-      }
-
-      state.accounts.push({ name, balance });
-      pushDataToCloud();
-      closeAddAccountModal();
-    }
-
-    function deleteAccount(index) {
-      if (confirm("Bạn có chắc chắn muốn xóa tài khoản này?")) {
-        state.accounts.splice(index, 1);
-        pushDataToCloud();
-      }
-    }
-
-    function renderCategoryOptions(type, selectedCategory = null) {
-      const catSelect = document.getElementById('txCategorySelect');
-      const currentList = categoriesMap[type] || [];
-      
-      let html = currentList.map(cat => `<option value="${cat}">${cat}</option>`).join('');
-      html += `<option value="__ADD_NEW__">➕ Thêm danh mục mới...</option>`;
-      
-      catSelect.innerHTML = html;
-      if (selectedCategory && currentList.includes(selectedCategory)) {
-        catSelect.value = selectedCategory;
-      }
-    }
-
-    function handleCategoryChange(val) {
-      if (val === '__ADD_NEW__') {
-        const newCat = prompt("Nhập tên danh mục mới (ví dụ: 🎮 Game, ✈️ Du lịch):");
-        if (newCat && newCat.trim() !== '') {
-          const trimmed = newCat.trim();
-          if (!categoriesMap[state.currentType]) {
-            categoriesMap[state.currentType] = [];
-          }
-          if (!categoriesMap[state.currentType].includes(trimmed)) {
-            categoriesMap[state.currentType].push(trimmed);
-            pushDataToCloud();
-          }
-          renderCategoryOptions(state.currentType, trimmed);
-        } else {
-          renderCategoryOptions(state.currentType);
-        }
-      }
-    }
-
-    function onTxTypeChange(type) {
-      state.currentType = type;
-      const targetContainer = document.getElementById('targetAccContainer');
-      const catContainer = document.getElementById('categoryContainer');
-      const accLabel = document.getElementById('accLabel');
-
-      if (type === 'transfer') {
-        targetContainer.classList.remove('hidden');
-        catContainer.classList.add('hidden');
-        accLabel.innerText = "Từ tài khoản";
-      } else {
-        targetContainer.classList.add('hidden');
-        catContainer.classList.remove('hidden');
-        accLabel.innerText = "Tài khoản";
-        
-        renderCategoryOptions(type);
-      }
-    }
-
-    function openTransactionModal() {
-      if (state.accounts.length === 0) {
-        alert("Bạn cần tạo ít nhất 1 Tài khoản trước!");
-        return;
-      }
-      state.editingTxId = null;
-      document.getElementById('saveTxBtn').innerText = "Xác nhận Giao dịch";
-      document.getElementById('accountSelectContainer').classList.remove('hidden');
-
-      const select = document.getElementById('txAccountSelect');
-      const targetSelect = document.getElementById('txTargetAccountSelect');
-      const options = state.accounts.map((acc, index) => `<option value="${index}">${acc.name} (${formatMoney(acc.balance)})</option>`).join('');
-      select.innerHTML = options;
-      targetSelect.innerHTML = options;
-
-      document.getElementById('txTypeSelect').value = 'expense';
-      onTxTypeChange('expense');
-
-      document.getElementById('transactionModal').classList.remove('hidden');
-    }
-
-    function closeTransactionModal() {
-      document.getElementById('transactionModal').classList.add('hidden');
-      document.getElementById('txAmount').value = '';
-      document.getElementById('txNote').value = '';
-      state.editingTxId = null;
-    }
-
-    function revertTxBalance(tx) {
-      const acc = state.accounts.find(a => a.name === tx.accName);
-      if (!acc) return;
-
-      if (tx.type === 'expense' || tx.type === 'lend') {
-        acc.balance += Number(tx.amount);
-      } else if (tx.type === 'income' || tx.type === 'borrow') {
-        acc.balance -= Number(tx.amount);
-      }
-    }
-
-    function deleteTransaction(id) {
-      if (!confirm("Bạn có chắc chắn muốn xóa giao dịch này?")) return;
-      
-      const txIndex = state.transactions.findIndex(t => t.id === id);
-      if (txIndex !== -1) {
-        const tx = state.transactions[txIndex];
-        revertTxBalance(tx);
-        state.transactions.splice(txIndex, 1);
-        pushDataToCloud();
-      }
-    }
-
-    function editTransaction(id) {
-      const tx = state.transactions.find(t => t.id === id);
-      if (!tx) return;
-
-      state.editingTxId = id;
-      openTransactionModal();
-
-      document.getElementById('saveTxBtn').innerText = "Lưu Chỉnh Sửa";
-      document.getElementById('txTypeSelect').value = tx.type;
-      onTxTypeChange(tx.type);
-
-      document.getElementById('txAmount').value = tx.amount;
-      document.getElementById('txNote').value = tx.note || '';
-      document.getElementById('accountSelectContainer').classList.add('hidden');
-
-      if (tx.type !== 'transfer') {
-        renderCategoryOptions(tx.type, tx.category);
-      }
-    }
-
-    function saveTransaction() {
-      const amount = parseFloat(document.getElementById('txAmount').value);
-      const type = state.currentType;
-      const note = document.getElementById('txNote').value.trim();
-
-      if (!amount || amount <= 0) {
-        alert("Vui lòng nhập số tiền hợp lệ!");
-        return;
-      }
-
-      if (state.editingTxId) {
-        const txIndex = state.transactions.findIndex(t => t.id === state.editingTxId);
-        if (txIndex !== -1) {
-          const oldTx = state.transactions[txIndex];
-          revertTxBalance(oldTx);
-
-          const acc = state.accounts.find(a => a.name === oldTx.accName);
-          const category = type === 'transfer' ? '🔄 Chuyển khoản' : document.getElementById('txCategorySelect').value;
-
-          if (acc) {
-            if (type === 'expense' || type === 'lend') acc.balance -= amount;
-            else if (type === 'income' || type === 'borrow') acc.balance += amount;
-          }
-
-          state.transactions[txIndex] = {
-            ...oldTx,
-            type: type,
-            amount: amount,
-            category: category,
-            note: note
-          };
-        }
-      } 
-      else {
-        const accIndex = parseInt(document.getElementById('txAccountSelect').value);
-        const acc = state.accounts[accIndex];
-
-        if (type === 'transfer') {
-          const targetIndex = parseInt(document.getElementById('txTargetAccountSelect').value);
-          if (accIndex === targetIndex) {
-            alert("Tài khoản nhận phải khác tài khoản chuyển!");
-            return;
-          }
-          const targetAcc = state.accounts[targetIndex];
-          acc.balance -= amount;
-          targetAcc.balance += amount;
-
-          state.transactions.push({
-            id: Date.now(),
-            type: type,
-            amount: amount,
-            category: '🔄 Chuyển khoản',
-            accName: `${acc.name} ➔ ${targetAcc.name}`,
-            note: note,
-            date: new Date().toLocaleDateString('vi-VN')
-          });
-
-        } else if (type === 'adjust') {
-          acc.balance = amount;
-          state.transactions.push({
-            id: Date.now(),
-            type: type,
-            amount: amount,
-            category: '📝 Điều chỉnh số dư',
-            accName: acc.name,
-            note: note,
-            date: new Date().toLocaleDateString('vi-VN')
-          });
-
-        } else {
-          const category = document.getElementById('txCategorySelect').value;
-          if (type === 'expense' || type === 'lend') {
-            acc.balance -= amount;
-          } else {
-            acc.balance += amount;
-          }
-
-          state.transactions.push({
-            id: Date.now(),
-            type: type,
-            amount: amount,
-            category: category,
-            accName: acc.name,
-            note: note,
-            date: new Date().toLocaleDateString('vi-VN')
-          });
-        }
-      }
-
-      pushDataToCloud();
-      closeTransactionModal();
-    }
-  </script>
+    </script>
 </body>
 </html>
