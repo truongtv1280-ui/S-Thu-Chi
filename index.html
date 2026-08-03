@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sổ Thu Chi Cá Nhân</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14,19 +14,24 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen text-gray-800 pb-24" x-data="app()">
+<body class="bg-gray-50 min-h-screen text-gray-800 pb-20 select-none" x-data="app()">
 
     <!-- Header -->
     <header class="bg-sky-600 text-white p-4 shadow-md sticky top-0 z-30">
         <div class="max-w-md mx-auto flex items-center justify-between">
-            <h1 class="text-xl font-bold flex items-center gap-2">
-                <i class="fa-solid fa-wallet"></i> Sổ Thu Chi
+            <h1 class="text-lg font-bold flex items-center gap-2">
+                <i class="fa-solid fa-wallet"></i> 
+                <span x-text="activeTab === 'home' ? 'Tổng Quan' : (activeTab === 'tx' ? 'Lịch Sử Giao Dịch' : (activeTab === 'wallet' ? 'Quản Lý Ví' : 'Báo Cáo Thống Kê'))"></span>
             </h1>
             <template x-if="user">
                 <div class="flex items-center gap-2">
-                    <img :src="user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.email)" class="w-8 h-8 rounded-full border-2 border-white" title="Avatar">
-                    <button @click="logout()" class="text-xs bg-sky-700 hover:bg-sky-800 px-2 py-1 rounded text-white" title="Đăng xuất">
+                    <img :src="user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.email || 'User')" class="w-8 h-8 rounded-full border-2 border-white object-cover">
+                    <button @click="logout()" class="text-xs bg-sky-700 hover:bg-sky-800 p-2 rounded-full text-white transition" title="Đăng xuất">
                         <i class="fa-solid fa-right-from-bracket"></i>
                     </button>
                 </div>
@@ -34,141 +39,210 @@
         </div>
     </header>
 
-    <main class="max-w-md mx-auto p-4 space-y-4">
+    <main class="max-w-md mx-auto p-4">
 
         <!-- MÀN HÌNH CHƯA ĐĂNG NHẬP -->
         <template x-if="!user">
-            <div class="bg-white p-6 rounded-2xl shadow-sm space-y-4 mt-4">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-5 mt-6">
                 <div class="text-center space-y-2">
-                    <div class="w-14 h-14 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center mx-auto text-2xl">
-                        <i class="fa-solid fa-shield-halved"></i>
+                    <div class="w-16 h-16 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center mx-auto text-3xl">
+                        <i class="fa-solid fa-user-shield"></i>
                     </div>
-                    <h2 class="text-lg font-bold text-gray-800">Đăng Nhập Hoặc Đăng Ký</h2>
-                    <p class="text-xs text-gray-500">Dữ liệu thu chi của bạn sẽ được đồng bộ an toàn theo tài khoản.</p>
+                    <h2 class="text-xl font-bold text-gray-800">Đăng Nhập Tài Khoản</h2>
+                    <p class="text-xs text-gray-500">Đồng bộ dữ liệu an toàn trên đa thiết bị</p>
                 </div>
 
-                <!-- Chuyển Tab Đăng nhập -->
-                <div class="grid grid-cols-2 gap-1 bg-gray-100 p-1 rounded-xl text-xs font-semibold">
-                    <button @click="authTab = 'google'" :class="authTab === 'google' ? 'bg-white text-sky-600 shadow-sm' : 'text-gray-500'" class="py-2 rounded-lg transition">
+                <!-- Tab chọn phương thức đăng nhập -->
+                <div class="grid grid-cols-2 gap-1 bg-gray-100 p-1 rounded-2xl text-xs font-semibold">
+                    <button @click="authTab = 'google'" :class="authTab === 'google' ? 'bg-white text-sky-600 shadow-sm' : 'text-gray-500'" class="py-2.5 rounded-xl transition">
                         <i class="fa-brands fa-google mr-1"></i> Google
                     </button>
-                    <button @click="authTab = 'email'" :class="authTab === 'email' ? 'bg-white text-sky-600 shadow-sm' : 'text-gray-500'" class="py-2 rounded-lg transition">
+                    <button @click="authTab = 'email'" :class="authTab === 'email' ? 'bg-white text-sky-600 shadow-sm' : 'text-gray-500'" class="py-2.5 rounded-xl transition">
                         <i class="fa-solid fa-envelope mr-1"></i> Email
                     </button>
                 </div>
 
-                <!-- Tab 1: Google -->
+                <!-- Google Auth -->
                 <div x-show="authTab === 'google'" class="space-y-3 pt-2">
-                    <button @click="loginWithGoogle()" :disabled="isLoggingIn" class="w-full bg-white border border-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-xl shadow-sm hover:bg-gray-50 flex items-center justify-center gap-3 transition disabled:opacity-50">
+                    <button @click="loginWithGoogle()" :disabled="isLoggingIn" class="w-full bg-white border border-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-2xl shadow-sm hover:bg-gray-50 flex items-center justify-center gap-3 transition disabled:opacity-50">
                         <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google">
-                        <span x-text="isLoggingIn ? 'Đang kết nối...' : 'Đăng nhập nhanh với Google'"></span>
+                        <span x-text="isLoggingIn ? 'Đang kết nối...' : 'Tiếp tục với Google'"></span>
                     </button>
                 </div>
 
-                <!-- Tab 2: Email & Mật khẩu -->
-                <div x-show="authTab === 'email'" class="space-y-3 pt-2">
+                <!-- Email Auth -->
+                <div x-show="authTab === 'email'" class="space-y-3 pt-1">
                     <div>
                         <label class="text-xs font-medium text-gray-600 block mb-1">Email</label>
-                        <input type="email" x-model="emailInput" placeholder="nhapemail@gmail.com" class="w-full border rounded-xl p-2.5 text-sm focus:outline-none focus:border-sky-500">
+                        <input type="email" x-model="emailInput" placeholder="nhapemail@gmail.com" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500">
                     </div>
                     <div>
                         <label class="text-xs font-medium text-gray-600 block mb-1">Mật khẩu</label>
-                        <input type="password" x-model="passwordInput" placeholder="Mật khẩu (ít nhất 6 ký tự)" class="w-full border rounded-xl p-2.5 text-sm focus:outline-none focus:border-sky-500">
+                        <input type="password" x-model="passwordInput" placeholder="Mật khẩu (ít nhất 6 ký tự)" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500">
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-2 pt-1">
-                        <button @click="loginWithEmail()" class="w-full bg-sky-600 text-white font-semibold py-2.5 px-3 rounded-xl text-xs hover:bg-sky-700 transition">
+                    <div class="grid grid-cols-2 gap-2 pt-2">
+                        <button @click="loginWithEmail()" class="w-full bg-sky-600 text-white font-semibold py-3 px-3 rounded-xl text-xs hover:bg-sky-700 transition">
                             Đăng nhập
                         </button>
-                        <button @click="registerWithEmail()" class="w-full bg-gray-100 border border-gray-300 text-gray-700 font-semibold py-2.5 px-3 rounded-xl text-xs hover:bg-gray-200 transition">
-                            Tạo tài khoản mới
+                        <button @click="registerWithEmail()" class="w-full bg-gray-100 border border-gray-300 text-gray-700 font-semibold py-3 px-3 rounded-xl text-xs hover:bg-gray-200 transition">
+                            Tạo tài khoản
                         </button>
                     </div>
                 </div>
             </div>
         </template>
 
-        <!-- MÀN HÌNH ĐÃ ĐĂNG NHẬP -->
+        <!-- MÀN HÌNH ĐÃ ĐĂNG NHẬP (HIỂN THỊ THEO TAB) -->
         <template x-if="user">
-            <div class="space-y-4">
+            <div>
 
-                <!-- TỔNG SỐ DƯ -->
-                <div class="bg-gradient-to-br from-sky-500 to-sky-700 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
-                    <div class="absolute -right-4 -bottom-4 text-white/10 text-8xl">
-                        <i class="fa-solid fa-coins"></i>
+                <!-- TAB 1: TRANG CHỦ (TỔNG QUAN) -->
+                <div x-show="activeTab === 'home'" class="space-y-4">
+                    <!-- Card tổng số dư -->
+                    <div class="bg-gradient-to-br from-sky-500 to-sky-700 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden">
+                        <div class="absolute -right-6 -bottom-6 text-white/10 text-9xl">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+                        <div class="relative z-10">
+                            <p class="text-xs text-sky-100 font-medium uppercase tracking-wider mb-1">Tổng Số Dư</p>
+                            <h2 class="text-3xl font-black" x-text="formatMoney(calculateTotalBalance())">0 ₫</h2>
+                            <div class="mt-4 pt-3 border-t border-sky-400/40 flex justify-between text-xs text-sky-100">
+                                <span>Ví hoạt động: <strong x-text="accounts.length">0</strong></span>
+                                <span class="truncate max-w-[180px]" x-text="user.email"></span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="relative z-10">
-                        <p class="text-xs text-sky-100 font-medium uppercase tracking-wider mb-1">Tổng Số Dư Hiện Có</p>
-                        <h2 class="text-3xl font-extrabold" x-text="formatMoney(calculateTotalBalance())">0 ₫</h2>
-                        <div class="mt-4 pt-3 border-t border-sky-400/40 flex justify-between text-xs text-sky-100">
-                            <span>Tài khoản ví: <strong x-text="accounts.length">0</strong></span>
-                            <span class="truncate max-w-[200px]" x-text="user.email"></span>
+
+                    <!-- Nút thao tác nhanh -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <button @click="openTxModal('expense')" class="bg-red-50 border border-red-100 p-3.5 rounded-2xl flex items-center gap-3 text-red-600 font-semibold text-sm shadow-sm hover:bg-red-100 transition">
+                            <div class="w-10 h-10 bg-red-500 text-white rounded-xl flex items-center justify-center">
+                                <i class="fa-solid fa-arrow-up"></i>
+                            </div>
+                            <span>Tạo Khoản Chi</span>
+                        </button>
+                        <button @click="openTxModal('income')" class="bg-emerald-50 border border-emerald-100 p-3.5 rounded-2xl flex items-center gap-3 text-emerald-600 font-semibold text-sm shadow-sm hover:bg-emerald-100 transition">
+                            <div class="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center">
+                                <i class="fa-solid fa-arrow-down"></i>
+                            </div>
+                            <span>Tạo Khoản Thu</span>
+                        </button>
+                    </div>
+
+                    <!-- Giao dịch gần đây (tối đa 5) -->
+                    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-gray-700 text-sm">Giao Dịch Gần Đây</h3>
+                            <button @click="activeTab = 'tx'" class="text-xs text-sky-600 font-semibold hover:underline">Xem tất cả</button>
+                        </div>
+                        <div class="divide-y divide-gray-100">
+                            <template x-for="tx in sortedTransactions.slice(0, 5)" :key="tx.id">
+                                <div class="py-2.5 flex justify-between items-center">
+                                    <div class="space-y-0.5">
+                                        <p class="font-semibold text-gray-800 text-sm" x-text="tx.note || getTypeName(tx.type)"></p>
+                                        <p class="text-[11px] text-gray-400" x-text="formatDate(tx.date) + ' • ' + getAccountName(tx.accountId)"></p>
+                                    </div>
+                                    <span class="font-bold text-sm" :class="tx.type === 'income' ? 'text-emerald-600' : 'text-red-500'" x-text="(tx.type === 'income' ? '+' : '-') + formatMoney(tx.amount)"></span>
+                                </div>
+                            </template>
+                            <template x-if="transactions.length === 0">
+                                <p class="text-xs text-gray-400 text-center py-4">Chưa có giao dịch nào.</p>
+                            </template>
                         </div>
                     </div>
                 </div>
 
-                <!-- DANH SÁCH TÀI KHOẢN VÍ -->
-                <div class="bg-white p-4 rounded-2xl shadow-sm space-y-3">
-                    <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
-                            <i class="fa-solid fa-building-columns text-sky-600"></i> Danh Sách Ví / Tài Khoản
-                        </h3>
-                        <button @click="openAccountModal()" class="text-xs bg-sky-50 text-sky-600 hover:bg-sky-100 font-semibold px-3 py-1.5 rounded-lg transition">
-                            + Thêm ví
+                <!-- TAB 2: LỊCH SỬ GIAO DỊCH -->
+                <div x-show="activeTab === 'tx'" class="space-y-3">
+                    <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
+                        <span class="text-xs font-semibold text-gray-500" x-text="transactions.length + ' giao dịch'"></span>
+                        <button @click="openTxModal('expense')" class="text-xs bg-sky-600 text-white hover:bg-sky-700 font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1">
+                            <i class="fa-solid fa-plus"></i> Thêm mới
                         </button>
                     </div>
 
-                    <div class="divide-y divide-gray-100">
-                        <template x-for="acc in accounts" :key="acc.id">
-                            <div class="py-2.5 flex justify-between items-center">
-                                <div>
-                                    <p class="font-semibold text-gray-800 text-sm" x-text="acc.name"></p>
-                                    <p class="text-xs text-gray-400" x-text="acc.type || 'Ví tiền'"></p>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-sm" :class="acc.balance >= 0 ? 'text-gray-800' : 'text-red-500'" x-text="formatMoney(acc.balance)"></span>
-                                    <button @click="deleteAccount(acc.id)" class="text-gray-300 hover:text-red-500 text-xs p-1">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </template>
-                        <template x-if="accounts.length === 0">
-                            <p class="text-xs text-gray-400 text-center py-4">Chưa có tài khoản nào. Nhấn "+ Thêm ví" để bắt đầu.</p>
-                        </template>
-                    </div>
-                </div>
-
-                <!-- LỊCH SỬ GIAO DỊCH -->
-                <div class="bg-white p-4 rounded-2xl shadow-sm space-y-3">
-                    <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-gray-700 flex items-center gap-2 text-sm">
-                            <i class="fa-solid fa-list-check text-sky-600"></i> Giao Dịch Gần Đây
-                        </h3>
-                        <button @click="openTxModal()" class="text-xs bg-emerald-50 text-emerald-600 hover:bg-emerald-100 font-semibold px-3 py-1.5 rounded-lg transition">
-                            + Thêm thu/chi
-                        </button>
-                    </div>
-
-                    <div class="divide-y divide-gray-100">
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 divide-y divide-gray-100">
                         <template x-for="tx in sortedTransactions" :key="tx.id">
-                            <div class="py-2.5 flex justify-between items-center">
+                            <div class="py-3 flex justify-between items-center">
                                 <div class="space-y-0.5">
                                     <p class="font-semibold text-gray-800 text-sm" x-text="tx.note || getTypeName(tx.type)"></p>
-                                    <p class="text-[11px] text-gray-400" x-text="formatDate(tx.date) + ' • ' + getAccountName(tx.accountId)"></p>
+                                    <p class="text-xs text-gray-400" x-text="formatDate(tx.date) + ' • ' + getAccountName(tx.accountId)"></p>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-sm" :class="tx.type === 'income' ? 'text-emerald-600' : 'text-red-500'"
-                                          x-text="(tx.type === 'income' ? '+' : '-') + formatMoney(tx.amount)"></span>
+                                <div class="flex items-center gap-3">
+                                    <span class="font-bold text-sm" :class="tx.type === 'income' ? 'text-emerald-600' : 'text-red-500'" x-text="(tx.type === 'income' ? '+' : '-') + formatMoney(tx.amount)"></span>
                                     <button @click="deleteTransaction(tx.id)" class="text-gray-300 hover:text-red-500 text-xs p-1">
-                                        <i class="fa-solid fa-xmark"></i>
+                                        <i class="fa-solid fa-trash-can"></i>
                                     </button>
                                 </div>
                             </div>
                         </template>
                         <template x-if="transactions.length === 0">
-                            <p class="text-xs text-gray-400 text-center py-4">Chưa có giao dịch nào.</p>
+                            <p class="text-xs text-gray-400 text-center py-6">Chưa ghi nhận giao dịch nào.</p>
                         </template>
+                    </div>
+                </div>
+
+                <!-- TAB 3: QUẢN LÝ VÍ / TÀI KHOẢN -->
+                <div x-show="activeTab === 'wallet'" class="space-y-3">
+                    <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
+                        <span class="text-xs font-semibold text-gray-500" x-text="accounts.length + ' ví tài khoản'"></span>
+                        <button @click="openAccountModal()" class="text-xs bg-sky-600 text-white hover:bg-sky-700 font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1">
+                            <i class="fa-solid fa-plus"></i> Thêm ví mới
+                        </button>
+                    </div>
+
+                    <div class="space-y-2">
+                        <template x-for="acc in accounts" :key="acc.id">
+                            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-sky-50 text-sky-600 rounded-xl flex items-center justify-center font-bold">
+                                        <i class="fa-solid fa-credit-card"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-gray-800 text-sm" x-text="acc.name"></p>
+                                        <p class="text-xs text-gray-400">Số dư hiện tại</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="font-bold text-sm" :class="acc.balance >= 0 ? 'text-gray-800' : 'text-red-500'" x-text="formatMoney(acc.balance)"></span>
+                                    <button @click="deleteAccount(acc.id)" class="text-gray-300 hover:text-red-500 text-xs p-1">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                        <template x-if="accounts.length === 0">
+                            <p class="text-xs text-gray-400 text-center py-6 bg-white rounded-2xl">Chưa có tài khoản ví. Nhấn "+ Thêm ví mới" để tạo.</p>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- TAB 4: BÁO CÁO THỐNG KÊ -->
+                <div x-show="activeTab === 'report'" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl">
+                            <p class="text-xs text-emerald-600 font-semibold uppercase">Tổng thu nhập</p>
+                            <p class="text-xl font-bold text-emerald-700 mt-1" x-text="formatMoney(calculateTotalIncome())"></p>
+                        </div>
+                        <div class="bg-red-50 border border-red-100 p-4 rounded-2xl">
+                            <p class="text-xs text-red-600 font-semibold uppercase">Tổng chi tiêu</p>
+                            <p class="text-xl font-bold text-red-700 mt-1" x-text="formatMoney(calculateTotalExpense())"></p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                        <h3 class="font-bold text-gray-700 text-sm">Tóm Tắt Dòng Tiền</h3>
+                        <div class="space-y-2 text-xs">
+                            <div class="flex justify-between py-1 border-b">
+                                <span class="text-gray-500">Chênh lệch Thu - Chi:</span>
+                                <span class="font-bold" :class="(calculateTotalIncome() - calculateTotalExpense()) >= 0 ? 'text-emerald-600' : 'text-red-500'" x-text="formatMoney(calculateTotalIncome() - calculateTotalExpense())"></span>
+                            </div>
+                            <div class="flex justify-between py-1 border-b">
+                                <span class="text-gray-500">Tổng số lượng giao dịch:</span>
+                                <span class="font-bold text-gray-700" x-text="transactions.length"></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -177,31 +251,62 @@
 
     </main>
 
+    <!-- THANH BOTTOM NAVIGATION TAB (CHỈ HIỂN THỊ KHIN ĐÃ ĐĂNG NHẬP) -->
+    <template x-if="user">
+        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 pb-safe">
+            <div class="max-w-md mx-auto grid grid-cols-4 h-16">
+                <!-- Tab 1: Trang chủ -->
+                <button @click="activeTab = 'home'" :class="activeTab === 'home' ? 'text-sky-600' : 'text-gray-400'" class="flex flex-col items-center justify-center gap-1 transition">
+                    <i class="fa-solid fa-house text-lg"></i>
+                    <span class="text-[10px] font-semibold">Trang chủ</span>
+                </button>
+
+                <!-- Tab 2: Sổ Thu Chi -->
+                <button @click="activeTab = 'tx'" :class="activeTab === 'tx' ? 'text-sky-600' : 'text-gray-400'" class="flex flex-col items-center justify-center gap-1 transition">
+                    <i class="fa-solid fa-list-check text-lg"></i>
+                    <span class="text-[10px] font-semibold">Giao dịch</span>
+                </button>
+
+                <!-- Tab 3: Ví tài khoản -->
+                <button @click="activeTab = 'wallet'" :class="activeTab === 'wallet' ? 'text-sky-600' : 'text-gray-400'" class="flex flex-col items-center justify-center gap-1 transition">
+                    <i class="fa-solid fa-wallet text-lg"></i>
+                    <span class="text-[10px] font-semibold">Ví tiền</span>
+                </button>
+
+                <!-- Tab 4: Báo cáo -->
+                <button @click="activeTab = 'report'" :class="activeTab === 'report' ? 'text-sky-600' : 'text-gray-400'" class="flex flex-col items-center justify-center gap-1 transition">
+                    <i class="fa-solid fa-chart-pie text-lg"></i>
+                    <span class="text-[10px] font-semibold">Thống kê</span>
+                </button>
+            </div>
+        </nav>
+    </template>
+
     <!-- MODAL THÊM TÀI KHOẢN -->
     <div x-show="showAccModal" class="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4" x-cloak>
-        <div class="bg-white w-full max-w-md rounded-2xl p-5 space-y-4">
+        <div class="bg-white w-full max-w-md rounded-3xl p-5 space-y-4">
             <h3 class="font-bold text-gray-800">Thêm Ví / Tài Khoản Mới</h3>
-            <input type="text" x-model="newAcc.name" placeholder="Tên ví (Ví dụ: Tiền mặt, ATM Vietcombank)" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500">
+            <input type="text" x-model="newAcc.name" placeholder="Tên ví (VD: Tiền mặt, Vietcombank)" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500">
             <input type="number" x-model.number="newAcc.balance" placeholder="Số dư ban đầu" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500">
             <div class="flex gap-2">
-                <button @click="showAccModal = false" class="w-1/2 py-2.5 bg-gray-100 rounded-xl text-sm font-semibold text-gray-600">Hủy</button>
-                <button @click="addAccount()" class="w-1/2 py-2.5 bg-sky-600 rounded-xl text-sm font-semibold text-white">Lưu</button>
+                <button @click="showAccModal = false" class="w-1/2 py-3 bg-gray-100 rounded-xl text-sm font-semibold text-gray-600">Hủy</button>
+                <button @click="addAccount()" class="w-1/2 py-3 bg-sky-600 rounded-xl text-sm font-semibold text-white">Lưu ví</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL THÊM GIAO DỊCH -->
     <div x-show="showTxModal" class="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4" x-cloak>
-        <div class="bg-white w-full max-w-md rounded-2xl p-5 space-y-4">
-            <h3 class="font-bold text-gray-800">Thêm Giao Dịch</h3>
+        <div class="bg-white w-full max-w-md rounded-3xl p-5 space-y-4">
+            <h3 class="font-bold text-gray-800">Tạo Giao Dịch Mới</h3>
             
             <div class="grid grid-cols-2 gap-2">
-                <button @click="newTx.type = 'expense'" :class="newTx.type === 'expense' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700'" class="py-2 rounded-xl font-semibold text-sm">Chi tiền (-)</button>
-                <button @click="newTx.type = 'income'" :class="newTx.type === 'income' ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-700'" class="py-2 rounded-xl font-semibold text-sm">Thu tiền (+)</button>
+                <button @click="newTx.type = 'expense'" :class="newTx.type === 'expense' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700'" class="py-2.5 rounded-xl font-semibold text-xs transition">Khoản Chi (-)</button>
+                <button @click="newTx.type = 'income'" :class="newTx.type === 'income' ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-700'" class="py-2.5 rounded-xl font-semibold text-xs transition">Khoản Thu (+)</button>
             </div>
 
             <div>
-                <label class="text-xs text-gray-500 font-medium mb-1 block">Tài khoản ví</label>
+                <label class="text-xs text-gray-500 font-medium mb-1 block">Chọn ví tài khoản</label>
                 <select x-model="newTx.accountId" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500">
                     <template x-for="acc in accounts" :key="acc.id">
                         <option :value="acc.id" x-text="acc.name"></option>
@@ -210,16 +315,16 @@
             </div>
 
             <input type="number" x-model.number="newTx.amount" placeholder="Số tiền" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500">
-            <input type="text" x-model="newTx.note" placeholder="Ghi chú (Ví dụ: Ăn sáng, Lương tháng)" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500">
+            <input type="text" x-model="newTx.note" placeholder="Ghi chú (VD: Ăn sáng, Lương tháng...)" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500">
 
             <div class="flex gap-2">
-                <button @click="showTxModal = false" class="w-1/2 py-2.5 bg-gray-100 rounded-xl text-sm font-semibold text-gray-600">Hủy</button>
-                <button @click="addTransaction()" class="w-1/2 py-2.5 bg-sky-600 rounded-xl text-sm font-semibold text-white">Lưu Giao Dịch</button>
+                <button @click="showTxModal = false" class="w-1/2 py-3 bg-gray-100 rounded-xl text-sm font-semibold text-gray-600">Hủy</button>
+                <button @click="addTransaction()" class="w-1/2 py-3 bg-sky-600 rounded-xl text-sm font-semibold text-white">Lưu Giao Dịch</button>
             </div>
         </div>
     </div>
 
-    <!-- LOGIC JAVASCRIPT -->
+    <!-- JAVASCRIPT LOGIC -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyD60xItsgAdFomunCdhypi26yyI5xrp0P0",
@@ -239,6 +344,7 @@
         function app() {
             return {
                 user: null,
+                activeTab: 'home', // 'home', 'tx', 'wallet', 'report'
                 authTab: 'google',
                 emailInput: '',
                 passwordInput: '',
@@ -251,7 +357,6 @@
                 newTx: { type: 'expense', accountId: '', amount: 0, note: '' },
 
                 init() {
-                    // Kiểm tra kết quả trả về từ Redirect Google (dành cho điện thoại)
                     auth.getRedirectResult().catch(err => {
                         if (err.code && err.code !== 'auth/cancelled-popup-request') {
                             alert("Lỗi đăng nhập: " + err.message);
@@ -278,10 +383,8 @@
                     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
                     if (isMobile) {
-                        // Trên di động: dùng chuyển trang (Redirect)
                         auth.signInWithRedirect(provider);
                     } else {
-                        // Trên máy tính: dùng cửa sổ bật lên (Popup)
                         auth.signInWithPopup(provider)
                             .then(() => { this.isLoggingIn = false; })
                             .catch(err => {
@@ -301,10 +404,10 @@
 
                 registerWithEmail() {
                     if (!this.emailInput || !this.passwordInput) return alert("Vui lòng nhập đầy đủ Email và Mật khẩu!");
-                    if (this.passwordInput.length < 6) return alert("Mật khẩu phải có ít nhất 6 ký tự!");
+                    if (this.passwordInput.length < 6) return alert("Mật khẩu phải từ 6 ký tự trở lên!");
                     auth.createUserWithEmailAndPassword(this.emailInput, this.passwordInput)
-                        .then(() => alert("Tạo tài khoản thành công!"))
-                        .catch(err => alert("Lỗi tạo tài khoản: " + err.message));
+                        .then(() => alert("Đăng ký thành công!"))
+                        .catch(err => alert("Lỗi đăng ký: " + err.message));
                 },
 
                 logout() {
@@ -327,6 +430,14 @@
 
                 calculateTotalBalance() {
                     return this.accounts.reduce((sum, acc) => sum + Number(acc.balance || 0), 0);
+                },
+
+                calculateTotalIncome() {
+                    return this.transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + Number(t.amount || 0), 0);
+                },
+
+                calculateTotalExpense() {
+                    return this.transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount || 0), 0);
                 },
 
                 openAccountModal() {
@@ -352,9 +463,9 @@
                     }
                 },
 
-                openTxModal() {
+                openTxModal(type = 'expense') {
                     if (this.accounts.length === 0) return alert("Bạn cần tạo ít nhất 1 ví tài khoản trước!");
-                    this.newTx = { type: 'expense', accountId: this.accounts[0].id, amount: '', note: '' };
+                    this.newTx = { type: type, accountId: this.accounts[0].id, amount: '', note: '' };
                     this.showTxModal = true;
                 },
 
