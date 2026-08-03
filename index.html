@@ -229,7 +229,7 @@
 
       <div id="categoryContainer">
         <label class="block text-xs font-semibold text-gray-600 mb-1">Danh mục</label>
-        <select id="txCategorySelect" onchange="handleCategoryChange(this.value)" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
+        <select id="txCategorySelect" class="w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
         </select>
       </div>
 
@@ -275,7 +275,7 @@
     }
     const db = firebase.database();
 
-    const defaultCategories = {
+    const categoriesMap = {
       expense: ['☕ Cafe/Trà sữa', '⛽ Xăng xe', '🍲 Ăn uống', '🛒 Mua sắm', '🏠 Dịch vụ gia đình', '🎬 Giải trí', '💊 Sức khỏe', '❓ Chi khác'],
       income: ['💵 Lương', '🎁 Thưởng', '📈 Đầu tư', '💰 Bán hàng', '❓ Thu khác'],
       lend: ['🤝 Cho vay bạn bè', '🤝 Cho vay người thân', '❓ Cho vay khác'],
@@ -284,13 +284,11 @@
       adjust: ['📝 Điều chỉnh số dư']
     };
 
-    let categoriesMap = JSON.parse(JSON.stringify(defaultCategories));
-
     let state = {
       accounts: [],
       transactions: [],
       userEmail: localStorage.getItem("sync_email") || "truongtv1280@gmail.com",
-      hideOverviewBalance: true,
+      hideOverviewBalance: true, // Chỉ ẩn ở tab Tổng quan
       currentType: 'expense',
       editingTxId: null
     };
@@ -350,9 +348,6 @@
         if (data) {
           state.accounts = data.accounts || [];
           state.transactions = data.transactions || [];
-          if (data.categories) {
-            categoriesMap = data.categories;
-          }
         } else {
           state.accounts = [];
           state.transactions = [];
@@ -373,7 +368,6 @@
       db.ref('users/' + userKey).set({
         accounts: state.accounts,
         transactions: state.transactions,
-        categories: categoriesMap,
         updatedAt: new Date().toISOString()
       });
     }
@@ -421,7 +415,10 @@
     function updateUI() {
       const total = state.accounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
       
+      // Tab Tổng quan: kiểm tra ẩn/hiện
       document.getElementById('overviewBalance').innerText = state.hideOverviewBalance ? "•••••• đ" : formatMoney(total);
+      
+      // Tab Tài khoản: Luôn hiện
       document.getElementById('totalBalance').innerText = formatMoney(total);
       document.getElementById('accountCount').innerText = state.accounts.length;
 
@@ -567,41 +564,9 @@
       }
     }
 
-    function renderCategoryOptions(type, selectedCategory = null) {
-      const catSelect = document.getElementById('txCategorySelect');
-      const currentList = categoriesMap[type] || [];
-      
-      let html = currentList.map(cat => `<option value="${cat}">${cat}</option>`).join('');
-      html += `<option value="__ADD_NEW__">➕ Thêm danh mục mới...</option>`;
-      
-      catSelect.innerHTML = html;
-      if (selectedCategory && currentList.includes(selectedCategory)) {
-        catSelect.value = selectedCategory;
-      }
-    }
-
-    function handleCategoryChange(val) {
-      if (val === '__ADD_NEW__') {
-        const newCat = prompt("Nhập tên danh mục mới (ví dụ: 🎮 Game, ✈️ Du lịch):");
-        if (newCat && newCat.trim() !== '') {
-          const trimmed = newCat.trim();
-          if (!categoriesMap[state.currentType]) {
-            categoriesMap[state.currentType] = [];
-          }
-          if (!categoriesMap[state.currentType].includes(trimmed)) {
-            categoriesMap[state.currentType].push(trimmed);
-            pushDataToCloud();
-          }
-          renderCategoryOptions(state.currentType, trimmed);
-        } else {
-          // Reset về danh mục đầu tiên nếu hủy
-          renderCategoryOptions(state.currentType);
-        }
-      }
-    }
-
     function onTxTypeChange(type) {
       state.currentType = type;
+      const catSelect = document.getElementById('txCategorySelect');
       const targetContainer = document.getElementById('targetAccContainer');
       const catContainer = document.getElementById('categoryContainer');
       const accLabel = document.getElementById('accLabel');
@@ -615,7 +580,8 @@
         catContainer.classList.remove('hidden');
         accLabel.innerText = "Tài khoản";
         
-        renderCategoryOptions(type);
+        const currentList = categoriesMap[type] || [];
+        catSelect.innerHTML = currentList.map(cat => `<option value="${cat}">${cat}</option>`).join('');
       }
     }
 
@@ -686,7 +652,7 @@
       document.getElementById('accountSelectContainer').classList.add('hidden');
 
       if (tx.type !== 'transfer') {
-        renderCategoryOptions(tx.type, tx.category);
+        document.getElementById('txCategorySelect').value = tx.category;
       }
     }
 
