@@ -117,9 +117,9 @@
 
         <div class="bg-sky-50 border border-sky-200 p-4 rounded-xl space-y-3">
           <label class="block text-xs font-bold text-sky-800">
-            <i class="fa-solid fa-envelope"></i> Nhập Gmail đồng bộ dùng chung
+            <i class="fa-solid fa-envelope"></i> Nhập Gmail để lưu dữ liệu của bạn
           </label>
-          <input type="email" id="syncEmail" placeholder="ví dụ: truongtv1280@gmail.com" 
+          <input type="email" id="syncEmail" placeholder="Nhập Gmail cá nhân của bạn..." 
                  class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium">
           
           <button onclick="saveAndSync()" class="w-full bg-sky-600 text-white py-3 rounded-lg font-bold text-sm shadow hover:bg-sky-700 active:scale-98 transition flex items-center justify-center gap-2">
@@ -289,7 +289,7 @@
     let state = {
       accounts: [],
       transactions: [],
-      userEmail: localStorage.getItem("sync_email") || "truongtv1280@gmail.com",
+      userEmail: localStorage.getItem("sync_email") || "",
       hideOverviewBalance: true,
       currentType: 'expense',
       editingTxId: null
@@ -299,7 +299,9 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('syncEmail').value = state.userEmail;
-      initFirebaseSync();
+      if (state.userEmail) {
+        initFirebaseSync();
+      }
       loadSavedBg();
     });
 
@@ -406,7 +408,6 @@
       }
     }
 
-    // Định dạng tiền tệ
     function formatMoney(num) {
       return new Intl.NumberFormat('vi-VN').format(num) + " đ";
     }
@@ -594,7 +595,6 @@
           }
           renderCategoryOptions(state.currentType, trimmed);
         } else {
-          // Reset về danh mục đầu tiên nếu hủy
           renderCategoryOptions(state.currentType);
         }
       }
