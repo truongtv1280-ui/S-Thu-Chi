@@ -26,7 +26,7 @@
         <div class="max-w-md mx-auto flex items-center justify-between">
             <h1 class="text-lg font-bold flex items-center gap-2">
                 <i class="fa-solid fa-wallet"></i> 
-                <span x-text="activeTab === 'home' ? 'Tổng Quan' : (activeTab === 'tx' ? 'Lịch Sử Giao Dịch' : (activeTab === 'wallet' ? 'Quản Lý Ví' : 'Báo Cáo Thống Kê'))"></span>
+                <span x-text="activeTab === 'home' ? 'Tổng Quan' : (activeTab === 'wallet' ? 'Quản Lý Ví / Tài Khoản' : (activeTab === 'report' ? 'Báo Cáo Thống Kê' : 'Lịch Sử Giao Dịch'))"></span>
             </h1>
             <template x-if="user">
                 <div class="flex items-center gap-2">
@@ -94,7 +94,7 @@
         <template x-if="user">
             <div>
 
-                <!-- TAB 1: TRANG CHỦ -->
+                <!-- TAB 1: TỔNG QUAN -->
                 <div x-show="activeTab === 'home'" class="space-y-4">
                     <div class="bg-gradient-to-br from-sky-500 to-sky-700 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden">
                         <div class="absolute -right-6 -bottom-6 text-white/10 text-9xl">
@@ -110,25 +110,10 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
-                        <button @click="openTxModal('expense')" class="bg-red-50 border border-red-100 p-3.5 rounded-2xl flex items-center gap-3 text-red-600 font-semibold text-sm shadow-sm hover:bg-red-100 transition">
-                            <div class="w-10 h-10 bg-red-500 text-white rounded-xl flex items-center justify-center">
-                                <i class="fa-solid fa-arrow-up"></i>
-                            </div>
-                            <span>Tạo Khoản Chi</span>
-                        </button>
-                        <button @click="openTxModal('income')" class="bg-emerald-50 border border-emerald-100 p-3.5 rounded-2xl flex items-center gap-3 text-emerald-600 font-semibold text-sm shadow-sm hover:bg-emerald-100 transition">
-                            <div class="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center">
-                                <i class="fa-solid fa-arrow-down"></i>
-                            </div>
-                            <span>Tạo Khoản Thu</span>
-                        </button>
-                    </div>
-
                     <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3">
                         <div class="flex justify-between items-center">
                             <h3 class="font-bold text-gray-700 text-sm">Giao Dịch Gần Đây</h3>
-                            <button @click="activeTab = 'tx'" class="text-xs text-sky-600 font-semibold hover:underline">Xem tất cả</button>
+                            <button @click="activeTab = 'tx_history'" class="text-xs text-sky-600 font-semibold hover:underline">Xem tất cả</button>
                         </div>
                         <div class="divide-y divide-gray-100">
                             <template x-for="tx in sortedTransactions.slice(0, 5)" :key="tx.id">
@@ -152,42 +137,7 @@
                     </div>
                 </div>
 
-                <!-- TAB 2: LỊCH SỬ GIAO DỊCH -->
-                <div x-show="activeTab === 'tx'" class="space-y-3">
-                    <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
-                        <span class="text-xs font-semibold text-gray-500" x-text="transactions.length + ' giao dịch'"></span>
-                        <button @click="openTxModal('expense')" class="text-xs bg-sky-600 text-white hover:bg-sky-700 font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1">
-                            <i class="fa-solid fa-plus"></i> Thêm mới
-                        </button>
-                    </div>
-
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 divide-y divide-gray-100">
-                        <template x-for="tx in sortedTransactions" :key="tx.id">
-                            <div class="py-3 flex justify-between items-center">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-xl flex items-center justify-center text-sm" :class="tx.type === 'income' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'">
-                                        <span x-text="getCategoryIcon(tx.category)"></span>
-                                    </div>
-                                    <div class="space-y-0.5">
-                                        <p class="font-semibold text-gray-800 text-sm" x-text="tx.category || 'Chi khác'"></p>
-                                        <p class="text-xs text-gray-400" x-text="formatDate(tx.date) + (tx.note ? ' • ' + tx.note : '') + ' • ' + getAccountName(tx.accountId)"></p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <span class="font-bold text-sm" :class="tx.type === 'income' ? 'text-emerald-600' : 'text-red-500'" x-text="(tx.type === 'income' ? '+' : '-') + formatMoney(tx.amount)"></span>
-                                    <button @click="deleteTransaction(tx.id)" class="text-gray-300 hover:text-red-500 text-xs p-1">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </template>
-                        <template x-if="transactions.length === 0">
-                            <p class="text-xs text-gray-400 text-center py-6">Chưa ghi nhận giao dịch nào.</p>
-                        </template>
-                    </div>
-                </div>
-
-                <!-- TAB 3: QUẢN LÝ VÍ -->
+                <!-- TAB 2: QUẢN LÝ VÍ / TÀI KHOẢN -->
                 <div x-show="activeTab === 'wallet'" class="space-y-3">
                     <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
                         <span class="text-xs font-semibold text-gray-500" x-text="accounts.length + ' ví tài khoản'"></span>
@@ -222,7 +172,7 @@
                     </div>
                 </div>
 
-                <!-- TAB 4: BÁO CÁO -->
+                <!-- TAB 3: BÁO CÁO -->
                 <div x-show="activeTab === 'report'" class="space-y-3">
                     <div class="grid grid-cols-2 gap-3">
                         <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl">
@@ -250,31 +200,79 @@
                     </div>
                 </div>
 
+                <!-- TAB 4: LỊCH SỬ GIAO DỊCH (TỪ KHÁC) -->
+                <div x-show="activeTab === 'tx_history'" class="space-y-3">
+                    <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
+                        <span class="text-xs font-semibold text-gray-500" x-text="transactions.length + ' giao dịch'"></span>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 divide-y divide-gray-100">
+                        <template x-for="tx in sortedTransactions" :key="tx.id">
+                            <div class="py-3 flex justify-between items-center">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-xl flex items-center justify-center text-sm" :class="tx.type === 'income' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'">
+                                        <span x-text="getCategoryIcon(tx.category)"></span>
+                                    </div>
+                                    <div class="space-y-0.5">
+                                        <p class="font-semibold text-gray-800 text-sm" x-text="tx.category || 'Chi khác'"></p>
+                                        <p class="text-xs text-gray-400" x-text="formatDate(tx.date) + (tx.note ? ' • ' + tx.note : '') + ' • ' + getAccountName(tx.accountId)"></p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="font-bold text-sm" :class="tx.type === 'income' ? 'text-emerald-600' : 'text-red-500'" x-text="(tx.type === 'income' ? '+' : '-') + formatMoney(tx.amount)"></span>
+                                    <button @click="deleteTransaction(tx.id)" class="text-gray-300 hover:text-red-500 text-xs p-1">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                        <template x-if="transactions.length === 0">
+                            <p class="text-xs text-gray-400 text-center py-6">Chưa ghi nhận giao dịch nào.</p>
+                        </template>
+                    </div>
+                </div>
+
             </div>
         </template>
 
     </main>
 
-    <!-- BOTTOM TAB BAR -->
+    <!-- THANH BOTTOM NAVIGATION (5 MỤC VỚI NÚT DẤU + NỔI BẬT Ở GIỮA) -->
     <template x-if="user">
-        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 pb-safe">
-            <div class="max-w-md mx-auto grid grid-cols-4 h-16">
+        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 pb-safe shadow-lg">
+            <div class="max-w-md mx-auto grid grid-cols-5 h-16 relative">
+                
+                <!-- 1. Tổng quan -->
                 <button @click="activeTab = 'home'" :class="activeTab === 'home' ? 'text-sky-600' : 'text-gray-400'" class="flex flex-col items-center justify-center gap-1 transition">
                     <i class="fa-solid fa-house text-lg"></i>
-                    <span class="text-[10px] font-semibold">Trang chủ</span>
+                    <span class="text-[10px] font-semibold">Tổng quan</span>
                 </button>
-                <button @click="activeTab = 'tx'" :class="activeTab === 'tx' ? 'text-sky-600' : 'text-gray-400'" class="flex flex-col items-center justify-center gap-1 transition">
-                    <i class="fa-solid fa-list-check text-lg"></i>
-                    <span class="text-[10px] font-semibold">Giao dịch</span>
-                </button>
+
+                <!-- 2. Tài khoản / Ví -->
                 <button @click="activeTab = 'wallet'" :class="activeTab === 'wallet' ? 'text-sky-600' : 'text-gray-400'" class="flex flex-col items-center justify-center gap-1 transition">
                     <i class="fa-solid fa-wallet text-lg"></i>
-                    <span class="text-[10px] font-semibold">Ví tiền</span>
+                    <span class="text-[10px] font-semibold">Tài khoản</span>
                 </button>
+
+                <!-- 3. NÚT DẤU + (TẠO MỚI GIAO DỊCH - TRỌNG TÂM) -->
+                <div class="flex items-center justify-center">
+                    <button @click="openTxModal('expense')" class="w-12 h-12 bg-sky-500 hover:bg-sky-600 text-white rounded-full flex items-center justify-center shadow-lg -mt-5 border-4 border-white transition transform active:scale-95">
+                        <i class="fa-solid fa-plus text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- 4. Báo cáo -->
                 <button @click="activeTab = 'report'" :class="activeTab === 'report' ? 'text-sky-600' : 'text-gray-400'" class="flex flex-col items-center justify-center gap-1 transition">
                     <i class="fa-solid fa-chart-pie text-lg"></i>
-                    <span class="text-[10px] font-semibold">Thống kê</span>
+                    <span class="text-[10px] font-semibold">Báo cáo</span>
                 </button>
+
+                <!-- 5. Khác (Lịch sử giao dịch) -->
+                <button @click="activeTab = 'tx_history'" :class="activeTab === 'tx_history' ? 'text-sky-600' : 'text-gray-400'" class="flex flex-col items-center justify-center gap-1 transition">
+                    <i class="fa-solid fa-border-all text-lg"></i>
+                    <span class="text-[10px] font-semibold">Khác</span>
+                </button>
+
             </div>
         </nav>
     </template>
@@ -292,7 +290,7 @@
         </div>
     </div>
 
-    <!-- MODAL THÊM GIAO DỊCH (CÓ DANH MỤC KHỎE) -->
+    <!-- MODAL TẠO GIAO DỊCH (BẤM DẤU + ĐỂ MỞ) -->
     <div x-show="showTxModal" class="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4" x-cloak>
         <div class="bg-white w-full max-w-md rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center">
@@ -303,8 +301,8 @@
             </div>
             
             <div class="grid grid-cols-2 gap-2">
-                <button @click="setTxType('expense')" :class="newTx.type === 'expense' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700'" class="py-2.5 rounded-xl font-semibold text-xs transition">Khoản Chi (-)</button>
-                <button @click="setTxType('income')" :class="newTx.type === 'income' ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-700'" class="py-2.5 rounded-xl font-semibold text-xs transition">Khoản Thu (+)</button>
+                <button @click="setTxType('expense')" :class="newTx.type === 'expense' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700'" class="py-2.5 rounded-xl font-semibold text-xs transition">Chi tiền (-)</button>
+                <button @click="setTxType('income')" :class="newTx.type === 'income' ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-700'" class="py-2.5 rounded-xl font-semibold text-xs transition">Thu tiền (+)</button>
             </div>
 
             <!-- CHỌN DANH MỤC GIAO DỊCH -->
@@ -375,7 +373,6 @@
                 newAcc: { name: '', balance: 0 },
                 newTx: { type: 'expense', category: 'Ăn uống', accountId: '', amount: 0, note: '' },
 
-                // Danh sách danh mục chuẩn
                 expenseCategories: [
                     { name: 'Cafe/Trà sữa', icon: '☕' },
                     { name: 'Xăng xe', icon: '⛽' },
