@@ -355,9 +355,6 @@
           if (data.categories) {
             categoriesMap = data.categories;
           }
-        } else {
-          state.accounts = [];
-          state.transactions = [];
         }
         updateUI();
         updateSyncStatus(true);
@@ -389,8 +386,7 @@
       state.userEmail = emailInput;
       localStorage.setItem("sync_email", emailInput);
       initFirebaseSync();
-      pushDataToCloud();
-      alert("Đã kết nối đồng bộ!");
+      alert("Đã kết nối đồng bộ thành công!");
     }
 
     function updateSyncStatus(isConnected) {
