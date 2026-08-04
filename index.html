@@ -216,7 +216,7 @@
                 </div>
             </div>
 
-            <!-- Thanh Điều Hướng Bên Dưới (Bottom Navigation Bar) -->
+            <!-- Thanh Điều Hướng Bên Dưới -->
             <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 flex items-center justify-between py-2 px-3 z-10">
                 <button @click="activeTab = 'home'" :class="activeTab === 'home' ? 'text-blue-600 font-bold' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-[10px] flex-1">
                     <span class="text-base">📊</span>
@@ -277,7 +277,10 @@
                     </div>
 
                     <div x-show="newTx.type !== 'transfer'">
-                        <label class="block text-[11px] text-gray-500 mb-1">Danh mục</label>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-[11px] text-gray-500">Danh mục</label>
+                            <button @click="showCatModal = true" class="text-[10px] text-blue-600 font-bold hover:underline">+ Tạo danh mục</button>
+                        </div>
                         <select x-model="newTx.category" class="w-full border rounded-lg px-3 py-2 text-xs">
                             <template x-for="cat in currentCategories" :key="cat.name">
                                 <option :value="cat.name" x-text="cat.icon + ' ' + cat.name"></option>
@@ -320,6 +323,36 @@
                 </div>
             </div>
 
+            <!-- Modal Thêm Danh Mục Mới -->
+            <div x-show="showCatModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4" style="display: none;">
+                <div class="bg-white rounded-2xl w-full max-w-xs p-5 space-y-3">
+                    <h3 class="font-bold text-sm text-gray-800">Thêm Danh Mục Mới</h3>
+                    
+                    <div>
+                        <label class="block text-[11px] text-gray-500 mb-1">Loại danh mục</label>
+                        <select x-model="newCat.type" class="w-full border rounded-lg px-3 py-2 text-xs">
+                            <option value="expense">Khoản Chi (-)</option>
+                            <option value="income">Khoản Thu (+)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] text-gray-500 mb-1">Biểu tượng (Icon / Emoji)</label>
+                        <input type="text" x-model="newCat.icon" class="w-full border rounded-lg px-3 py-2 text-xs" placeholder="VD: 🍔, 🎁, 🎮...">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] text-gray-500 mb-1">Tên danh mục</label>
+                        <input type="text" x-model="newCat.name" class="w-full border rounded-lg px-3 py-2 text-xs" placeholder="VD: Đồ công nghệ, Thú cưng...">
+                    </div>
+
+                    <div class="flex gap-2 pt-2">
+                        <button @click="showCatModal = false" class="flex-1 py-2 text-xs bg-gray-100 rounded-lg">Hủy</button>
+                        <button @click="addCategory()" class="flex-1 py-2 text-xs bg-blue-600 text-white rounded-lg font-bold">Thêm</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </template>
 
@@ -353,15 +386,18 @@
                 timeFilter: 'month',
                 accounts: [],
                 transactions: [],
+                customCategories: [],
                 filteredIncome: 0,
                 filteredExpense: 0,
                 filteredCategoryPercentages: [],
                 showAccModal: false,
                 showTxModal: false,
+                showCatModal: false,
                 newAcc: { name: '', balance: '' },
                 newTx: { type: 'expense', category: 'Ăn uống', accountId: '', targetAccountId: '', amount: '', note: '' },
+                newCat: { type: 'expense', icon: '🏷️', name: '' },
 
-                expenseCategories: [
+                defaultExpenseCategories: [
                     { name: 'Ăn uống', icon: '🍜' },
                     { name: 'Đi lại', icon: '⛽' },
                     { name: 'Cafe/Trà sữa', icon: '☕' },
@@ -371,12 +407,22 @@
                     { name: 'Sức khỏe', icon: '💊' },
                     { name: 'Chi khác', icon: '❓' }
                 ],
-                incomeCategories: [
+                defaultIncomeCategories: [
                     { name: 'Lương', icon: '💵' },
                     { name: 'Thưởng', icon: '🎁' },
                     { name: 'Bán hàng', icon: '🛍️' },
                     { name: 'Thu khác', icon: '💰' }
                 ],
+
+                get expenseCategories() {
+                    const custom = this.customCategories.filter(c => c.type === 'expense');
+                    return [...this.defaultExpenseCategories, ...custom];
+                },
+
+                get incomeCategories() {
+                    const custom = this.customCategories.filter(c => c.type === 'income');
+                    return [...this.defaultIncomeCategories, ...custom];
+                },
 
                 get currentCategories() {
                     return this.newTx.type === 'expense' ? this.expenseCategories : this.incomeCategories;
@@ -387,8 +433,8 @@
                 },
 
                 onTxTypeChange() {
-                    if (this.newTx.type === 'expense') this.newTx.category = 'Ăn uống';
-                    else if (this.newTx.type === 'income') this.newTx.category = 'Lương';
+                    if (this.newTx.type === 'expense') this.newTx.category = this.expenseCategories[0]?.name || 'Ăn uống';
+                    else if (this.newTx.type === 'income') this.newTx.category = this.incomeCategories[0]?.name || 'Lương';
                 },
 
                 getTxTitle(tx) {
@@ -461,6 +507,7 @@
                         } else {
                             this.accounts = [];
                             this.transactions = [];
+                            this.customCategories = [];
                         }
                     });
                 },
@@ -512,9 +559,11 @@
                         if (data) {
                             this.accounts = data.accounts ? Object.values(data.accounts) : [];
                             this.transactions = data.transactions ? Object.values(data.transactions) : [];
+                            this.customCategories = data.categories ? Object.values(data.categories) : [];
                         } else {
                             this.accounts = [];
                             this.transactions = [];
+                            this.customCategories = [];
                         }
                         this.updateOverviewChart();
                     });
@@ -621,11 +670,27 @@
                     }
                 },
 
+                addCategory() {
+                    if (!this.newCat.name.trim()) return alert("Vui lòng nhập tên danh mục!");
+                    const catId = db.ref().child('users').push().key;
+                    const categoryData = {
+                        id: catId,
+                        name: this.newCat.name.trim(),
+                        icon: this.newCat.icon.trim() || '🏷️',
+                        type: this.newCat.type
+                    };
+
+                    db.ref(`users/${this.user.uid}/categories/${catId}`).set(categoryData);
+                    this.newTx.category = categoryData.name;
+                    this.showCatModal = false;
+                    this.newCat = { type: 'expense', icon: '🏷️', name: '' };
+                },
+
                 openTxModal() {
                     if (this.accounts.length === 0) return alert("Vui lòng tạo ít nhất một ví trước khi tạo giao dịch!");
                     this.newTx = {
                         type: 'expense',
-                        category: 'Ăn uống',
+                        category: this.expenseCategories[0]?.name || 'Ăn uống',
                         accountId: this.accounts[0].id,
                         targetAccountId: this.accounts.length > 1 ? this.accounts[1].id : this.accounts[0].id,
                         amount: '',
