@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sổ Thu Chi</title>
+    <title>Sổ Thu Chi Quản Lý Tài Chính</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js -->
@@ -68,7 +68,7 @@
 
     <!-- Màn hình chính sau khi Đăng nhập -->
     <template x-if="user">
-        <div class="max-w-md mx-auto pb-20 min-h-screen bg-gray-50 flex flex-col">
+        <div class="max-w-md mx-auto pb-24 min-h-screen bg-gray-50 flex flex-col">
             <!-- Header -->
             <div class="bg-blue-600 text-white p-4 rounded-b-2xl shadow-md">
                 <div class="flex items-center justify-between mb-4">
@@ -93,9 +93,8 @@
                 </div>
             </div>
 
-            <!-- Tab Trang chủ / Thống kê -->
+            <!-- TAB 1: Trang chủ / Tổng quan -->
             <div x-show="activeTab === 'home'" class="p-4 space-y-4 flex-1">
-                <!-- Bảng chọn thời gian -->
                 <div class="flex items-center justify-between bg-white p-2 rounded-xl shadow-sm text-xs font-medium text-gray-600 overflow-x-auto">
                     <button @click="timeFilter = 'today'; updateOverviewChart()" :class="timeFilter === 'today' ? 'bg-blue-500 text-white' : ''" class="px-3 py-1.5 rounded-lg transition">Hôm nay</button>
                     <button @click="timeFilter = 'week'; updateOverviewChart()" :class="timeFilter === 'week' ? 'bg-blue-500 text-white' : ''" class="px-3 py-1.5 rounded-lg transition">Tuần này</button>
@@ -103,7 +102,6 @@
                     <button @click="timeFilter = 'year'; updateOverviewChart()" :class="timeFilter === 'year' ? 'bg-blue-500 text-white' : ''" class="px-3 py-1.5 rounded-lg transition">Năm nay</button>
                 </div>
 
-                <!-- Tổng Thu / Chi trong kỳ -->
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-white p-3 rounded-xl shadow-sm border border-emerald-100">
                         <div class="text-xs text-gray-500 mb-1">Tổng Thu</div>
@@ -115,13 +113,11 @@
                     </div>
                 </div>
 
-                <!-- Biểu đồ -->
                 <div class="bg-white p-4 rounded-xl shadow-sm">
                     <h3 class="text-xs font-bold text-gray-700 mb-3">TỶ LỆ CHI TIÊU</h3>
                     <div class="h-48 relative">
                         <canvas id="categoryDoughnutChart"></canvas>
                     </div>
-                    <!-- Danh sách danh mục chi -->
                     <div class="mt-4 space-y-2">
                         <template x-for="item in filteredCategoryPercentages" :key="item.category">
                             <div class="flex items-center justify-between text-xs">
@@ -136,7 +132,47 @@
                 </div>
             </div>
 
-            <!-- Tab Tài khoản / Ví -->
+            <!-- TAB 2: Báo cáo / Thống kê -->
+            <div x-show="activeTab === 'analytics'" class="p-4 space-y-4 flex-1" style="display: none;">
+                <div class="bg-white p-4 rounded-xl shadow-sm">
+                    <h3 class="text-sm font-bold text-gray-800 mb-2">📊 Báo cáo Dòng tiền</h3>
+                    <p class="text-xs text-gray-500 mb-4">So sánh tổng Thu nhập và Chi tiêu trong kỳ</p>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-emerald-600">Thu nhập</span>
+                                <span x-text="formatMoney(filteredIncome)"></span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-2.5">
+                                <div class="bg-emerald-500 h-2.5 rounded-full" :style="`width: ${filteredIncome + filteredExpense > 0 ? (filteredIncome / (filteredIncome + filteredExpense) * 100) : 0}%`"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-red-500">Chi tiêu</span>
+                                <span x-text="formatMoney(filteredExpense)"></span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-2.5">
+                                <div class="bg-red-500 h-2.5 rounded-full" :style="`width: ${filteredIncome + filteredExpense > 0 ? (filteredExpense / (filteredIncome + filteredExpense) * 100) : 0}%`"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm space-y-2">
+                    <h3 class="text-sm font-bold text-gray-800">💡 Thống kê tiết kiệm</h3>
+                    <div class="flex justify-between items-center text-xs py-2 border-b">
+                        <span class="text-gray-600">Thôi dư / Thâm hụt:</span>
+                        <span class="font-bold text-sm" :class="(filteredIncome - filteredExpense) >= 0 ? 'text-emerald-600' : 'text-red-500'" x-text="formatMoney(filteredIncome - filteredExpense)"></span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs py-2">
+                        <span class="text-gray-600">Tỷ lệ tiết kiệm:</span>
+                        <span class="font-bold text-blue-600" x-text="filteredIncome > 0 ? Math.max(0, (((filteredIncome - filteredExpense) / filteredIncome) * 100)).toFixed(1) + '%' : '0%'"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: Tài khoản / Ví -->
             <div x-show="activeTab === 'accounts'" class="p-4 space-y-3 flex-1" style="display: none;">
                 <div class="flex items-center justify-between">
                     <h2 class="font-bold text-base">Danh sách ví tài khoản</h2>
@@ -149,15 +185,13 @@
                                 <div class="font-bold text-sm" x-text="acc.name"></div>
                                 <div class="text-xs text-blue-600 font-semibold mt-0.5" x-text="formatMoney(acc.balance)"></div>
                             </div>
-                            <button @click="deleteAccount(acc.id)" class="text-gray-400 hover:text-red-500 p-1">
-                                🗑️
-                            </button>
+                            <button @click="deleteAccount(acc.id)" class="text-gray-400 hover:text-red-500 p-1">🗑️</button>
                         </div>
                     </template>
                 </div>
             </div>
 
-            <!-- Tab Lịch sử Giao dịch -->
+            <!-- TAB 4: Lịch sử Giao dịch -->
             <div x-show="activeTab === 'history'" class="p-4 space-y-3 flex-1" style="display: none;">
                 <div class="flex items-center justify-between">
                     <h2 class="font-bold text-base">Lịch sử giao dịch</h2>
@@ -182,21 +216,29 @@
                 </div>
             </div>
 
-            <!-- Thanh Điều Hướng Bên Dưới -->
-            <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 flex items-center justify-around py-2 px-4 z-10">
-                <button @click="activeTab = 'home'" :class="activeTab === 'home' ? 'text-blue-600 font-bold' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-[11px]">
-                    <span>📊</span>
+            <!-- Thanh Điều Hướng Bên Dưới (Bottom Navigation Bar) -->
+            <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 flex items-center justify-between py-2 px-3 z-10">
+                <button @click="activeTab = 'home'" :class="activeTab === 'home' ? 'text-blue-600 font-bold' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-[10px] flex-1">
+                    <span class="text-base">📊</span>
                     <span>Tổng quan</span>
                 </button>
-                <button @click="activeTab = 'accounts'" :class="activeTab === 'accounts' ? 'text-blue-600 font-bold' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-[11px]">
-                    <span>💳</span>
+                <button @click="activeTab = 'analytics'" :class="activeTab === 'analytics' ? 'text-blue-600 font-bold' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-[10px] flex-1">
+                    <span class="text-base">📈</span>
+                    <span>Báo cáo</span>
+                </button>
+                
+                <div class="flex-1 flex justify-center">
+                    <button @click="openTxModal()" class="bg-blue-600 text-white p-3 rounded-full -mt-6 shadow-lg hover:bg-blue-700 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                    </button>
+                </div>
+
+                <button @click="activeTab = 'accounts'" :class="activeTab === 'accounts' ? 'text-blue-600 font-bold' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-[10px] flex-1">
+                    <span class="text-base">💳</span>
                     <span>Ví tiền</span>
                 </button>
-                <button @click="openTxModal()" class="bg-blue-600 text-white p-3 rounded-full -mt-6 shadow-lg hover:bg-blue-700 transition">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-                </button>
-                <button @click="activeTab = 'history'" :class="activeTab === 'history' ? 'text-blue-600 font-bold' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-[11px]">
-                    <span>📜</span>
+                <button @click="activeTab = 'history'" :class="activeTab === 'history' ? 'text-blue-600 font-bold' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-[10px] flex-1">
+                    <span class="text-base">📜</span>
                     <span>Lịch sử</span>
                 </button>
             </div>
@@ -401,7 +443,6 @@
                 init() {
                     this.isLoggingIn = false;
 
-                    // Xử lý sau khi redirect Đăng nhập bằng Google
                     auth.getRedirectResult().then((result) => {
                         this.isLoggingIn = false;
                         if (result.user) {
@@ -412,7 +453,6 @@
                         this.isLoggingIn = false;
                     });
 
-                    // Lắng nghe Auth State
                     auth.onAuthStateChanged(u => {
                         this.user = u;
                         this.isLoggingIn = false;
@@ -615,7 +655,6 @@
                         date: new Date().toISOString()
                     };
 
-                    // Cập nhật số dư ví tương ứng
                     const account = this.accounts.find(a => a.id === this.newTx.accountId);
                     if (account) {
                         let newBalance = Number(account.balance);
@@ -635,7 +674,6 @@
                         }
                     }
 
-                    // Lưu giao dịch
                     db.ref(`users/${this.user.uid}/transactions/${txId}`).set(txData);
                     this.showTxModal = false;
                 },
@@ -647,7 +685,6 @@
                     if (confirm("Bạn có chắc chắn muốn xóa giao dịch này? Số dư ví sẽ được cập nhật lại.")) {
                         const amount = Number(tx.amount);
                         
-                        // Hoàn trả số dư ví nguồn
                         const account = this.accounts.find(a => a.id === tx.accountId);
                         if (account) {
                             let updatedBalance = Number(account.balance);
@@ -659,7 +696,6 @@
                             db.ref(`users/${this.user.uid}/accounts/${account.id}/balance`).set(updatedBalance);
                         }
 
-                        // Hoàn trả số dư ví đích nếu là chuyển khoản
                         if (tx.type === 'transfer' && tx.targetAccountId) {
                             const targetAccount = this.accounts.find(a => a.id === tx.targetAccountId);
                             if (targetAccount) {
@@ -668,7 +704,6 @@
                             }
                         }
 
-                        // Xóa giao dịch khỏi Firebase
                         db.ref(`users/${this.user.uid}/transactions/${txId}`).remove();
                     }
                 }
