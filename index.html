@@ -172,22 +172,48 @@
                 </div>
             </div>
 
-            <!-- TAB 3: Tài khoản / Ví -->
-            <div x-show="activeTab === 'accounts'" class="p-4 space-y-3 flex-1" style="display: none;">
-                <div class="flex items-center justify-between">
-                    <h2 class="font-bold text-base">Danh sách ví tài khoản</h2>
-                    <button @click="openAccountModal()" class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium shadow">+ Thêm ví</button>
-                </div>
-                <div class="space-y-2">
-                    <template x-for="acc in accounts" :key="acc.id">
-                        <div class="bg-white p-3 rounded-xl shadow-sm flex items-center justify-between">
-                            <div>
-                                <div class="font-bold text-sm" x-text="acc.name"></div>
-                                <div class="text-xs text-blue-600 font-semibold mt-0.5" x-text="formatMoney(acc.balance)"></div>
+            <!-- TAB 3: Tài khoản / Ví & Danh mục -->
+            <div x-show="activeTab === 'accounts'" class="p-4 space-y-5 flex-1" style="display: none;">
+                <!-- Quản lý Ví -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h2 class="font-bold text-base">Danh sách ví tài khoản</h2>
+                        <button @click="openAccountModal()" class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium shadow">+ Thêm ví</button>
+                    </div>
+                    <div class="space-y-2">
+                        <template x-for="acc in accounts" :key="acc.id">
+                            <div class="bg-white p-3 rounded-xl shadow-sm flex items-center justify-between">
+                                <div>
+                                    <div class="font-bold text-sm" x-text="acc.name"></div>
+                                    <div class="text-xs text-blue-600 font-semibold mt-0.5" x-text="formatMoney(acc.balance)"></div>
+                                </div>
+                                <button @click="deleteAccount(acc.id)" class="text-gray-400 hover:text-red-500 p-1">🗑️</button>
                             </div>
-                            <button @click="deleteAccount(acc.id)" class="text-gray-400 hover:text-red-500 p-1">🗑️</button>
-                        </div>
-                    </template>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Quản lý Danh mục tự tạo -->
+                <div class="space-y-3 pt-2">
+                    <div class="flex items-center justify-between">
+                        <h2 class="font-bold text-base">Danh mục tùy chỉnh</h2>
+                        <button @click="showCatModal = true" class="bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium shadow">+ Tạo danh mục</button>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl shadow-sm space-y-2">
+                        <template x-if="customCategories.length === 0">
+                            <div class="text-xs text-gray-400 text-center py-2">Chưa có danh mục tự tạo nào</div>
+                        </template>
+                        <template x-for="cat in customCategories" :key="cat.id">
+                            <div class="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0 text-xs">
+                                <div class="flex items-center gap-2">
+                                    <span x-text="cat.icon" class="text-base"></span>
+                                    <span x-text="cat.name" class="font-medium"></span>
+                                    <span :class="cat.type === 'expense' ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-600'" class="px-1.5 py-0.5 rounded text-[10px]" x-text="cat.type === 'expense' ? 'Chi' : 'Thu'"></span>
+                                </div>
+                                <button @click="deleteCategory(cat.id)" class="text-gray-400 hover:text-red-500">🗑️</button>
+                            </div>
+                        </template>
+                    </div>
                 </div>
             </div>
 
@@ -204,7 +230,16 @@
                                 <div class="w-9 h-9 rounded-full flex items-center justify-center text-base" :class="getTxTypeBg(tx.type)" x-text="getTxIcon(tx)"></div>
                                 <div>
                                     <div class="font-bold text-xs" x-text="getTxTitle(tx)"></div>
-                                    <div class="text-[10px] text-gray-400" x-text="formatDate(tx.date) + ' • ' + getAccountName(tx.accountId) + (tx.type === 'transfer' ? ' ➔ ' + getAccountName(tx.targetAccountId) : '')"></div>
+                                    <div class="text-[10px] text-gray-500 font-medium mt-0.5">
+                                        <span class="text-blue-600 font-semibold" x-text="getAccountName(tx.accountId)"></span>
+                                        <template x-if="tx.type === 'transfer'">
+                                            <span> ➔ <span class="text-blue-600 font-semibold" x-text="getAccountName(tx.targetAccountId)"></span></span>
+                                        </template>
+                                        <span x-text="' • ' + formatDate(tx.date)"></span>
+                                    </div>
+                                    <template x-if="tx.note">
+                                        <div class="text-[10px] text-gray-400 italic" x-text="tx.note"></div>
+                                    </template>
                                 </div>
                             </div>
                             <div class="text-right">
@@ -253,7 +288,7 @@
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">Số dư ban đầu</label>
-                        <input type="number" x-model="newAcc.balance" class="w-full border rounded-lg px-3 py-2 text-xs outline-none focus:border-blue-500" placeholder="0">
+                        <input type="text" x-model="newAcc.formattedBalance" @input="formatInputMoney($event, 'newAcc', 'balance', 'formattedBalance')" class="w-full border rounded-lg px-3 py-2 text-xs outline-none focus:border-blue-500" placeholder="0">
                     </div>
                     <div class="flex gap-2">
                         <button @click="showAccModal = false" class="flex-1 py-2 text-xs bg-gray-100 rounded-lg">Hủy</button>
@@ -279,7 +314,7 @@
                     <div x-show="newTx.type !== 'transfer'">
                         <div class="flex items-center justify-between mb-1">
                             <label class="block text-[11px] text-gray-500">Danh mục</label>
-                            <button @click="showCatModal = true" class="text-[10px] text-blue-600 font-bold hover:underline">+ Tạo danh mục</button>
+                            <button @click="newCat.type = newTx.type; showCatModal = true" class="text-[10px] text-blue-600 font-bold hover:underline">+ Tạo danh mục</button>
                         </div>
                         <select x-model="newTx.category" class="w-full border rounded-lg px-3 py-2 text-xs">
                             <template x-for="cat in currentCategories" :key="cat.name">
@@ -290,7 +325,7 @@
 
                     <div>
                         <label class="block text-[11px] text-gray-500 mb-1">Số tiền</label>
-                        <input type="number" x-model="newTx.amount" class="w-full border rounded-lg px-3 py-2 text-xs font-bold text-blue-600" placeholder="0">
+                        <input type="text" x-model="newTx.formattedAmount" @input="formatInputMoney($event, 'newTx', 'amount', 'formattedAmount')" class="w-full border rounded-lg px-3 py-2 text-xs font-bold text-blue-600" placeholder="0">
                     </div>
 
                     <div>
@@ -337,8 +372,15 @@
                     </div>
 
                     <div>
-                        <label class="block text-[11px] text-gray-500 mb-1">Biểu tượng (Icon / Emoji)</label>
-                        <input type="text" x-model="newCat.icon" class="w-full border rounded-lg px-3 py-2 text-xs" placeholder="VD: 🍔, 🎁, 🎮...">
+                        <label class="block text-[11px] text-gray-500 mb-1">Chọn nhanh biểu tượng</label>
+                        <div class="flex flex-wrap gap-1.5 p-2 bg-gray-50 rounded-lg mb-2">
+                            <template x-for="emoji in quickEmojis" :key="emoji">
+                                <button type="button" @click="newCat.icon = emoji" class="w-7 h-7 flex items-center justify-center bg-white rounded border border-gray-200 text-sm hover:bg-blue-50 hover:border-blue-300">
+                                    <span x-text="emoji"></span>
+                                </button>
+                            </template>
+                        </div>
+                        <input type="text" x-model="newCat.icon" class="w-full border rounded-lg px-3 py-2 text-xs" placeholder="Nhập Emoji khác...">
                     </div>
 
                     <div>
@@ -393,9 +435,11 @@
                 showAccModal: false,
                 showTxModal: false,
                 showCatModal: false,
-                newAcc: { name: '', balance: '' },
-                newTx: { type: 'expense', category: 'Ăn uống', accountId: '', targetAccountId: '', amount: '', note: '' },
-                newCat: { type: 'expense', icon: '🏷️', name: '' },
+                newAcc: { name: '', balance: 0, formattedBalance: '' },
+                newTx: { type: 'expense', category: 'Ăn uống', accountId: '', targetAccountId: '', amount: 0, formattedAmount: '', note: '' },
+                newCat: { type: 'expense', icon: '🍔', name: '' },
+
+                quickEmojis: ['🍔', '☕', '🛒', '🚗', '🏠', '🎬', '💊', '🎁', '💵', '🎮', '✈️', '🐶'],
 
                 defaultExpenseCategories: [
                     { name: 'Ăn uống', icon: '🍜' },
@@ -430,6 +474,18 @@
 
                 get sortedTransactions() {
                     return [...this.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+                },
+
+                // Tự động định dạng dấu chấm phân cách hàng nghìn khi nhập số tiền
+                formatInputMoney(event, targetObj, keyRaw, keyFormatted) {
+                    let rawValue = event.target.value.replace(/\D/g, '');
+                    if (!rawValue) {
+                        this[targetObj][keyRaw] = 0;
+                        this[targetObj][keyFormatted] = '';
+                        return;
+                    }
+                    this[targetObj][keyRaw] = Number(rawValue);
+                    this[targetObj][keyFormatted] = new Intl.NumberFormat('vi-VN').format(rawValue);
                 },
 
                 onTxTypeChange() {
@@ -473,7 +529,7 @@
 
                 getAccountName(accId) {
                     const acc = this.accounts.find(a => a.id === accId);
-                    return acc ? acc.name : 'Ví không xác định';
+                    return acc ? acc.name : 'Ví ẩn';
                 },
 
                 formatMoney(amount) {
@@ -517,9 +573,7 @@
                     this.isLoggingIn = true;
 
                     const provider = new firebase.auth.GoogleAuthProvider();
-                    provider.setCustomParameters({
-                        prompt: 'select_account'
-                    });
+                    provider.setCustomParameters({ prompt: 'select_account' });
 
                     auth.signInWithPopup(provider).catch(error => {
                         if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
@@ -554,6 +608,7 @@
 
                 loadData() {
                     if (!this.user) return;
+                    // Lấy dữ liệu 100 giao dịch gần nhất để tránh lag ứng dụng
                     db.ref('users/' + this.user.uid).on('value', snapshot => {
                         const data = snapshot.val();
                         if (data) {
@@ -648,16 +703,16 @@
                 },
 
                 openAccountModal() {
-                    this.newAcc = { name: '', balance: '' };
+                    this.newAcc = { name: '', balance: 0, formattedBalance: '' };
                     this.showAccModal = true;
                 },
 
                 addAccount() {
-                    if (!this.newAcc.name) return alert("Vui lòng nhập tên ví!");
+                    if (!this.newAcc.name.trim()) return alert("Vui lòng nhập tên ví!");
                     const id = db.ref().child('users').push().key;
                     const accountData = {
                         id: id,
-                        name: this.newAcc.name,
+                        name: this.newAcc.name.trim(),
                         balance: Number(this.newAcc.balance) || 0
                     };
                     db.ref(`users/${this.user.uid}/accounts/${id}`).set(accountData);
@@ -681,9 +736,21 @@
                     };
 
                     db.ref(`users/${this.user.uid}/categories/${catId}`).set(categoryData);
-                    this.newTx.category = categoryData.name;
+                    
+                    // Tự động gán danh mục vừa tạo cho giao dịch đang tạo dở
+                    if (this.showTxModal) {
+                        this.newTx.type = categoryData.type;
+                        this.newTx.category = categoryData.name;
+                    }
+
                     this.showCatModal = false;
-                    this.newCat = { type: 'expense', icon: '🏷️', name: '' };
+                    this.newCat = { type: 'expense', icon: '🍔', name: '' };
+                },
+
+                deleteCategory(catId) {
+                    if (confirm("Bạn có chắc chắn muốn xóa danh mục tùy chỉnh này?")) {
+                        db.ref(`users/${this.user.uid}/categories/${catId}`).remove();
+                    }
                 },
 
                 openTxModal() {
@@ -693,7 +760,8 @@
                         category: this.expenseCategories[0]?.name || 'Ăn uống',
                         accountId: this.accounts[0].id,
                         targetAccountId: this.accounts.length > 1 ? this.accounts[1].id : this.accounts[0].id,
-                        amount: '',
+                        amount: 0,
+                        formattedAmount: '',
                         note: ''
                     };
                     this.showTxModal = true;
