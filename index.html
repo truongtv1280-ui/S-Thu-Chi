@@ -1,832 +1,396 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sổ Thu Chi Cá Nhân</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Alpine.js -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    <style>
-        [x-cloak] { display: none !important; }
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-    </style>
-</head>
-<body class="bg-gray-100 min-h-screen text-gray-800 pb-20 select-none" x-data="app()">
-
-    <!-- HEADER PHONG CÁCH ỨNG DỤNG MỚI -->
-    <header class="bg-gradient-to-r from-sky-500 to-blue-600 text-white p-4 shadow-sm sticky top-0 z-30">
-        <div class="max-w-md mx-auto flex items-center justify-between">
-            <template x-if="user">
-                <div class="flex items-center gap-3">
-                    <div class="relative">
-                        <img :src="user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || user.email || 'User')" class="w-10 h-10 rounded-full border-2 border-white object-cover">
-                        <span class="absolute -bottom-1 -right-1 bg-white text-sky-600 rounded-full text-[10px] w-4 h-4 flex items-center justify-center font-bold border border-sky-500">
-                            <i class="fa-brands fa-google"></i>
-                        </span>
-                    </div>
-                    <div>
-                        <p class="text-xs text-sky-100 font-medium">Xin chào!</p>
-                        <h1 class="text-base font-bold leading-tight" x-text="user.displayName || user.email.split('@')[0]"></h1>
-                    </div>
-                </div>
-            </template>
-            <template x-if="!user">
-                <h1 class="text-lg font-bold flex items-center gap-2">
-                    <i class="fa-solid fa-wallet"></i> Sổ Thu Chi
-                </h1>
-            </template>
-
-            <template x-if="user">
-                <div class="flex items-center gap-3">
-                    <button @click="loadData()" class="text-white hover:text-sky-200 text-lg transition" title="Làm mới">
-                        <i class="fa-solid fa-rotate-right"></i>
-                    </button>
-                    <button class="text-white hover:text-sky-200 text-lg transition relative" title="Thông báo">
-                        <i class="fa-solid fa-bell"></i>
-                    </button>
-                    <button @click="logout()" class="text-white/80 hover:text-white text-sm transition ml-1" title="Đăng xuất">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                    </button>
-                </div>
-            </template>
-        </div>
-    </header>
-
-    <main class="max-w-md mx-auto p-3">
-
-        <!-- MÀN HÌNH CHƯA ĐĂNG NHẬP -->
-        <template x-if="!user">
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-5 mt-6">
-                <div class="text-center space-y-2">
-                    <div class="w-16 h-16 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center mx-auto text-3xl">
-                        <i class="fa-solid fa-user-shield"></i>
-                    </div>
-                    <h2 class="text-xl font-bold text-gray-800">Đăng Nhập Tài Khoản</h2>
-                    <p class="text-xs text-gray-500">Đồng bộ dữ liệu an toàn trên đa thiết bị</p>
-                </div>
-
-                <div class="grid grid-cols-2 gap-1 bg-gray-100 p-1 rounded-2xl text-xs font-semibold">
-                    <button @click="authTab = 'google'" :class="authTab === 'google' ? 'bg-white text-sky-600 shadow-sm' : 'text-gray-500'" class="py-2.5 rounded-xl transition">
-                        <i class="fa-brands fa-google mr-1"></i> Google
-                    </button>
-                    <button @click="authTab = 'email'" :class="authTab === 'email' ? 'bg-white text-sky-600 shadow-sm' : 'text-gray-500'" class="py-2.5 rounded-xl transition">
-                        <i class="fa-solid fa-envelope mr-1"></i> Email
-                    </button>
-                </div>
-
-                <div x-show="authTab === 'google'" class="space-y-3 pt-2">
-                    <button @click="loginWithGoogle()" :disabled="isLoggingIn" class="w-full bg-white border border-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-2xl shadow-sm hover:bg-gray-50 flex items-center justify-center gap-3 transition disabled:opacity-50">
-                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google">
-                        <span x-text="isLoggingIn ? 'Đang kết nối...' : 'Tiếp tục với Google'"></span>
-                    </button>
-                </div>
-
-                <div x-show="authTab === 'email'" class="space-y-3 pt-1">
-                    <div>
-                        <label class="text-xs font-medium text-gray-600 block mb-1">Email</label>
-                        <input type="email" x-model="emailInput" placeholder="nhapemail@gmail.com" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500">
-                    </div>
-                    <div>
-                        <label class="text-xs font-medium text-gray-600 block mb-1">Mật khẩu</label>
-                        <input type="password" x-model="passwordInput" placeholder="Mật khẩu" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500">
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-2 pt-2">
-                        <button @click="loginWithEmail()" class="w-full bg-sky-600 text-white font-semibold py-3 px-3 rounded-xl text-xs hover:bg-sky-700 transition">
-                            Đăng nhập
-                        </button>
-                        <button @click="registerWithEmail()" class="w-full bg-gray-100 border border-gray-300 text-gray-700 font-semibold py-3 px-3 rounded-xl text-xs hover:bg-gray-200 transition">
-                            Tạo tài khoản
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </template>
-
-        <!-- MÀN HÌNH ĐÃ ĐĂNG NHẬP -->
-        <template x-if="user">
-            <div>
-
-                <!-- TAB 1: TỔNG QUAN CHI TIẾT THEO MẪU ẢNH -->
-                <div x-show="activeTab === 'home'" class="space-y-3">
-                    
-                    <!-- THẺ TỔNG SỐ DƯ -->
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition" @click="activeTab = 'wallet'">
-                        <div>
-                            <p class="text-sm text-gray-500 font-medium">Tổng số dư</p>
-                            <div class="flex items-center gap-2 mt-0.5">
-                                <h2 class="text-2xl font-extrabold text-gray-900" x-text="hideBalance ? '•••••••• ₫' : formatMoney(calculateTotalBalance())"></h2>
-                                <button @click.stop="hideBalance = !hideBalance" class="text-gray-400 hover:text-gray-600 text-base">
-                                    <i class="fa-solid" :class="hideBalance ? 'fa-eye-slash' : 'fa-eye'"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="text-gray-400 text-lg">
-                            <i class="fa-solid fa-chevron-right"></i>
-                        </div>
-                    </div>
-
-                    <!-- THẺ TÌNH HÌNH THU CHI -->
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
-                        <!-- HEADER TÌNH HÌNH THU CHI + BỘ LỌC THỜI GIAN -->
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-1.5">
-                                <h3 class="font-bold text-gray-800 text-base">Tình hình thu chi</h3>
-                                <button class="text-gray-400 text-xs hover:text-gray-600">
-                                    <i class="fa-solid fa-gear"></i>
-                                </button>
-                            </div>
-
-                            <!-- DROPDOWN CHỌN THỜI GIAN (Hôm nay, Tuần này, Tháng này, Quý này, Năm nay) -->
-                            <select x-model="timeFilter" @change="updateOverviewChart()" class="border border-gray-200 text-gray-700 text-xs font-semibold rounded-xl px-3 py-1.5 bg-gray-50 focus:outline-none cursor-pointer">
-                                <option value="today">Hôm nay</option>
-                                <option value="week">Tuần này</option>
-                                <option value="month">Tháng này</option>
-                                <option value="quarter">Quý này</option>
-                                <option value="year">Năm nay</option>
-                            </select>
-                        </div>
-
-                        <!-- CỘT BIỂU ĐỒ & CHỈ SỐ THU - CHI - CHÊNH LỆCH -->
-                        <div class="flex items-center justify-between gap-4 pt-1">
-                            <!-- CỘT THU/CHI MINIS -->
-                            <div class="flex items-end gap-2 h-20 w-16 bg-gray-50 rounded-lg p-2 justify-center border border-gray-100">
-                                <div class="w-3 bg-emerald-500 rounded-t-sm transition-all duration-300" :style="'height: ' + getBarHeight('income') + '%'" title="Thu"></div>
-                                <div class="w-3 bg-red-500 rounded-t-sm transition-all duration-300" :style="'height: ' + getBarHeight('expense') + '%'" title="Chi"></div>
-                            </div>
-
-                            <!-- CHI TIẾT SỐ TIỀN -->
-                            <div class="flex-1 space-y-2 text-sm">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-gray-500 font-medium">Thu</span>
-                                    <span class="font-bold text-emerald-600" x-text="formatMoney(filteredIncome)"></span>
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-gray-500 font-medium">Chi</span>
-                                    <span class="font-bold text-red-500" x-text="formatMoney(filteredExpense)"></span>
-                                </div>
-                                <div class="flex justify-between items-center border-t border-gray-100 pt-1.5">
-                                    <span class="text-gray-500 font-medium">Chênh lệch</span>
-                                    <span class="font-extrabold" :class="(filteredIncome - filteredExpense) >= 0 ? 'text-gray-800' : 'text-gray-800'" x-text="formatMoney(filteredIncome - filteredExpense)"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- BIỂU ĐỒ TRÒN DOUGHNUT DẠNG DÒNG CHI TIÊU HẠNG MỤC -->
-                        <div class="pt-3 border-t border-gray-100">
-                            <div class="flex items-center justify-between gap-2">
-                                <!-- CANVAS CHARTS -->
-                                <div class="w-28 h-28 relative flex-shrink-0 flex items-center justify-center">
-                                    <canvas id="categoryDoughnutChart"></canvas>
-                                </div>
-
-                                <!-- LEGEND DANH MỤC CHI TIÊU & % -->
-                                <div class="flex-1 space-y-1.5 text-xs">
-                                    <template x-for="item in filteredCategoryPercentages" :key="item.category">
-                                        <div class="flex justify-between items-center">
-                                            <div class="flex items-center gap-1.5 truncate">
-                                                <span class="w-2.5 h-2.5 rounded-full inline-block flex-shrink-0" :style="'background-color:' + item.color"></span>
-                                                <span class="text-gray-600 truncate" x-text="item.category"></span>
-                                            </div>
-                                            <span class="font-bold text-gray-800 ml-2" x-text="item.percentage + '%'"></span>
-                                        </div>
-                                    </template>
-                                    <template x-if="filteredCategoryPercentages.length === 0">
-                                        <p class="text-gray-400 text-center py-4 text-[11px]">Chưa có khoản chi nào trong thời gian này.</p>
-                                    </template>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- NÚT LỊCH SỬ GHI CHÉP -->
-                        <div class="pt-2 flex justify-center">
-                            <button @click="activeTab = 'tx_history'" class="border border-gray-300 text-gray-700 font-semibold text-xs px-5 py-2 rounded-xl hover:bg-gray-50 transition shadow-sm">
-                                Lịch sử ghi chép
-                            </button>
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- TAB 2: QUẢN LÝ VÍ / TÀI KHOẢN -->
-                <div x-show="activeTab === 'wallet'" class="space-y-3">
-                    <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
-                        <span class="text-xs font-semibold text-gray-500" x-text="accounts.length + ' ví tài khoản'"></span>
-                        <button @click="openAccountModal()" class="text-xs bg-sky-600 text-white hover:bg-sky-700 font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1">
-                            <i class="fa-solid fa-plus"></i> Thêm ví mới
-                        </button>
-                    </div>
-
-                    <div class="space-y-2">
-                        <template x-for="acc in accounts" :key="acc.id">
-                            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 bg-sky-50 text-sky-600 rounded-xl flex items-center justify-center font-bold">
-                                        <i class="fa-solid fa-credit-card"></i>
-                                    </div>
-                                    <div>
-                                        <p class="font-bold text-gray-800 text-sm" x-text="acc.name"></p>
-                                        <p class="text-xs text-gray-400">Số dư hiện tại</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <span class="font-bold text-sm" :class="acc.balance >= 0 ? 'text-gray-800' : 'text-red-500'" x-text="formatMoney(acc.balance)"></span>
-                                    <button @click="deleteAccount(acc.id)" class="text-gray-300 hover:text-red-500 text-xs p-1">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </template>
-                        <template x-if="accounts.length === 0">
-                            <p class="text-xs text-gray-400 text-center py-6 bg-white rounded-2xl">Chưa có tài khoản ví. Nhấn "+ Thêm ví mới" để tạo.</p>
-                        </template>
-                    </div>
-                </div>
-
-                <!-- TAB 3: BÁO CÁO -->
-                <div x-show="activeTab === 'report'" class="space-y-3">
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl">
-                            <p class="text-xs text-emerald-600 font-semibold uppercase">Tổng thu nhập</p>
-                            <p class="text-xl font-bold text-emerald-700 mt-1" x-text="formatMoney(calculateTotalIncome())"></p>
-                        </div>
-                        <div class="bg-red-50 border border-red-100 p-4 rounded-2xl">
-                            <p class="text-xs text-red-600 font-semibold uppercase">Tổng chi tiêu</p>
-                            <p class="text-xl font-bold text-red-700 mt-1" x-text="formatMoney(calculateTotalExpense())"></p>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
-                        <h3 class="font-bold text-gray-700 text-sm">Tóm Tắt Dòng Tiền</h3>
-                        <div class="space-y-2 text-xs">
-                            <div class="flex justify-between py-1 border-b">
-                                <span class="text-gray-500">Chênh lệch Thu - Chi:</span>
-                                <span class="font-bold" :class="(calculateTotalIncome() - calculateTotalExpense()) >= 0 ? 'text-emerald-600' : 'text-red-500'" x-text="formatMoney(calculateTotalIncome() - calculateTotalExpense())"></span>
-                            </div>
-                            <div class="flex justify-between py-1 border-b">
-                                <span class="text-gray-500">Tổng số lượng giao dịch:</span>
-                                <span class="font-bold text-gray-700" x-text="transactions.length"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB 4: LỊCH SỬ GIAO DỊCH -->
-                <div x-show="activeTab === 'tx_history'" class="space-y-3">
-                    <div class="flex justify-between items-center bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
-                        <span class="text-xs font-semibold text-gray-500" x-text="transactions.length + ' giao dịch'"></span>
-                    </div>
-
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 divide-y divide-gray-100">
-                        <template x-for="tx in sortedTransactions" :key="tx.id">
-                            <div class="py-3 flex justify-between items-center">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-xl flex items-center justify-center text-sm" :class="getTxTypeBg(tx.type)">
-                                        <span x-text="getTxIcon(tx)"></span>
-                                    </div>
-                                    <div class="space-y-0.5">
-                                        <p class="font-semibold text-gray-800 text-sm" x-text="getTxTitle(tx)"></p>
-                                        <p class="text-xs text-gray-400" x-text="formatDate(tx.date) + (tx.note ? ' • ' + tx.note : '') + ' • ' + getAccountName(tx.accountId)"></p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <span class="font-bold text-sm" :class="getTxColorClass(tx.type)" x-text="getTxPrefix(tx.type) + formatMoney(tx.amount)"></span>
-                                    <button @click="deleteTransaction(tx.id)" class="text-gray-300 hover:text-red-500 text-xs p-1">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </template>
-                        <template x-if="transactions.length === 0">
-                            <p class="text-xs text-gray-400 text-center py-6">Chưa ghi nhận giao dịch nào.</p>
-                        </template>
-                    </div>
-                </div>
-
-            </div>
-        </template>
-
-    </main>
-
-    <!-- THANH BOTTOM NAVIGATION -->
-    <template x-if="user">
-        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 pb-safe shadow-lg">
-            <div class="max-w-md mx-auto grid grid-cols-5 h-16 relative">
-                <button @click="activeTab = 'home'" :class="activeTab === 'home' ? 'text-sky-600' : 'text-gray-400'" class="flex flex-col items-center justify-center gap-1 transition">
-                    <i class="fa-solid fa-house text-lg"></i>
-                    <span class="text-[10px] font-semibold">Tổng quan</span>
-                </button>
-
-                <button @click="activeTab = 'wallet'" :class="activeTab === 'wallet' ? 'text-sky-600' : 'text-gray-400'" class="flex flex-col items-center justify-center gap-1 transition">
-                    <i class="fa-solid fa-wallet text-lg"></i>
-                    <span class="text-[10px] font-semibold">Tài khoản</span>
-                </button>
-
-                <!-- NÚT DẤU + MỞ MODAL GIAO DỊCH -->
-                <div class="flex items-center justify-center">
-                    <button @click="openTxModal()" class="w-12 h-12 bg-sky-500 hover:bg-sky-600 text-white rounded-full flex items-center justify-center shadow-lg -mt-5 border-4 border-white transition transform active:scale-95">
-                        <i class="fa-solid fa-plus text-xl"></i>
-                    </button>
-                </div>
-
-                <button @click="activeTab = 'report'" :class="activeTab === 'report' ? 'text-sky-600' : 'text-gray-400'" class="flex flex-col items-center justify-center gap-1 transition">
-                    <i class="fa-solid fa-chart-pie text-lg"></i>
-                    <span class="text-[10px] font-semibold">Báo cáo</span>
-                </button>
-
-                <button @click="activeTab = 'tx_history'" :class="activeTab === 'tx_history' ? 'text-sky-600' : 'text-gray-400'" class="flex flex-col items-center justify-center gap-1 transition">
-                    <i class="fa-solid fa-border-all text-lg"></i>
-                    <span class="text-[10px] font-semibold">Khác</span>
-                </button>
-            </div>
-        </nav>
-    </template>
-
-    <!-- MODAL THÊM VÍ -->
-    <div x-show="showAccModal" class="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4" x-cloak>
-        <div class="bg-white w-full max-w-md rounded-3xl p-5 space-y-4">
-            <h3 class="font-bold text-gray-800">Thêm Ví / Tài Khoản Mới</h3>
-            <input type="text" x-model="newAcc.name" placeholder="Tên ví (VD: Tiền mặt, Vietcombank)" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500">
-            <input type="number" x-model.number="newAcc.balance" placeholder="Số dư ban đầu" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500">
-            <div class="flex gap-2">
-                <button @click="showAccModal = false" class="w-1/2 py-3 bg-gray-100 rounded-xl text-sm font-semibold text-gray-600">Hủy</button>
-                <button @click="addAccount()" class="w-1/2 py-3 bg-sky-600 rounded-xl text-sm font-semibold text-white">Lưu ví</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL TẠO GIAO DỊCH -->
-    <div x-show="showTxModal" class="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4" x-cloak>
-        <div class="bg-white w-full max-w-md rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
-            
-            <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="font-bold text-gray-800 text-base">Thêm Giao Dịch</h3>
-                <button @click="showTxModal = false" class="text-gray-400 hover:text-gray-600">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            <div>
-                <label class="text-xs text-gray-500 font-medium mb-1 block">Loại giao dịch</label>
-                <div class="relative">
-                    <select x-model="newTx.type" @change="onTxTypeChange()" class="w-full border border-sky-300 bg-sky-50 text-sky-800 font-bold rounded-xl p-3 text-sm focus:outline-none appearance-none pr-8 cursor-pointer">
-                        <option value="expense">➖ Chi tiền</option>
-                        <option value="income">➕ Thu tiền</option>
-                        <option value="lend">💸 Cho vay</option>
-                        <option value="borrow">💰 Đi vay</option>
-                        <option value="transfer">🔄 Chuyển khoản</option>
-                        <option value="adjust">📝 Điều chỉnh số dư</option>
-                    </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-sky-600">
-                        <i class="fa-solid fa-chevron-down text-xs"></i>
-                    </div>
-                </div>
-            </div>
-
-            <template x-if="newTx.type === 'expense' || newTx.type === 'income'">
-                <div>
-                    <label class="text-xs text-gray-500 font-medium mb-1 block">Danh mục</label>
-                    <select x-model="newTx.category" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500 bg-white">
-                        <template x-for="cat in currentCategories" :key="cat.name">
-                            <option :value="cat.name" x-text="cat.icon + ' ' + cat.name"></option>
-                        </template>
-                    </select>
-                </div>
-            </template>
-
-            <div>
-                <label class="text-xs text-gray-500 font-medium mb-1 block" x-text="newTx.type === 'transfer' ? 'Từ tài khoản / Ví' : 'Tài khoản / Ví'"></label>
-                <select x-model="newTx.accountId" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500 bg-white">
-                    <template x-for="acc in accounts" :key="acc.id">
-                        <option :value="acc.id" x-text="acc.name + ' (' + formatMoney(acc.balance) + ')'"></option>
-                    </template>
-                </select>
-            </div>
-
-            <template x-if="newTx.type === 'transfer'">
-                <div>
-                    <label class="text-xs text-gray-500 font-medium mb-1 block">Đến tài khoản / Ví</label>
-                    <select x-model="newTx.targetAccountId" class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500 bg-white">
-                        <template x-for="acc in accounts" :key="acc.id">
-                            <option :value="acc.id" x-text="acc.name + ' (' + formatMoney(acc.balance) + ')'" :disabled="acc.id === newTx.accountId"></option>
-                        </template>
-                    </select>
-                </div>
-            </template>
-
-            <div>
-                <label class="text-xs text-gray-500 font-medium mb-1 block" x-text="newTx.type === 'adjust' ? 'Số dư thực tế mới' : 'Số tiền'"></label>
-                <input type="number" x-model.number="newTx.amount" placeholder="0 ₫" class="w-full border rounded-xl p-3 text-sm font-bold text-gray-800 focus:outline-none focus:border-sky-500">
-            </div>
-
-            <div>
-                <label class="text-xs text-gray-500 font-medium mb-1 block">Diễn giải / Ghi chú</label>
-                <input type="text" x-model="newTx.note" placeholder="VD: Mua sắm, Đổ xăng..." class="w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-sky-500">
-            </div>
-
-            <button @click="addTransaction()" class="w-full py-3.5 bg-sky-600 rounded-xl text-sm font-bold text-white shadow-md hover:bg-sky-700 transition">
-                Xác nhận Giao dịch
-            </button>
-        </div>
-    </div>
-
-    <!-- JAVASCRIPT LOGIC -->
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyD60xItsgAdFomunCdhypi26yyI5xrp0P0",
-            authDomain: "appthuchimoi.firebaseapp.com",
-            databaseURL: "https://appthuchimoi-default-rtdb.firebaseio.com",
-            projectId: "appthuchimoi",
-            storageBucket: "appthuchimoi.firebasestorage.app",
-            messagingSenderId: "77316598744",
-            appId: "1:77316598744:web:e0da4f203841cdfcee60ad",
-            measurementId: "G-LDYPBV32N6"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.database();
-
-        let chartInstance = null;
-
-        function app() {
-            return {
-                user: null,
-                activeTab: 'home',
-                authTab: 'google',
-                emailInput: '',
-                passwordInput: '',
-                isLoggingIn: false,
-                hideBalance: false,
-                timeFilter: 'month',
-                accounts: [],
-                transactions: [],
-                filteredIncome: 0,
-                filteredExpense: 0,
-                filteredCategoryPercentages: [],
-                showAccModal: false,
-                showTxModal: false,
-                newAcc: { name: '', balance: 0 },
-                newTx: { type: 'expense', category: 'Ăn uống', accountId: '', targetAccountId: '', amount: '', note: '' },
-
-                expenseCategories: [
-                    { name: 'Ăn uống', icon: '🍜' },
-                    { name: 'Đi lại', icon: '⛽' },
-                    { name: 'Cafe/Trà sữa', icon: '☕' },
-                    { name: 'Mua sắm', icon: '🛒' },
-                    { name: 'Dịch vụ gia đình', icon: '🏠' },
-                    { name: 'Giải trí', icon: '🎬' },
-                    { name: 'Sức khỏe', icon: '💊' },
-                    { name: 'Chi khác', icon: '❓' }
-                ],
-                incomeCategories: [
-                    { name: 'Lương', icon: '💵' },
-                    { name: 'Thưởng', icon: '🎁' },
-                    { name: 'Bán hàng', icon: '🛍️' },
-                    { name: 'Thu khác', icon: '💰' }
-                ],
-
-                get currentCategories() {
-                    return this.newTx.type === 'expense' ? this.expenseCategories : this.incomeCategories;
-                },
-
-                onTxTypeChange() {
-                    if (this.newTx.type === 'expense') this.newTx.category = 'Ăn uống';
-                    else if (this.newTx.type === 'income') this.newTx.category = 'Lương';
-                },
-
-                getTxTitle(tx) {
-                    if (tx.type === 'expense' || tx.type === 'income') return tx.category || 'Giao dịch';
-                    if (tx.type === 'lend') return 'Cho vay';
-                    if (tx.type === 'borrow') return 'Đi vay';
-                    if (tx.type === 'transfer') return 'Chuyển khoản';
-                    if (tx.type === 'adjust') return 'Điều chỉnh số dư';
-                    return 'Giao dịch';
-                },
-
-                getTxIcon(tx) {
-                    if (tx.type === 'expense' || tx.type === 'income') {
-                        const allCats = [...this.expenseCategories, ...this.incomeCategories];
-                        const found = allCats.find(c => c.name === tx.category);
-                        return found ? found.icon : '📝';
-                    }
-                    if (tx.type === 'lend') return '💸';
-                    if (tx.type === 'borrow') return '💰';
-                    if (tx.type === 'transfer') return '🔄';
-                    if (tx.type === 'adjust') return '📝';
-                    return '📝';
-                },
-
-                getTxTypeBg(type) {
-                    if (type === 'income' || type === 'borrow') return 'bg-emerald-50 text-emerald-600';
-                    if (type === 'expense' || type === 'lend') return 'bg-red-50 text-red-500';
-                    return 'bg-blue-50 text-blue-600';
-                },
-
-                getTxColorClass(type) {
-                    if (type === 'income' || type === 'borrow') return 'text-emerald-600';
-                    if (type === 'expense' || type === 'lend') return 'text-red-500';
-                    return 'text-gray-700';
-                },
-
-                getTxPrefix(type) {
-                    if (type === 'income' || type === 'borrow') return '+';
-                    if (type === 'expense' || type === 'lend') return '-';
-                    return '';
-                },
-
-                getBarHeight(type) {
-                    const max = Math.max(this.filteredIncome, this.filteredExpense);
-                    if (max === 0) return 10;
-                    const val = type === 'income' ? this.filteredIncome : this.filteredExpense;
-                    return Math.max(10, Math.round((val / max) * 100));
-                },
-
-                init() {
-                    auth.getRedirectResult().catch(err => {
-                        if (err.code && err.code !== 'auth/cancelled-popup-request') {
-                            alert("Lỗi đăng nhập: " + err.message);
-                        }
-                    });
-
-                    auth.onAuthStateChanged(u => {
-                        this.user = u;
-                        this.isLoggingIn = false;
-                        if (u) {
-                            this.loadData();
-                        } else {
-                            this.accounts = [];
-                            this.transactions = [];
-                        }
-                    });
-
-                    this.$watch('activeTab', (val) => {
-                        if (val === 'home') {
-                            this.$nextTick(() => this.updateOverviewChart());
-                        }
-                    });
-                },
-
-                loginWithGoogle() {
-                    if (this.isLoggingIn) return;
-                    this.isLoggingIn = true;
-
-                    const provider = new firebase.auth.GoogleAuthProvider();
-                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-                    if (isMobile) {
-                        auth.signInWithRedirect(provider);
-                    } else {
-                        auth.signInWithPopup(provider)
-                            .then(() => { this.isLoggingIn = false; })
-                            .catch(err => {
-                                this.isLoggingIn = false;
-                                if (err.code !== 'auth/cancelled-popup-request' && err.code !== 'auth/popup-closed-by-user') {
-                                    alert("Lỗi đăng nhập Google: " + err.message);
-                                }
-                            });
-                    }
-                },
-
-                loginWithEmail() {
-                    if (!this.emailInput || !this.passwordInput) return alert("Vui lòng nhập đầy đủ Email và Mật khẩu!");
-                    auth.signInWithEmailAndPassword(this.emailInput, this.passwordInput)
-                        .catch(err => alert("Lỗi đăng nhập: " + err.message));
-                },
-
-                registerWithEmail() {
-                    if (!this.emailInput || !this.passwordInput) return alert("Vui lòng nhập đầy đủ Email và Mật khẩu!");
-                    if (this.passwordInput.length < 6) return alert("Mật khẩu phải từ 6 ký tự trở lên!");
-                    auth.createUserWithEmailAndPassword(this.emailInput, this.passwordInput)
-                        .then(() => alert("Đăng ký thành công!"))
-                        .catch(err => alert("Lỗi đăng ký: " + err.message));
-                },
-
-                logout() {
-                    auth.signOut();
-                },
-
-                loadData() {
-                    if (!this.user) return;
-                    db.ref('users/' + this.user.uid).on('value', snapshot => {
-                        const data = snapshot.val();
-                        if (data) {
-                            this.accounts = data.accounts ? Object.values(data.accounts) : [];
-                            this.transactions = data.transactions ? Object.values(data.transactions) : [];
-                        } else {
-                            this.accounts = [];
-                            this.transactions = [];
-                        }
-                        this.updateOverviewChart();
-                    });
-                },
-
-                calculateTotalBalance() {
-                    return this.accounts.reduce((sum, acc) => sum + Number(acc.balance || 0), 0);
-                },
-
-                calculateTotalIncome() {
-                    return this.transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + Number(t.amount || 0), 0);
-                },
-
-                calculateTotalExpense() {
-                    return this.transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount || 0), 0);
-                },
-
-                filterTransactionsByTime() {
-                    const now = new Date();
-                    return this.transactions.filter(t => {
-                        const d = new Date(t.date);
-                        if (this.timeFilter === 'today') {
-                            return d.toDateString() === now.toDateString();
-                        } else if (this.timeFilter === 'week') {
-                            const firstDayOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
-                            return d >= firstDayOfWeek;
-                        } else if (this.timeFilter === 'month') {
-                            return d.getMonth() === new Date().getMonth() && d.getFullYear() === new Date().getFullYear();
-                        } else if (this.timeFilter === 'quarter') {
-                            const currentQuarter = Math.floor(new Date().getMonth() / 3);
-                            const txQuarter = Math.floor(d.getMonth() / 3);
-                            return currentQuarter === txQuarter && d.getFullYear() === new Date().getFullYear();
-                        } else if (this.timeFilter === 'year') {
-                            return d.getFullYear() === new Date().getFullYear();
-                        }
-                        return true;
-                    });
-                },
-
-                updateOverviewChart() {
-                    const filtered = this.filterTransactionsByTime();
-                    
-                    this.filteredIncome = filtered.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount || 0), 0);
-                    this.filteredExpense = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount || 0), 0);
-
-                    // Tính phần trăm theo hạng mục chi tiêu
-                    const catMap = {};
-                    const expenses = filtered.filter(t => t.type === 'expense');
-                    expenses.forEach(t => {
-                        const cat = t.category || 'Chi khác';
-                        catMap[cat] = (catMap[cat] || 0) + Number(t.amount || 0);
-                    });
-
-                    const colors = ['#f59e0b', '#f43f5e', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#6366f1'];
-                    let colorIdx = 0;
-
-                    this.filteredCategoryPercentages = Object.keys(catMap).map(cat => {
-                        const amount = catMap[cat];
-                        const percentage = this.filteredExpense > 0 ? ((amount / this.filteredExpense) * 100).toFixed(2) : 0;
-                        const color = colors[colorIdx % colors.length];
-                        colorIdx++;
-                        return { category: cat, amount, percentage, color };
-                    }).sort((a,b) => b.amount - a.amount);
-
-                    // Vẽ biểu đồ Doughnut
-                    this.$nextTick(() => {
-                        const ctx = document.getElementById('categoryDoughnutChart');
-                        if (!ctx) return;
-
-                        if (chartInstance) chartInstance.destroy();
-
-                        const labels = this.filteredCategoryPercentages.map(c => c.category);
-                        const data = this.filteredCategoryPercentages.map(c => c.amount);
-                        const bgColors = this.filteredCategoryPercentages.map(c => c.color);
-
-                        chartInstance = new Chart(ctx, {
-                            type: 'doughnut',
-                            data: {
-                                labels: labels.length > 0 ? labels : ['Chưa có dữ liệu'],
-                                datasets: [{
-                                    data: data.length > 0 ? data : [1],
-                                    backgroundColor: bgColors.length > 0 ? bgColors : ['#e5e7eb'],
-                                    borderWidth: 2,
-                                    borderColor: '#ffffff'
-                                }]
-                            },
-                            options: {
-                                cutout: '70%',
-                                plugins: {
-                                    legend: { display: false },
-                                    tooltip: { enabled: labels.length > 0 }
-                                },
-                                responsive: true,
-                                maintainAspectRatio: false
-                            }
-                        });
-                    });
-                },
-
-                openAccountModal() {
-                    this.newAcc = { name: '', balance: '' };
-                    this.showAccModal = true;
-                },
-
-                addAccount() {
-                    if (!this.newAcc.name) return alert("Vui lòng nhập tên ví!");
-                    const id = db.ref().child('users').push().key;
-                    const accountData = {
-                        id: id,
-                        name: this.newAcc.name,
-                        balance: Number(this.newAcc.balance) || 0
-                    };
-                    db.ref(`users/${this.user.uid}/accounts/${id}`).set(accountData);
-                    this.showAccModal = false;
-                },
-
-                deleteAccount(id) {
-                    if (confirm("Bạn có chắc chắn muốn xóa ví này?")) {
-                        db.ref(`users/${this.user.uid}/accounts/${id}`).remove();
-                    }
-                },
-
-                openTxModal() {
-                    if (this.accounts.length === 0) return alert("Bạn cần tạo ít nhất 1 ví tài khoản trước!");
-                    const defaultTarget = this.accounts.length > 1 ? this.accounts[1].id : this.accounts[0].id;
-                    this.newTx = { 
-                        type: 'expense', 
-                        category: 'Ăn uống', 
-                        accountId: this.accounts[0].id, 
-                        targetAccountId: defaultTarget,
-                        amount: '', 
-                        note: '' 
-                    };
-                    this.showTxModal = true;
-                },
-
-                addTransaction() {
-                    if (!this.newTx.amount && this.newTx.type !== 'adjust') return alert("Vui lòng nhập số tiền hợp lệ!");
-                    
-                    const id = db.ref().child('users').push().key;
-                    const amount = Number(this.newTx.amount) || 0;
-                    const targetAcc = this.accounts.find(a => a.id === this.newTx.accountId);
-
-                    if (!targetAcc) return alert("Vui lòng chọn tài khoản!");
-
-                    if (this.newTx.type === 'expense' || this.newTx.type === 'lend') {
-                        db.ref(`users/${this.user.uid}/accounts/${targetAcc.id}/balance`).set(Number(targetAcc.balance) - amount);
-                    } else if (this.newTx.type === 'income' || this.newTx.type === 'borrow') {
-                        db.ref(`users/${this.user.uid}/accounts/${targetAcc.id}/balance`).set(Number(targetAcc.balance) + amount);
-                    } else if (this.newTx.type === 'transfer') {
-                        if (this.newTx.accountId === this.newTx.targetAccountId) return alert("Ví đích phải khác ví nguồn!");
-                        const targetAcc2 = this.accounts.find(a => a.id === this.newTx.targetAccountId);
-                        if (!targetAcc2) return alert("Vui lòng chọn ví nhận!");
-
-                        db.ref(`users/${this.user.uid}/accounts/${targetAcc.id}/balance`).set(Number(targetAcc.balance) - amount);
-                        db.ref(`users/${this.user.uid}/accounts/${targetAcc2.id}/balance`).set(Number(targetAcc2.balance) + amount);
-                    } else if (this.newTx.type === 'adjust') {
-                        db.ref(`users/${this.user.uid}/accounts/${targetAcc.id}/balance`).set(amount);
-                    }
-
-                    const txData = {
-                        id: id,
-                        type: this.newTx.type,
-                        category: (this.newTx.type === 'expense' || this.newTx.type === 'income') ? this.newTx.category : '',
-                        accountId: this.newTx.accountId,
-                        targetAccountId: this.newTx.type === 'transfer' ? this.newTx.targetAccountId : '',
-                        amount: amount,
-                        note: this.newTx.note,
-                        date: new Date().toISOString()
-                    };
-
-                    db.ref(`users/${this.user.uid}/transactions/${id}`).set(txData);
-                    this.showTxModal = false;
-                },
-
-                deleteTransaction(id) {
-                    if (confirm("Xóa giao dịch này?")) {
-                        db.ref(`users/${this.user.uid}/transactions/${id}`).remove();
-                    }
-                },
-
-                get sortedTransactions() {
-                    return [...this.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
-                },
-
-                getAccountName(accId) {
-                    const acc = this.accounts.find(a => a.id === accId);
-                    return acc ? acc.name : 'Ví không xác định';
-                },
-
-                formatMoney(amount) {
-                    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
-                },
-
-                formatDate(dateStr) {
-                    if (!dateStr) return '';
-                    const d = new Date(dateStr);
-                    return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyD60xItsgAdFomunCdhypi26yyI5xrp0P0",
+        authDomain: "appthuchimoi.firebaseapp.com",
+        databaseURL: "https://appthuchimoi-default-rtdb.firebaseio.com",
+        projectId: "appthuchimoi",
+        storageBucket: "appthuchimoi.firebasestorage.app",
+        messagingSenderId: "77316598744",
+        appId: "1:77316598744:web:e0da4f203841cdfcee60ad",
+        measurementId: "G-LDYPBV32N6"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    // Thiết lập lưu trữ thông tin đăng nhập vào Bộ nhớ cục bộ (Tránh đơ khi redirect trên Safari)
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+    let chartInstance = null;
+
+    function app() {
+        return {
+            user: null,
+            activeTab: 'home',
+            authTab: 'google',
+            emailInput: '',
+            passwordInput: '',
+            isLoggingIn: false,
+            hideBalance: false,
+            timeFilter: 'month',
+            accounts: [],
+            transactions: [],
+            filteredIncome: 0,
+            filteredExpense: 0,
+            filteredCategoryPercentages: [],
+            showAccModal: false,
+            showTxModal: false,
+            newAcc: { name: '', balance: 0 },
+            newTx: { type: 'expense', category: 'Ăn uống', accountId: '', targetAccountId: '', amount: '', note: '' },
+
+            expenseCategories: [
+                { name: 'Ăn uống', icon: '🍜' },
+                { name: 'Đi lại', icon: '⛽' },
+                { name: 'Cafe/Trà sữa', icon: '☕' },
+                { name: 'Mua sắm', icon: '🛒' },
+                { name: 'Dịch vụ gia đình', icon: '🏠' },
+                { name: 'Giải trí', icon: '🎬' },
+                { name: 'Sức khỏe', icon: '💊' },
+                { name: 'Chi khác', icon: '❓' }
+            ],
+            incomeCategories: [
+                { name: 'Lương', icon: '💵' },
+                { name: 'Thưởng', icon: '🎁' },
+                { name: 'Bán hàng', icon: '🛍️' },
+                { name: 'Thu khác', icon: '💰' }
+            ],
+
+            get currentCategories() {
+                return this.newTx.type === 'expense' ? this.expenseCategories : this.incomeCategories;
+            },
+
+            onTxTypeChange() {
+                if (this.newTx.type === 'expense') this.newTx.category = 'Ăn uống';
+                else if (this.newTx.type === 'income') this.newTx.category = 'Lương';
+            },
+
+            getTxTitle(tx) {
+                if (tx.type === 'expense' || tx.type === 'income') return tx.category || 'Giao dịch';
+                if (tx.type === 'lend') return 'Cho vay';
+                if (tx.type === 'borrow') return 'Đi vay';
+                if (tx.type === 'transfer') return 'Chuyển khoản';
+                if (tx.type === 'adjust') return 'Điều chỉnh số dư';
+                return 'Giao dịch';
+            },
+
+            getTxIcon(tx) {
+                if (tx.type === 'expense' || tx.type === 'income') {
+                    const allCats = [...this.expenseCategories, ...this.incomeCategories];
+                    const found = allCats.find(c => c.name === tx.category);
+                    return found ? found.icon : '📝';
                 }
+                if (tx.type === 'lend') return '💸';
+                if (tx.type === 'borrow') return '💰';
+                if (tx.type === 'transfer') return '🔄';
+                if (tx.type === 'adjust') return '📝';
+                return '📝';
+            },
+
+            getTxTypeBg(type) {
+                if (type === 'income' || type === 'borrow') return 'bg-emerald-50 text-emerald-600';
+                if (type === 'expense' || type === 'lend') return 'bg-red-50 text-red-500';
+                return 'bg-blue-50 text-blue-600';
+            },
+
+            getTxColorClass(type) {
+                if (type === 'income' || type === 'borrow') return 'text-emerald-600';
+                if (type === 'expense' || type === 'lend') return 'text-red-500';
+                return 'text-gray-700';
+            },
+
+            getTxPrefix(type) {
+                if (type === 'income' || type === 'borrow') return '+';
+                if (type === 'expense' || type === 'lend') return '-';
+                return '';
+            },
+
+            getBarHeight(type) {
+                const max = Math.max(this.filteredIncome, this.filteredExpense);
+                if (max === 0) return 10;
+                const val = type === 'income' ? this.filteredIncome : this.filteredExpense;
+                return Math.max(10, Math.round((val / max) * 100));
+            },
+
+            init() {
+                this.isLoggingIn = false;
+
+                // Xử lý lấy thông tin sau khi chọn Gmail đăng nhập thành công
+                auth.getRedirectResult()
+                    .then((result) => {
+                        this.isLoggingIn = false;
+                        if (result.user) {
+                            this.user = result.user;
+                            this.loadData();
+                        }
+                    })
+                    .catch((error) => {
+                        this.isLoggingIn = false;
+                        if (error.code && error.code !== 'auth/cancelled-popup-request') {
+                            console.error("Lỗi Đăng Nhập:", error);
+                        }
+                    });
+
+                // Lắng nghe thay đổi trạng thái Auth
+                auth.onAuthStateChanged(u => {
+                    this.user = u;
+                    this.isLoggingIn = false;
+                    if (u) {
+                        this.loadData();
+                    } else {
+                        this.accounts = [];
+                        this.transactions = [];
+                    }
+                });
+
+                this.$watch('activeTab', (val) => {
+                    if (val === 'home') {
+                        this.$nextTick(() => this.updateOverviewChart());
+                    }
+                });
+            },
+
+            loginWithGoogle() {
+                if (this.isLoggingIn) return;
+                this.isLoggingIn = true;
+
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.setCustomParameters({
+                    prompt: 'select_account'
+                });
+
+                // Dùng Redirect cho di động và nhận kết quả ở hàm init()
+                auth.signInWithRedirect(provider);
+            },
+
+            loginWithEmail() {
+                if (!this.emailInput || !this.passwordInput) return alert("Vui lòng nhập đầy đủ Email và Mật khẩu!");
+                auth.signInWithEmailAndPassword(this.emailInput, this.passwordInput)
+                    .catch(err => alert("Lỗi đăng nhập: " + err.message));
+            },
+
+            registerWithEmail() {
+                if (!this.emailInput || !this.passwordInput) return alert("Vui lòng nhập đầy đủ Email và Mật khẩu!");
+                if (this.passwordInput.length < 6) return alert("Mật khẩu phải từ 6 ký tự trở lên!");
+                auth.createUserWithEmailAndPassword(this.emailInput, this.passwordInput)
+                    .then(() => alert("Đăng ký thành công!"))
+                    .catch(err => alert("Lỗi đăng ký: " + err.message));
+            },
+
+            logout() {
+                auth.signOut().then(() => {
+                    this.user = null;
+                    this.isLoggingIn = false;
+                });
+            },
+
+            loadData() {
+                if (!this.user) return;
+                db.ref('users/' + this.user.uid).on('value', snapshot => {
+                    const data = snapshot.val();
+                    if (data) {
+                        this.accounts = data.accounts ? Object.values(data.accounts) : [];
+                        this.transactions = data.transactions ? Object.values(data.transactions) : [];
+                    } else {
+                        this.accounts = [];
+                        this.transactions = [];
+                    }
+                    this.updateOverviewChart();
+                });
+            },
+
+            calculateTotalBalance() {
+                return this.accounts.reduce((sum, acc) => sum + Number(acc.balance || 0), 0);
+            },
+
+            calculateTotalIncome() {
+                return this.transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + Number(t.amount || 0), 0);
+            },
+
+            calculateTotalExpense() {
+                return this.transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount || 0), 0);
+            },
+
+            filterTransactionsByTime() {
+                const now = new Date();
+                return this.transactions.filter(t => {
+                    const d = new Date(t.date);
+                    if (this.timeFilter === 'today') {
+                        return d.toDateString() === now.toDateString();
+                    } else if (this.timeFilter === 'week') {
+                        const firstDayOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+                        return d >= firstDayOfWeek;
+                    } else if (this.timeFilter === 'month') {
+                        return d.getMonth() === new Date().getMonth() && d.getFullYear() === new Date().getFullYear();
+                    } else if (this.timeFilter === 'quarter') {
+                        const currentQuarter = Math.floor(new Date().getMonth() / 3);
+                        const txQuarter = Math.floor(d.getMonth() / 3);
+                        return currentQuarter === txQuarter && d.getFullYear() === new Date().getFullYear();
+                    } else if (this.timeFilter === 'year') {
+                        return d.getFullYear() === new Date().getFullYear();
+                    }
+                    return true;
+                });
+            },
+
+            updateOverviewChart() {
+                const filtered = this.filterTransactionsByTime();
+                
+                this.filteredIncome = filtered.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount || 0), 0);
+                this.filteredExpense = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount || 0), 0);
+
+                const catMap = {};
+                const expenses = filtered.filter(t => t.type === 'expense');
+                expenses.forEach(t => {
+                    const cat = t.category || 'Chi khác';
+                    catMap[cat] = (catMap[cat] || 0) + Number(t.amount || 0);
+                });
+
+                const colors = ['#f59e0b', '#f43f5e', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#6366f1'];
+                let colorIdx = 0;
+
+                this.filteredCategoryPercentages = Object.keys(catMap).map(cat => {
+                    const amount = catMap[cat];
+                    const percentage = this.filteredExpense > 0 ? ((amount / this.filteredExpense) * 100).toFixed(2) : 0;
+                    const color = colors[colorIdx % colors.length];
+                    colorIdx++;
+                    return { category: cat, amount, percentage, color };
+                }).sort((a,b) => b.amount - a.amount);
+
+                this.$nextTick(() => {
+                    const ctx = document.getElementById('categoryDoughnutChart');
+                    if (!ctx) return;
+
+                    if (chartInstance) chartInstance.destroy();
+
+                    const labels = this.filteredCategoryPercentages.map(c => c.category);
+                    const data = this.filteredCategoryPercentages.map(c => c.amount);
+                    const bgColors = this.filteredCategoryPercentages.map(c => c.color);
+
+                    chartInstance = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: labels.length > 0 ? labels : ['Chưa có dữ liệu'],
+                            datasets: [{
+                                data: data.length > 0 ? data : [1],
+                                backgroundColor: bgColors.length > 0 ? bgColors : ['#e5e7eb'],
+                                borderWidth: 2,
+                                borderColor: '#ffffff'
+                            }]
+                        },
+                        options: {
+                            cutout: '70%',
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: { enabled: labels.length > 0 }
+                            },
+                            responsive: true,
+                            maintainAspectRatio: false
+                        }
+                    });
+                });
+            },
+
+            openAccountModal() {
+                this.newAcc = { name: '', balance: '' };
+                this.showAccModal = true;
+            },
+
+            addAccount() {
+                if (!this.newAcc.name) return alert("Vui lòng nhập tên ví!");
+                const id = db.ref().child('users').push().key;
+                const accountData = {
+                    id: id,
+                    name: this.newAcc.name,
+                    balance: Number(this.newAcc.balance) || 0
+                };
+                db.ref(`users/${this.user.uid}/accounts/${id}`).set(accountData);
+                this.showAccModal = false;
+            },
+
+            deleteAccount(id) {
+                if (confirm("Bạn có chắc chắn muốn xóa ví này?")) {
+                    db.ref(`users/${this.user.uid}/accounts/${id}`).remove();
+                }
+            },
+
+            openTxModal() {
+                if (this.accounts.length === 0) return alert("Bạn cần tạo ít nhất 1 ví tài khoản trước!");
+                const defaultTarget = this.accounts.length > 1 ? this.accounts[1].id : this.accounts[0].id;
+                this.newTx = { 
+                    type: 'expense', 
+                    category: 'Ăn uống', 
+                    accountId: this.accounts[0].id, 
+                    targetAccountId: defaultTarget,
+                    amount: '', 
+                    note: '' 
+                };
+                this.showTxModal = true;
+            },
+
+            addTransaction() {
+                if (!this.newTx.amount && this.newTx.type !== 'adjust') return alert("Vui lòng nhập số tiền hợp lệ!");
+                
+                const id = db.ref().child('users').push().key;
+                const amount = Number(this.newTx.amount) || 0;
+                const targetAcc = this.accounts.find(a => a.id === this.newTx.accountId);
+
+                if (!targetAcc) return alert("Vui lòng chọn tài khoản!");
+
+                if (this.newTx.type === 'expense' || this.newTx.type === 'lend') {
+                    db.ref(`users/${this.user.uid}/accounts/${targetAcc.id}/balance`).set(Number(targetAcc.balance) - amount);
+                } else if (this.newTx.type === 'income' || this.newTx.type === 'borrow') {
+                    db.ref(`users/${this.user.uid}/accounts/${targetAcc.id}/balance`).set(Number(targetAcc.balance) + amount);
+                } else if (this.newTx.type === 'transfer') {
+                    if (this.newTx.accountId === this.newTx.targetAccountId) return alert("Ví đích phải khác ví nguồn!");
+                    const targetAcc2 = this.accounts.find(a => a.id === this.newTx.targetAccountId);
+                    if (!targetAcc2) return alert("Vui lòng chọn ví nhận!");
+
+                    db.ref(`users/${this.user.uid}/accounts/${targetAcc.id}/balance`).set(Number(targetAcc.balance) - amount);
+                    db.ref(`users/${this.user.uid}/accounts/${targetAcc2.id}/balance`).set(Number(targetAcc2.balance) + amount);
+                } else if (this.newTx.type === 'adjust') {
+                    db.ref(`users/${this.user.uid}/accounts/${targetAcc.id}/balance`).set(amount);
+                }
+
+                const txData = {
+                    id: id,
+                    type: this.newTx.type,
+                    category: (this.newTx.type === 'expense' || this.newTx.type === 'income') ? this.newTx.category : '',
+                    accountId: this.newTx.accountId,
+                    targetAccountId: this.newTx.type === 'transfer' ? this.newTx.targetAccountId : '',
+                    amount: amount,
+                    note: this.newTx.note,
+                    date: new Date().toISOString()
+                };
+
+                db.ref(`users/${this.user.uid}/transactions/${id}`).set(txData);
+                this.showTxModal = false;
+            },
+
+            deleteTransaction(id) {
+                if (confirm("Xóa giao dịch này?")) {
+                    db.ref(`users/${this.user.uid}/transactions/${id}`).remove();
+                }
+            },
+
+            get sortedTransactions() {
+                return [...this.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+            },
+
+            getAccountName(accId) {
+                const acc = this.accounts.find(a => a.id === accId);
+                return acc ? acc.name : 'Ví không xác định';
+            },
+
+            formatMoney(amount) {
+                return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
+            },
+
+            formatDate(dateStr) {
+                if (!dateStr) return '';
+                const d = new Date(dateStr);
+                return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
             }
         }
-    </script>
-</body>
-</html>
+    }
+</script>
