@@ -76,7 +76,8 @@
                         <img :src="user.photoURL || 'https://via.placeholder.com/40'" class="w-10 h-10 rounded-full border-2 border-white/50">
                         <div>
                             <div class="text-xs text-blue-100">Xin chào,</div>
-                            <div class="font-bold text-sm" x-text="user.displayName || user.email"></div>
+                            <!-- DÒNG MỚI (Ép hiển thị email): -->
+<div class="font-bold text-sm" x-text="user.email"></div>
                         </div>
                     </div>
                     <button @click="logout()" class="p-2 bg-blue-700 hover:bg-blue-800 rounded-lg text-xs transition">Đăng xuất</button>
