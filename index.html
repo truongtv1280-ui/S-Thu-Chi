@@ -14,6 +14,17 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        /* Chống phóng to (auto-zoom) trên điện thoại khi click vào ô nhập liệu */
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        input[type="password"],
+        select,
+        textarea {
+            font-size: 16px !important;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen text-gray-800" x-data="app()" x-init="init()">
 
@@ -76,8 +87,7 @@
                         <img :src="user.photoURL || 'https://via.placeholder.com/40'" class="w-10 h-10 rounded-full border-2 border-white/50">
                         <div>
                             <div class="text-xs text-blue-100">Xin chào,</div>
-                            <!-- DÒNG MỚI (Ép hiển thị email): -->
-<div class="font-bold text-sm" x-text="user.email"></div>
+                            <div class="font-bold text-sm" x-text="user.email"></div>
                         </div>
                     </div>
                     <button @click="logout()" class="p-2 bg-blue-700 hover:bg-blue-800 rounded-lg text-xs transition">Đăng xuất</button>
@@ -477,7 +487,6 @@
                     return [...this.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
                 },
 
-                // Tự động định dạng dấu chấm phân cách hàng nghìn khi nhập số tiền
                 formatInputMoney(event, targetObj, keyRaw, keyFormatted) {
                     let rawValue = event.target.value.replace(/\D/g, '');
                     if (!rawValue) {
@@ -490,100 +499,28 @@
                 },
 
                 onTxTypeChange() {
-                    if (this.newTx.type === 'expense') this.newTx.category = this.expenseCategories[0]?.name || 'Ăn uống';
-                    else if (this.newTx.type === 'income') this.newTx.category = this.incomeCategories[0]?.name || 'Lương';
-                },
-
-                getTxTitle(tx) {
-                    if (tx.type === 'expense' || tx.type === 'income') return tx.category || 'Giao dịch';
-                    if (tx.type === 'transfer') return 'Chuyển khoản';
-                    return 'Giao dịch';
-                },
-
-                getTxIcon(tx) {
-                    if (tx.type === 'expense' || tx.type === 'income') {
-                        const allCats = [...this.expenseCategories, ...this.incomeCategories];
-                        const found = allCats.find(c => c.name === tx.category);
-                        return found ? found.icon : '📝';
+                    if (this.newTx.type === 'expense') {
+                        this.newTx.category = this.expenseCategories[0]?.name || 'Ăn uống';
+                    } else if (this.newTx.type === 'income') {
+                        this.newTx.category = this.incomeCategories[0]?.name || 'Lương';
                     }
-                    if (tx.type === 'transfer') return '🔄';
-                    return '📝';
-                },
-
-                getTxTypeBg(type) {
-                    if (type === 'income') return 'bg-emerald-50 text-emerald-600';
-                    if (type === 'expense') return 'bg-red-50 text-red-500';
-                    return 'bg-blue-50 text-blue-600';
-                },
-
-                getTxColorClass(type) {
-                    if (type === 'income') return 'text-emerald-600';
-                    if (type === 'expense') return 'text-red-500';
-                    return 'text-gray-700';
-                },
-
-                getTxPrefix(type) {
-                    if (type === 'income') return '+';
-                    if (type === 'expense') return '-';
-                    return '';
-                },
-
-                getAccountName(accId) {
-                    const acc = this.accounts.find(a => a.id === accId);
-                    return acc ? acc.name : 'Ví ẩn';
-                },
-
-                formatMoney(amount) {
-                    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
-                },
-
-                formatDate(dateStr) {
-                    if (!dateStr) return '';
-                    const d = new Date(dateStr);
-                    return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
                 },
 
                 init() {
-                    this.isLoggingIn = false;
-
-                    auth.getRedirectResult().then((result) => {
-                        this.isLoggingIn = false;
-                        if (result.user) {
-                            this.user = result.user;
+                    auth.onAuthStateChanged(user => {
+                        this.user = user;
+                        if (user) {
                             this.loadData();
-                        }
-                    }).catch(err => {
-                        this.isLoggingIn = false;
-                    });
-
-                    auth.onAuthStateChanged(u => {
-                        this.user = u;
-                        this.isLoggingIn = false;
-                        if (u) {
-                            this.loadData();
-                        } else {
-                            this.accounts = [];
-                            this.transactions = [];
-                            this.customCategories = [];
                         }
                     });
                 },
 
                 loginWithGoogle() {
-                    if (this.isLoggingIn) return;
                     this.isLoggingIn = true;
-
                     const provider = new firebase.auth.GoogleAuthProvider();
-                    provider.setCustomParameters({ prompt: 'select_account' });
-
-                    auth.signInWithPopup(provider).catch(error => {
-                        if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
-                            auth.signInWithRedirect(provider);
-                        } else {
-                            this.isLoggingIn = false;
-                            alert("Lỗi đăng nhập: " + error.message);
-                        }
-                    });
+                    auth.signInWithPopup(provider)
+                        .catch(err => alert("Lỗi đăng nhập: " + err.message))
+                        .finally(() => this.isLoggingIn = false);
                 },
 
                 loginWithEmail() {
@@ -594,113 +531,59 @@
 
                 registerWithEmail() {
                     if (!this.emailInput || !this.passwordInput) return alert("Vui lòng nhập Email và Mật khẩu!");
-                    if (this.passwordInput.length < 6) return alert("Mật khẩu ít nhất 6 ký tự!");
                     auth.createUserWithEmailAndPassword(this.emailInput, this.passwordInput)
-                        .then(() => alert("Đăng ký thành công!"))
                         .catch(err => alert("Lỗi đăng ký: " + err.message));
                 },
 
                 logout() {
-                    auth.signOut().then(() => {
-                        this.user = null;
-                        this.isLoggingIn = false;
-                    });
+                    auth.signOut();
                 },
 
                 loadData() {
                     if (!this.user) return;
-                    // Lấy dữ liệu 100 giao dịch gần nhất để tránh lag ứng dụng
-                    db.ref('users/' + this.user.uid).on('value', snapshot => {
-                        const data = snapshot.val();
-                        if (data) {
-                            this.accounts = data.accounts ? Object.values(data.accounts) : [];
-                            this.transactions = data.transactions ? Object.values(data.transactions) : [];
-                            this.customCategories = data.categories ? Object.values(data.categories) : [];
-                        } else {
-                            this.accounts = [];
-                            this.transactions = [];
-                            this.customCategories = [];
+                    const uid = this.user.uid;
+
+                    // Lắng nghe Ví tiền
+                    db.ref(`users/${uid}/accounts`).on('value', snapshot => {
+                        const val = snapshot.val();
+                        this.accounts = val ? Object.keys(val).map(k => ({ id: k, ...val[k] })) : [];
+                        if (this.accounts.length === 0) {
+                            this.createDefaultAccount();
                         }
+                    });
+
+                    // Lắng nghe Giao dịch
+                    db.ref(`users/${uid}/transactions`).on('value', snapshot => {
+                        const val = snapshot.val();
+                        this.transactions = val ? Object.keys(val).map(k => ({ id: k, ...val[k] })) : [];
                         this.updateOverviewChart();
                     });
+
+                    // Lắng nghe Danh mục tùy chỉnh
+                    db.ref(`users/${uid}/customCategories`).on('value', snapshot => {
+                        const val = snapshot.val();
+                        this.customCategories = val ? Object.keys(val).map(k => ({ id: k, ...val[k] })) : [];
+                    });
+                },
+
+                createDefaultAccount() {
+                    const uid = this.user.uid;
+                    const newRef = db.ref(`users/${uid}/accounts`).push();
+                    newRef.set({ name: 'Ví tiền mặt', balance: 0 });
                 },
 
                 calculateTotalBalance() {
-                    return this.accounts.reduce((sum, acc) => sum + Number(acc.balance || 0), 0);
+                    return this.accounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
                 },
 
-                filterTransactionsByTime() {
-                    const now = new Date();
-                    return this.transactions.filter(t => {
-                        const d = new Date(t.date);
-                        if (this.timeFilter === 'today') {
-                            return d.toDateString() === now.toDateString();
-                        } else if (this.timeFilter === 'week') {
-                            const firstDayOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
-                            return d >= firstDayOfWeek;
-                        } else if (this.timeFilter === 'month') {
-                            return d.getMonth() === new Date().getMonth() && d.getFullYear() === new Date().getFullYear();
-                        } else if (this.timeFilter === 'year') {
-                            return d.getFullYear() === new Date().getFullYear();
-                        }
-                        return true;
-                    });
+                formatMoney(amount) {
+                    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
                 },
 
-                updateOverviewChart() {
-                    const filtered = this.filterTransactionsByTime();
-                    
-                    this.filteredIncome = filtered.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount || 0), 0);
-                    this.filteredExpense = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount || 0), 0);
-
-                    const catMap = {};
-                    filtered.filter(t => t.type === 'expense').forEach(t => {
-                        const cat = t.category || 'Chi khác';
-                        catMap[cat] = (catMap[cat] || 0) + Number(t.amount || 0);
-                    });
-
-                    const colors = ['#f59e0b', '#f43f5e', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#6366f1'];
-                    let colorIdx = 0;
-
-                    this.filteredCategoryPercentages = Object.keys(catMap).map(cat => {
-                        const amount = catMap[cat];
-                        const percentage = this.filteredExpense > 0 ? ((amount / this.filteredExpense) * 100).toFixed(1) : 0;
-                        const color = colors[colorIdx % colors.length];
-                        colorIdx++;
-                        return { category: cat, amount, percentage, color };
-                    }).sort((a,b) => b.amount - a.amount);
-
-                    this.$nextTick(() => {
-                        const ctx = document.getElementById('categoryDoughnutChart');
-                        if (!ctx) return;
-
-                        if (chartInstance) chartInstance.destroy();
-
-                        const labels = this.filteredCategoryPercentages.map(c => c.category);
-                        const data = this.filteredCategoryPercentages.map(c => c.amount);
-                        const bgColors = this.filteredCategoryPercentages.map(c => c.color);
-
-                        chartInstance = new Chart(ctx, {
-                            type: 'doughnut',
-                            data: {
-                                labels: labels.length > 0 ? labels : ['Chưa có chi tiêu'],
-                                datasets: [{
-                                    data: data.length > 0 ? data : [1],
-                                    backgroundColor: bgColors.length > 0 ? bgColors : ['#e5e7eb'],
-                                    borderWidth: 2,
-                                    borderColor: '#ffffff'
-                                }]
-                            },
-                            options: {
-                                cutout: '70%',
-                                plugins: {
-                                    legend: { display: false }
-                                },
-                                responsive: true,
-                                maintainAspectRatio: false
-                            }
-                        });
-                    });
+                formatDate(dateStr) {
+                    if (!dateStr) return '';
+                    const d = new Date(dateStr);
+                    return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
                 },
 
                 openAccountModal() {
@@ -709,58 +592,46 @@
                 },
 
                 addAccount() {
-                    if (!this.newAcc.name.trim()) return alert("Vui lòng nhập tên ví!");
-                    const id = db.ref().child('users').push().key;
-                    const accountData = {
-                        id: id,
-                        name: this.newAcc.name.trim(),
-                        balance: Number(this.newAcc.balance) || 0
-                    };
-                    db.ref(`users/${this.user.uid}/accounts/${id}`).set(accountData);
+                    if (!this.newAcc.name) return alert("Vui lòng nhập tên ví!");
+                    const uid = this.user.uid;
+                    db.ref(`users/${uid}/accounts`).push({
+                        name: this.newAcc.name,
+                        balance: this.newAcc.balance
+                    });
                     this.showAccModal = false;
                 },
 
-                deleteAccount(id) {
+                deleteAccount(accId) {
                     if (confirm("Bạn có chắc chắn muốn xóa ví này?")) {
-                        db.ref(`users/${this.user.uid}/accounts/${id}`).remove();
+                        db.ref(`users/${this.user.uid}/accounts/${accId}`).remove();
                     }
                 },
 
                 addCategory() {
-                    if (!this.newCat.name.trim()) return alert("Vui lòng nhập tên danh mục!");
-                    const catId = db.ref().child('users').push().key;
-                    const categoryData = {
-                        id: catId,
-                        name: this.newCat.name.trim(),
-                        icon: this.newCat.icon.trim() || '🏷️',
-                        type: this.newCat.type
-                    };
-
-                    db.ref(`users/${this.user.uid}/categories/${catId}`).set(categoryData);
-                    
-                    // Tự động gán danh mục vừa tạo cho giao dịch đang tạo dở
-                    if (this.showTxModal) {
-                        this.newTx.type = categoryData.type;
-                        this.newTx.category = categoryData.name;
-                    }
-
+                    if (!this.newCat.name) return alert("Vui lòng nhập tên danh mục!");
+                    const uid = this.user.uid;
+                    db.ref(`users/${uid}/customCategories`).push({
+                        type: this.newCat.type,
+                        icon: this.newCat.icon || '📁',
+                        name: this.newCat.name
+                    });
                     this.showCatModal = false;
-                    this.newCat = { type: 'expense', icon: '🍔', name: '' };
+                    this.newCat.name = '';
                 },
 
                 deleteCategory(catId) {
-                    if (confirm("Bạn có chắc chắn muốn xóa danh mục tùy chỉnh này?")) {
-                        db.ref(`users/${this.user.uid}/categories/${catId}`).remove();
+                    if (confirm("Bạn có chắc muốn xóa danh mục này?")) {
+                        db.ref(`users/${this.user.uid}/customCategories/${catId}`).remove();
                     }
                 },
 
                 openTxModal() {
-                    if (this.accounts.length === 0) return alert("Vui lòng tạo ít nhất một ví trước khi tạo giao dịch!");
+                    if (this.accounts.length === 0) return alert("Vui lòng tạo ít nhất 1 ví trước khi ghi chép!");
                     this.newTx = {
                         type: 'expense',
                         category: this.expenseCategories[0]?.name || 'Ăn uống',
                         accountId: this.accounts[0].id,
-                        targetAccountId: this.accounts.length > 1 ? this.accounts[1].id : this.accounts[0].id,
+                        targetAccountId: this.accounts[1]?.id || this.accounts[0].id,
                         amount: 0,
                         formattedAmount: '',
                         note: ''
@@ -769,79 +640,173 @@
                 },
 
                 addTransaction() {
-                    const amount = Number(this.newTx.amount);
-                    if (!amount || amount <= 0) return alert("Vui lòng nhập số tiền hợp lệ!");
-                    if (!this.newTx.accountId) return alert("Vui lòng chọn ví!");
+                    if (!this.newTx.amount || this.newTx.amount <= 0) return alert("Vui lòng nhập số tiền hợp lệ!");
 
-                    if (this.newTx.type === 'transfer' && this.newTx.accountId === this.newTx.targetAccountId) {
-                        return alert("Ví nguồn và ví đích không thể trùng nhau!");
-                    }
-
-                    const txId = db.ref().child('users').push().key;
+                    const uid = this.user.uid;
                     const txData = {
-                        id: txId,
                         type: this.newTx.type,
-                        category: this.newTx.type === 'transfer' ? '' : this.newTx.category,
-                        amount: amount,
+                        amount: this.newTx.amount,
                         accountId: this.newTx.accountId,
-                        targetAccountId: this.newTx.type === 'transfer' ? this.newTx.targetAccountId : null,
                         note: this.newTx.note,
                         date: new Date().toISOString()
                     };
 
-                    const account = this.accounts.find(a => a.id === this.newTx.accountId);
-                    if (account) {
-                        let newBalance = Number(account.balance);
-                        if (this.newTx.type === 'expense' || this.newTx.type === 'transfer') {
-                            newBalance -= amount;
-                        } else if (this.newTx.type === 'income') {
-                            newBalance += amount;
-                        }
-                        db.ref(`users/${this.user.uid}/accounts/${account.id}/balance`).set(newBalance);
-                    }
-
                     if (this.newTx.type === 'transfer') {
-                        const targetAccount = this.accounts.find(a => a.id === this.newTx.targetAccountId);
-                        if (targetAccount) {
-                            const newTargetBalance = Number(targetAccount.balance) + amount;
-                            db.ref(`users/${this.user.uid}/accounts/${targetAccount.id}/balance`).set(newTargetBalance);
+                        if (this.newTx.accountId === this.newTx.targetAccountId) {
+                            return alert("Ví nhận phải khác ví chuyển!");
                         }
+                        txData.targetAccountId = this.newTx.targetAccountId;
+                    } else {
+                        txData.category = this.newTx.category;
                     }
 
-                    db.ref(`users/${this.user.uid}/transactions/${txId}`).set(txData);
+                    // Cập nhật số dư ví
+                    if (this.newTx.type === 'expense') {
+                        this.updateAccountBalance(this.newTx.accountId, -this.newTx.amount);
+                    } else if (this.newTx.type === 'income') {
+                        this.updateAccountBalance(this.newTx.accountId, this.newTx.amount);
+                    } else if (this.newTx.type === 'transfer') {
+                        this.updateAccountBalance(this.newTx.accountId, -this.newTx.amount);
+                        this.updateAccountBalance(this.newTx.targetAccountId, this.newTx.amount);
+                    }
+
+                    db.ref(`users/${uid}/transactions`).push(txData);
                     this.showTxModal = false;
+                },
+
+                updateAccountBalance(accId, delta) {
+                    const acc = this.accounts.find(a => a.id === accId);
+                    if (acc) {
+                        const newBal = (acc.balance || 0) + delta;
+                        db.ref(`users/${this.user.uid}/accounts/${accId}/balance`).set(newBal);
+                    }
                 },
 
                 deleteTransaction(txId) {
                     const tx = this.transactions.find(t => t.id === txId);
                     if (!tx) return;
 
-                    if (confirm("Bạn có chắc chắn muốn xóa giao dịch này? Số dư ví sẽ được cập nhật lại.")) {
-                        const amount = Number(tx.amount);
-                        
-                        const account = this.accounts.find(a => a.id === tx.accountId);
-                        if (account) {
-                            let updatedBalance = Number(account.balance);
-                            if (tx.type === 'expense' || tx.type === 'transfer') {
-                                updatedBalance += amount;
-                            } else if (tx.type === 'income') {
-                                updatedBalance -= amount;
-                            }
-                            db.ref(`users/${this.user.uid}/accounts/${account.id}/balance`).set(updatedBalance);
-                        }
-
-                        if (tx.type === 'transfer' && tx.targetAccountId) {
-                            const targetAccount = this.accounts.find(a => a.id === tx.targetAccountId);
-                            if (targetAccount) {
-                                const updatedTargetBalance = Number(targetAccount.balance) - amount;
-                                db.ref(`users/${this.user.uid}/accounts/${targetAccount.id}/balance`).set(updatedTargetBalance);
-                            }
+                    if (confirm("Xóa giao dịch này và hoàn trả lại số dư ví?")) {
+                        // Hoàn lại tiền cho ví
+                        if (tx.type === 'expense') {
+                            this.updateAccountBalance(tx.accountId, tx.amount);
+                        } else if (tx.type === 'income') {
+                            this.updateAccountBalance(tx.accountId, -tx.amount);
+                        } else if (tx.type === 'transfer') {
+                            this.updateAccountBalance(tx.accountId, tx.amount);
+                            this.updateAccountBalance(tx.targetAccountId, -tx.amount);
                         }
 
                         db.ref(`users/${this.user.uid}/transactions/${txId}`).remove();
                     }
+                },
+
+                getAccountName(accId) {
+                    const acc = this.accounts.find(a => a.id === accId);
+                    return acc ? acc.name : 'Chưa xác định';
+                },
+
+                getTxTypeBg(type) {
+                    if (type === 'expense') return 'bg-red-100 text-red-600';
+                    if (type === 'income') return 'bg-emerald-100 text-emerald-600';
+                    return 'bg-blue-100 text-blue-600';
+                },
+
+                getTxIcon(tx) {
+                    if (tx.type === 'transfer') return '🔄';
+                    const allCat = [...this.expenseCategories, ...this.incomeCategories];
+                    const cat = allCat.find(c => c.name === tx.category);
+                    return cat ? cat.icon : '💸';
+                },
+
+                getTxTitle(tx) {
+                    if (tx.type === 'transfer') return 'Chuyển tiền nội bộ';
+                    return tx.category || 'Giao dịch';
+                },
+
+                getTxColorClass(type) {
+                    if (type === 'expense') return 'text-red-500';
+                    if (type === 'income') return 'text-emerald-600';
+                    return 'text-blue-600';
+                },
+
+                getTxPrefix(type) {
+                    if (type === 'expense') return '-';
+                    if (type === 'income') return '+';
+                    return '';
+                },
+
+                filterTransactionsByTime() {
+                    const now = new Date();
+                    return this.transactions.filter(tx => {
+                        const d = new Date(tx.date);
+                        if (this.timeFilter === 'today') {
+                            return d.toDateString() === now.toDateString();
+                        }
+                        if (this.timeFilter === 'week') {
+                            const diffTime = Math.abs(now - d);
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            return diffDays <= 7;
+                        }
+                        if (this.timeFilter === 'month') {
+                            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                        }
+                        if (this.timeFilter === 'year') {
+                            return d.getFullYear() === now.getFullYear();
+                        }
+                        return true;
+                    });
+                },
+
+                updateOverviewChart() {
+                    const filtered = this.filterTransactionsByTime();
+
+                    this.filteredIncome = filtered.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+                    this.filteredExpense = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+
+                    // Gom nhóm chi tiêu theo danh mục
+                    const catTotals = {};
+                    filtered.filter(t => t.type === 'expense').forEach(t => {
+                        catTotals[t.category] = (catTotals[t.category] || 0) + t.amount;
+                    });
+
+                    const colors = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6', '#6366F1'];
+                    const labels = Object.keys(catTotals);
+                    const data = Object.values(catTotals);
+
+                    this.filteredCategoryPercentages = labels.map((cat, idx) => ({
+                        category: cat,
+                        amount: catTotals[cat],
+                        percentage: this.filteredExpense > 0 ? ((catTotals[cat] / this.filteredExpense) * 100).toFixed(1) : 0,
+                        color: colors[idx % colors.length]
+                    }));
+
+                    this.$nextTick(() => {
+                        const ctx = document.getElementById('categoryDoughnutChart');
+                        if (!ctx) return;
+
+                        if (chartInstance) chartInstance.destroy();
+
+                        chartInstance = new Chart(ctx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: labels.length ? labels : ['Chưa có dữ liệu'],
+                                datasets: [{
+                                    data: data.length ? data : [1],
+                                    backgroundColor: data.length ? colors.slice(0, labels.length) : ['#E5E7EB']
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false }
+                                }
+                            }
+                        });
+                    });
                 }
-            }
+            };
         }
     </script>
 </body>
