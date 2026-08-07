@@ -15,12 +15,12 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        /* Chống phóng to (auto-zoom) trên điện thoại khi click vào ô nhập liệu */
         input[type="text"],
         input[type="number"],
         input[type="email"],
         input[type="password"],
         input[type="date"],
+        input[type="month"],
         select,
         textarea {
             font-size: 16px !important;
@@ -78,7 +78,7 @@
         </div>
     </template>
 
-    <!-- Màn hình chính sau khi Đăng nhập -->
+    <!-- Màn hình chính -->
     <template x-if="user">
         <div class="max-w-md mx-auto pb-24 min-h-screen bg-gray-50 flex flex-col">
             <!-- Header -->
@@ -144,49 +144,78 @@
                 </div>
             </div>
 
-            <!-- TAB 2: Báo cáo / Thống kê -->
+            <!-- TAB 2: Báo cáo / Thống kê (CÓ BỘ LỌC NGÀY/THÁNG/NĂM) -->
             <div x-show="activeTab === 'analytics'" class="p-4 space-y-4 flex-1" style="display: none;">
+                
+                <!-- BỘ LỌC THỜI GIAN CHO BÁO CÁO -->
+                <div class="bg-white p-3 rounded-xl shadow-sm space-y-2">
+                    <div class="text-xs font-bold text-gray-700 mb-1">Thời gian báo cáo:</div>
+                    <div class="flex items-center justify-between text-xs font-medium text-gray-600">
+                        <button @click="reportFilterType = 'day'" :class="reportFilterType === 'day' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center mr-1">Ngày</button>
+                        <button @click="reportFilterType = 'month'" :class="reportFilterType === 'month' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center mr-1">Tháng</button>
+                        <button @click="reportFilterType = 'year'" :class="reportFilterType === 'year' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center mr-1">Năm</button>
+                        <button @click="reportFilterType = 'all'" :class="reportFilterType === 'all' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center">Tất cả</button>
+                    </div>
+
+                    <!-- Ô chọn cụ thể thời gian -->
+                    <div class="pt-1 flex items-center justify-between gap-2 text-xs">
+                        <template x-if="reportFilterType === 'day'">
+                            <input type="date" x-model="reportFilterDate" class="w-full border rounded-lg px-3 py-1.5 text-xs text-gray-700 outline-none focus:border-blue-500">
+                        </template>
+                        <template x-if="reportFilterType === 'month'">
+                            <input type="month" x-model="reportFilterMonth" class="w-full border rounded-lg px-3 py-1.5 text-xs text-gray-700 outline-none focus:border-blue-500">
+                        </template>
+                        <template x-if="reportFilterType === 'year'">
+                            <select x-model="reportFilterYear" class="w-full border rounded-lg px-3 py-1.5 text-xs text-gray-700 outline-none focus:border-blue-500">
+                                <template x-for="y in availableYears" :key="y">
+                                    <option :value="y" x-text="'Năm ' + y"></option>
+                                </template>
+                            </select>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- BÁO CÁO DÒNG TIỀN THEO BỘ LỌC -->
                 <div class="bg-white p-4 rounded-xl shadow-sm">
-                    <h3 class="text-sm font-bold text-gray-800 mb-2">📊 Báo cáo Dòng tiền</h3>
-                    <p class="text-xs text-gray-500 mb-4">So sánh tổng Thu nhập và Chi tiêu trong kỳ</p>
+                    <h3 class="text-sm font-bold text-gray-800 mb-1">📊 Báo cáo Dòng tiền</h3>
+                    <p class="text-xs text-gray-500 mb-4">So sánh thu chi trong khoảng thời gian đã chọn</p>
                     <div class="space-y-3">
                         <div>
                             <div class="flex justify-between text-xs font-semibold mb-1">
                                 <span class="text-emerald-600">Thu nhập</span>
-                                <span x-text="formatMoney(filteredIncome)"></span>
+                                <span x-text="formatMoney(reportData.income)"></span>
                             </div>
                             <div class="w-full bg-gray-100 rounded-full h-2.5">
-                                <div class="bg-emerald-500 h-2.5 rounded-full" :style="`width: ${filteredIncome + filteredExpense > 0 ? (filteredIncome / (filteredIncome + filteredExpense) * 100) : 0}%`"></div>
+                                <div class="bg-emerald-500 h-2.5 rounded-full" :style="`width: ${reportData.total > 0 ? (reportData.income / reportData.total * 100) : 0}%`"></div>
                             </div>
                         </div>
                         <div>
                             <div class="flex justify-between text-xs font-semibold mb-1">
                                 <span class="text-red-500">Chi tiêu</span>
-                                <span x-text="formatMoney(filteredExpense)"></span>
+                                <span x-text="formatMoney(reportData.expense)"></span>
                             </div>
                             <div class="w-full bg-gray-100 rounded-full h-2.5">
-                                <div class="bg-red-500 h-2.5 rounded-full" :style="`width: ${filteredIncome + filteredExpense > 0 ? (filteredExpense / (filteredIncome + filteredExpense) * 100) : 0}%`"></div>
+                                <div class="bg-red-500 h-2.5 rounded-full" :style="`width: ${reportData.total > 0 ? (reportData.expense / reportData.total * 100) : 0}%`"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="bg-white p-4 rounded-xl shadow-sm space-y-2">
-                    <h3 class="text-sm font-bold text-gray-800">💡 Thống kê tiết kiệm</h3>
+                    <h3 class="text-sm font-bold text-gray-800">💡 Thống kê chi tiết</h3>
                     <div class="flex justify-between items-center text-xs py-2 border-b">
-                        <span class="text-gray-600">Dư / Thâm hụt:</span>
-                        <span class="font-bold text-sm" :class="(filteredIncome - filteredExpense) >= 0 ? 'text-emerald-600' : 'text-red-500'" x-text="formatMoney(filteredIncome - filteredExpense)"></span>
+                        <span class="text-gray-600">Tổng dư / Thâm hụt:</span>
+                        <span class="font-bold text-sm" :class="(reportData.income - reportData.expense) >= 0 ? 'text-emerald-600' : 'text-red-500'" x-text="formatMoney(reportData.income - reportData.expense)"></span>
                     </div>
                     <div class="flex justify-between items-center text-xs py-2">
                         <span class="text-gray-600">Tỷ lệ tiết kiệm:</span>
-                        <span class="font-bold text-blue-600" x-text="filteredIncome > 0 ? Math.max(0, (((filteredIncome - filteredExpense) / filteredIncome) * 100)).toFixed(1) + '%' : '0%'"></span>
+                        <span class="font-bold text-blue-600" x-text="reportData.income > 0 ? Math.max(0, (((reportData.income - reportData.expense) / reportData.income) * 100)).toFixed(1) + '%' : '0%'"></span>
                     </div>
                 </div>
             </div>
 
-            <!-- TAB 3: Tài khoản / Ví & Danh mục -->
+            <!-- TAB 3: Ví tiền -->
             <div x-show="activeTab === 'accounts'" class="p-4 space-y-5 flex-1" style="display: none;">
-                <!-- Quản lý Ví -->
                 <div class="space-y-3">
                     <div class="flex items-center justify-between">
                         <h2 class="font-bold text-base">Danh sách ví tài khoản</h2>
@@ -205,7 +234,6 @@
                     </div>
                 </div>
 
-                <!-- Quản lý Danh mục tự tạo -->
                 <div class="space-y-3 pt-2">
                     <div class="flex items-center justify-between">
                         <h2 class="font-bold text-base">Danh mục tùy chỉnh</h2>
@@ -236,7 +264,6 @@
                     <button @click="openTxModal()" class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium shadow">+ Tạo mới</button>
                 </div>
 
-                <!-- BỘ LỌC THEO NGÀY / THÁNG / NĂM -->
                 <div class="bg-white p-2 rounded-xl shadow-sm space-y-2">
                     <div class="flex items-center justify-between text-xs font-medium text-gray-600">
                         <button @click="historyFilterType = 'day'" :class="historyFilterType === 'day' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center mr-1">Ngày</button>
@@ -245,7 +272,6 @@
                         <button @click="historyFilterType = 'all'" :class="historyFilterType === 'all' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center">Tất cả</button>
                     </div>
 
-                    <!-- Ô chọn cụ thể thời gian -->
                     <div class="pt-1 flex items-center justify-between gap-2 text-xs">
                         <template x-if="historyFilterType === 'day'">
                             <input type="date" x-model="historyFilterDate" class="w-full border rounded-lg px-3 py-1.5 text-xs text-gray-700 outline-none focus:border-blue-500">
@@ -263,7 +289,6 @@
                     </div>
                 </div>
 
-                <!-- DANH SÁCH GIAO DỊCH -->
                 <div class="space-y-2">
                     <template x-if="filteredHistoryTransactions.length === 0">
                         <div class="bg-white p-6 rounded-xl text-center text-xs text-gray-400">
@@ -297,7 +322,7 @@
                 </div>
             </div>
 
-            <!-- Thanh Điều Hướng Bên Dưới -->
+            <!-- Bottom Nav -->
             <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 flex items-center justify-between py-2 px-3 z-10">
                 <button @click="activeTab = 'home'" :class="activeTab === 'home' ? 'text-blue-600 font-bold' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-[10px] flex-1">
                     <span class="text-base">📊</span>
@@ -324,13 +349,13 @@
                 </button>
             </div>
 
-            <!-- Modal Thêm Ví -->
+            <!-- Modals -->
             <div x-show="showAccModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" style="display: none;">
                 <div class="bg-white rounded-2xl w-full max-w-xs p-5 space-y-4">
                     <h3 class="font-bold text-sm text-gray-800">Thêm Ví Mới</h3>
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">Tên ví</label>
-                        <input type="text" x-model="newAcc.name" class="w-full border rounded-lg px-3 py-2 text-xs outline-none focus:border-blue-500" placeholder="VD: Tiền mặt, Techcombank...">
+                        <input type="text" x-model="newAcc.name" class="w-full border rounded-lg px-3 py-2 text-xs outline-none focus:border-blue-500" placeholder="VD: Tiền mặt, MB Bank...">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">Số dư ban đầu</label>
@@ -343,7 +368,6 @@
                 </div>
             </div>
 
-            <!-- Modal Thêm Giao Dịch -->
             <div x-show="showTxModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" style="display: none;">
                 <div class="bg-white rounded-2xl w-full max-w-xs p-5 space-y-3">
                     <h3 class="font-bold text-sm text-gray-800">Ghi Chép Giao Dịch</h3>
@@ -404,7 +428,6 @@
                 </div>
             </div>
 
-            <!-- Modal Thêm Danh Mục Mới -->
             <div x-show="showCatModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4" style="display: none;">
                 <div class="bg-white rounded-2xl w-full max-w-xs p-5 space-y-3">
                     <h3 class="font-bold text-sm text-gray-800">Thêm Danh Mục Mới</h3>
@@ -431,7 +454,7 @@
 
                     <div>
                         <label class="block text-[11px] text-gray-500 mb-1">Tên danh mục</label>
-                        <input type="text" x-model="newCat.name" class="w-full border rounded-lg px-3 py-2 text-xs" placeholder="VD: Đồ công nghệ, Thú cưng...">
+                        <input type="text" x-model="newCat.name" class="w-full border rounded-lg px-3 py-2 text-xs" placeholder="VD: Đầu tư, Đồ gia dụng...">
                     </div>
 
                     <div class="flex gap-2 pt-2">
@@ -500,11 +523,17 @@
                 newTx: { type: 'expense', category: 'Ăn uống', accountId: '', targetAccountId: '', amount: 0, formattedAmount: '', note: '' },
                 newCat: { type: 'expense', icon: '🍔', name: '' },
 
-                // Biến phục vụ Lọc Lịch Sử
-                historyFilterType: 'day', // 'day', 'month', 'year', 'all'
+                // Biến cho Lịch sử
+                historyFilterType: 'day',
                 historyFilterDate: getTodayString(),
                 historyFilterMonth: getMonthString(),
                 historyFilterYear: new Date().getFullYear(),
+
+                // Biến cho Báo cáo (Analytics)
+                reportFilterType: 'day',
+                reportFilterDate: getTodayString(),
+                reportFilterMonth: getMonthString(),
+                reportFilterYear: new Date().getFullYear(),
 
                 quickEmojis: ['🍔', '☕', '🛒', '🚗', '🏠', '🎬', '💊', '🎁', '💵', '🎮', '✈️', '🐶'],
 
@@ -553,29 +582,39 @@
                 },
 
                 get filteredHistoryTransactions() {
-                    return this.sortedTransactions.filter(tx => {
-                        if (!tx.date) return false;
-                        const d = new Date(tx.date);
-                        
-                        if (this.historyFilterType === 'day') {
-                            const yyyy = d.getFullYear();
-                            const mm = String(d.getMonth() + 1).padStart(2, '0');
-                            const dd = String(d.getDate()).padStart(2, '0');
-                            const txDateStr = `${yyyy}-${mm}-${dd}`;
-                            return txDateStr === this.historyFilterDate;
-                        } 
-                        else if (this.historyFilterType === 'month') {
-                            const yyyy = d.getFullYear();
-                            const mm = String(d.getMonth() + 1).padStart(2, '0');
-                            const txMonthStr = `${yyyy}-${mm}`;
-                            return txMonthStr === this.historyFilterMonth;
-                        } 
-                        else if (this.historyFilterType === 'year') {
-                            return d.getFullYear() === Number(this.historyFilterYear);
-                        }
-                        
-                        return true; // 'all'
-                    });
+                    return this.sortedTransactions.filter(tx => this.checkTimeMatch(tx.date, this.historyFilterType, this.historyFilterDate, this.historyFilterMonth, this.historyFilterYear));
+                },
+
+                get reportData() {
+                    const filtered = this.transactions.filter(tx => this.checkTimeMatch(tx.date, this.reportFilterType, this.reportFilterDate, this.reportFilterMonth, this.reportFilterYear));
+                    const income = filtered.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+                    const expense = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+                    return {
+                        income: income,
+                        expense: expense,
+                        total: income + expense
+                    };
+                },
+
+                checkTimeMatch(dateStr, filterType, filterDate, filterMonth, filterYear) {
+                    if (!dateStr) return false;
+                    const d = new Date(dateStr);
+                    
+                    if (filterType === 'day') {
+                        const yyyy = d.getFullYear();
+                        const mm = String(d.getMonth() + 1).padStart(2, '0');
+                        const dd = String(d.getDate()).padStart(2, '0');
+                        return `${yyyy}-${mm}-${dd}` === filterDate;
+                    } 
+                    else if (filterType === 'month') {
+                        const yyyy = d.getFullYear();
+                        const mm = String(d.getMonth() + 1).padStart(2, '0');
+                        return `${yyyy}-${mm}` === filterMonth;
+                    } 
+                    else if (filterType === 'year') {
+                        return d.getFullYear() === Number(filterYear);
+                    }
+                    return true; // 'all'
                 },
 
                 formatInputMoney(event, targetObj, keyRaw, keyFormatted) {
@@ -634,7 +673,6 @@
                     if (!this.user) return;
                     const uid = this.user.uid;
 
-                    // Lắng nghe Ví tiền
                     db.ref(`users/${uid}/accounts`).on('value', snapshot => {
                         const val = snapshot.val();
                         this.accounts = val ? Object.keys(val).map(k => ({ id: k, ...val[k] })) : [];
@@ -643,14 +681,12 @@
                         }
                     });
 
-                    // Lắng nghe Giao dịch
                     db.ref(`users/${uid}/transactions`).on('value', snapshot => {
                         const val = snapshot.val();
                         this.transactions = val ? Object.keys(val).map(k => ({ id: k, ...val[k] })) : [];
                         this.updateOverviewChart();
                     });
 
-                    // Lắng nghe Danh mục tùy chỉnh
                     db.ref(`users/${uid}/customCategories`).on('value', snapshot => {
                         const val = snapshot.val();
                         this.customCategories = val ? Object.keys(val).map(k => ({ id: k, ...val[k] })) : [];
@@ -751,7 +787,6 @@
                         txData.category = this.newTx.category;
                     }
 
-                    // Cập nhật số dư ví
                     if (this.newTx.type === 'expense') {
                         this.updateAccountBalance(this.newTx.accountId, -this.newTx.amount);
                     } else if (this.newTx.type === 'income') {
@@ -778,7 +813,6 @@
                     if (!tx) return;
 
                     if (confirm("Xóa giao dịch này và hoàn trả lại số dư ví?")) {
-                        // Hoàn lại tiền cho ví
                         if (tx.type === 'expense') {
                             this.updateAccountBalance(tx.accountId, tx.amount);
                         } else if (tx.type === 'income') {
@@ -855,7 +889,6 @@
                     this.filteredIncome = filtered.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
                     this.filteredExpense = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
 
-                    // Gom nhóm chi tiêu theo danh mục
                     const catTotals = {};
                     filtered.filter(t => t.type === 'expense').forEach(t => {
                         catTotals[t.category] = (catTotals[t.category] || 0) + t.amount;
@@ -865,7 +898,7 @@
                     const labels = Object.keys(catTotals);
                     const data = Object.values(catTotals);
 
-                    this.filteredCategoryPercentages = labels.map((idx, cat) => ({
+                    this.filteredCategoryPercentages = labels.map((cat, idx) => ({
                         category: cat,
                         amount: catTotals[cat],
                         percentage: this.filteredExpense > 0 ? ((catTotals[cat] / this.filteredExpense) * 100).toFixed(1) : 0,
