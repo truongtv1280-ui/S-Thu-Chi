@@ -1,499 +1,931 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>S-Thu Chi Quản Lý Tài Chính</title>
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <style>
-    body {
-      background-color: #f3f4f6;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-    .app-container {
-      max-width: 480px;
-      margin: 0 auto;
-      min-height: 100vh;
-      background: #ffffff;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      box-shadow: 0 0 20px rgba(0,0,0,0.05);
-    }
-    .tab-btn {
-      padding: 6px 12px;
-      font-size: 13px;
-      border-radius: 8px;
-      color: #4b5563;
-      background: #f3f4f6;
-      transition: all 0.2s;
-    }
-    .tab-btn.active {
-      background: #2563eb;
-      color: #ffffff;
-      font-weight: 600;
-    }
-    .bottom-nav-btn.active {
-      color: #2563eb;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sổ Thu Chi Quản Lý Tài Chính</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Firebase SDK (v8) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        input[type="password"],
+        input[type="date"],
+        input[type="month"],
+        select,
+        textarea {
+            font-size: 16px !important;
+        }
+    </style>
 </head>
-<body>
+<body class="bg-gray-100 min-h-screen text-gray-800" x-data="app()" x-init="init()">
 
-<div class="app-container pb-20">
-  <!-- Khung Đăng Nhập -->
-  <div id="auth-screen" class="p-6 flex flex-col justify-center items-center my-auto min-h-[80vh]">
-    <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold mb-4 shadow-lg">
-      S
-    </div>
-    <h2 class="text-2xl font-bold text-gray-800 mb-2">S-Thu-Chi</h2>
-    <p class="text-sm text-gray-500 text-center mb-6">Quản lý thu chi cá nhân an toàn & hiệu quả</p>
-    
-    <div class="w-full space-y-3">
-      <!-- Nút Đăng nhập nhanh bằng Gmail -->
-      <button onclick="handleGoogleLogin()" class="w-full bg-white border border-gray-300 text-gray-700 py-3 rounded-xl font-semibold shadow-sm flex items-center justify-center space-x-2 active:scale-95 transition hover:bg-gray-50">
-        <svg class="w-5 h-5" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-        </svg>
-        <span>Đăng nhập bằng Gmail</span>
-      </button>
+    <!-- Màn hình chưa đăng nhập -->
+    <template x-if="!user">
+        <div class="min-h-screen flex flex-col items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-6">
+                <div class="text-center space-y-2">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full text-blue-600 mb-2">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    </div>
+                    <h1 class="text-2xl font-bold text-gray-900">Đăng Nhập Tài Khoản</h1>
+                    <p class="text-sm text-gray-500">Đồng bộ dữ liệu an toàn trên đa thiết bị</p>
+                </div>
 
-      <div class="my-3 flex items-center justify-center space-x-2">
-        <div class="h-px bg-gray-200 flex-1"></div>
-        <span class="text-xs text-gray-400">hoặc Email</span>
-        <div class="h-px bg-gray-200 flex-1"></div>
-      </div>
+                <!-- Tabs Đăng nhập -->
+                <div class="flex border-b border-gray-200">
+                    <button @click="authTab = 'google'" :class="authTab === 'google' ? 'border-blue-600 text-blue-600 font-semibold' : 'text-gray-500 border-transparent'" class="w-1/2 py-2 text-center border-b-2 text-sm transition-colors">
+                        Google
+                    </button>
+                    <button @click="authTab = 'email'" :class="authTab === 'email' ? 'border-blue-600 text-blue-600 font-semibold' : 'text-gray-500 border-transparent'" class="w-1/2 py-2 text-center border-b-2 text-sm transition-colors">
+                        Email
+                    </button>
+                </div>
 
-      <input type="email" id="auth-email" placeholder="Email" class="w-full p-3 border rounded-xl outline-none focus:border-blue-500">
-      <input type="password" id="auth-password" placeholder="Mật khẩu" class="w-full p-3 border rounded-xl outline-none focus:border-blue-500">
-      <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold shadow-md active:scale-95 transition">Đăng nhập</button>
-      <button onclick="handleRegister()" class="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold active:scale-95 transition">Đăng ký tài khoản mới</button>
-    </div>
-  </div>
+                <!-- Tab Google -->
+                <div x-show="authTab === 'google'" class="space-y-4">
+                    <button @click="loginWithGoogle()" :disabled="isLoggingIn" class="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-700 font-medium hover:bg-gray-50 transition shadow-sm disabled:opacity-50">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                        <span x-text="isLoggingIn ? 'Đang kết nối...' : 'Tiếp tục với Google'"></span>
+                    </button>
+                </div>
 
-  <!-- Giao diện Chính -->
-  <div id="main-app" class="hidden">
-    <!-- Header -->
-    <div class="bg-blue-600 text-white p-5 rounded-b-3xl shadow-md">
-      <div class="flex justify-between items-center mb-4">
-        <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-lg font-bold">
-            <i class="fa-solid fa-user"></i>
-          </div>
-          <div>
-            <p class="text-xs text-blue-100">Xin chào,</p>
-            <p id="user-display-email" class="text-sm font-semibold truncate max-w-[180px]">User</p>
-          </div>
+                <!-- Tab Email -->
+                <div x-show="authTab === 'email'" class="space-y-4" style="display: none;">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Email</label>
+                        <input type="email" x-model="emailInput" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="nhap@email.com">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Mật khẩu</label>
+                        <input type="password" x-model="passwordInput" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="••••••••">
+                    </div>
+                    <div class="flex gap-2 pt-2">
+                        <button @click="loginWithEmail()" class="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-medium hover:bg-blue-700 transition">Đăng nhập</button>
+                        <button @click="registerWithEmail()" class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl font-medium hover:bg-gray-200 transition">Đăng ký</button>
+                    </div>
+                </div>
+            </div>
         </div>
-        <button onclick="handleLogout()" class="bg-white/20 hover:bg-white/30 text-xs px-3 py-1.5 rounded-lg font-medium transition">
-          Đăng xuất
-        </button>
-      </div>
+    </template>
 
-      <div class="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10">
-        <div class="flex justify-between items-center mb-1">
-          <span class="text-xs text-blue-100">Tổng số dư tài khoản</span>
-          <button onclick="toggleBalanceVisibility()" class="text-xs text-blue-100">
-            <i id="eye-icon" class="fa-solid fa-eye"></i> <span id="eye-text">Ẩn</span>
-          </button>
+    <!-- Màn hình chính -->
+    <template x-if="user">
+        <div class="max-w-md mx-auto pb-24 min-h-screen bg-gray-50 flex flex-col">
+            <!-- Header -->
+            <div class="bg-blue-600 text-white p-4 rounded-b-2xl shadow-md">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <img :src="user.photoURL || 'https://via.placeholder.com/40'" class="w-10 h-10 rounded-full border-2 border-white/50">
+                        <div>
+                            <div class="text-xs text-blue-100">Xin chào,</div>
+                            <div class="font-bold text-sm" x-text="user.email"></div>
+                        </div>
+                    </div>
+                    <button @click="logout()" class="p-2 bg-blue-700 hover:bg-blue-800 rounded-lg text-xs transition">Đăng xuất</button>
+                </div>
+
+                <div class="bg-white/10 backdrop-blur-md rounded-xl p-4 space-y-1">
+                    <div class="flex items-center justify-between text-xs text-blue-100">
+                        <span>Tổng số dư tài khoản</span>
+                        <button @click="hideBalance = !hideBalance" class="hover:text-white">
+                            <span x-text="hideBalance ? '👁️ Hiện' : '🙈 Ẩn'"></span>
+                        </button>
+                    </div>
+                    <div class="text-2xl font-black" x-text="hideBalance ? '••••••••' : formatMoney(calculateTotalBalance())"></div>
+                </div>
+            </div>
+
+            <!-- TAB 1: Trang chủ / Tổng quan -->
+            <div x-show="activeTab === 'home'" class="p-4 space-y-4 flex-1">
+                <div class="flex items-center justify-between bg-white p-2 rounded-xl shadow-sm text-xs font-medium text-gray-600 overflow-x-auto">
+                    <button @click="timeFilter = 'today'; updateOverviewChart()" :class="timeFilter === 'today' ? 'bg-blue-500 text-white' : ''" class="px-3 py-1.5 rounded-lg transition">Hôm nay</button>
+                    <button @click="timeFilter = 'week'; updateOverviewChart()" :class="timeFilter === 'week' ? 'bg-blue-500 text-white' : ''" class="px-3 py-1.5 rounded-lg transition">Tuần này</button>
+                    <button @click="timeFilter = 'month'; updateOverviewChart()" :class="timeFilter === 'month' ? 'bg-blue-500 text-white' : ''" class="px-3 py-1.5 rounded-lg transition">Tháng này</button>
+                    <button @click="timeFilter = 'year'; updateOverviewChart()" :class="timeFilter === 'year' ? 'bg-blue-500 text-white' : ''" class="px-3 py-1.5 rounded-lg transition">Năm nay</button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-emerald-100">
+                        <div class="text-xs text-gray-500 mb-1">Tổng Thu</div>
+                        <div class="text-emerald-600 font-bold text-base" x-text="formatMoney(filteredIncome)"></div>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-red-100">
+                        <div class="text-xs text-gray-500 mb-1">Tổng Chi</div>
+                        <div class="text-red-500 font-bold text-base" x-text="formatMoney(filteredExpense)"></div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm">
+                    <h3 class="text-xs font-bold text-gray-700 mb-3">TỶ LỆ CHI TIÊU</h3>
+                    <div class="h-48 relative">
+                        <canvas id="categoryDoughnutChart"></canvas>
+                    </div>
+                    <div class="mt-4 space-y-2">
+                        <template x-for="item in filteredCategoryPercentages" :key="item.category">
+                            <div class="flex items-center justify-between text-xs">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full" :style="`background-color: ${item.color}`"></span>
+                                    <span x-text="item.category" class="font-medium"></span>
+                                </div>
+                                <div class="font-bold" x-text="`${formatMoney(item.amount)} (${item.percentage}%)`"></div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: Báo cáo / Thống kê -->
+            <div x-show="activeTab === 'analytics'" class="p-4 space-y-4 flex-1" style="display: none;">
+                <div class="bg-white p-3 rounded-xl shadow-sm space-y-2">
+                    <div class="text-xs font-bold text-gray-700 mb-1">Thời gian báo cáo:</div>
+                    <div class="flex items-center justify-between text-xs font-medium text-gray-600">
+                        <button @click="reportFilterType = 'day'" :class="reportFilterType === 'day' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center mr-1">Ngày</button>
+                        <button @click="reportFilterType = 'month'" :class="reportFilterType === 'month' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center mr-1">Tháng</button>
+                        <button @click="reportFilterType = 'year'" :class="reportFilterType === 'year' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center mr-1">Năm</button>
+                        <button @click="reportFilterType = 'all'" :class="reportFilterType === 'all' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center">Tất cả</button>
+                    </div>
+
+                    <div class="pt-1 flex items-center justify-between gap-2 text-xs">
+                        <template x-if="reportFilterType === 'day'">
+                            <input type="date" x-model="reportFilterDate" class="w-full border rounded-lg px-3 py-1.5 text-xs text-gray-700 outline-none focus:border-blue-500">
+                        </template>
+                        <template x-if="reportFilterType === 'month'">
+                            <input type="month" x-model="reportFilterMonth" class="w-full border rounded-lg px-3 py-1.5 text-xs text-gray-700 outline-none focus:border-blue-500">
+                        </template>
+                        <template x-if="reportFilterType === 'year'">
+                            <select x-model="reportFilterYear" class="w-full border rounded-lg px-3 py-1.5 text-xs text-gray-700 outline-none focus:border-blue-500">
+                                <template x-for="y in availableYears" :key="y">
+                                    <option :value="y" x-text="'Năm ' + y"></option>
+                                </template>
+                            </select>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm">
+                    <h3 class="text-sm font-bold text-gray-800 mb-1">📊 Báo cáo Dòng tiền</h3>
+                    <p class="text-xs text-gray-500 mb-4">So sánh thu chi trong khoảng thời gian đã chọn</p>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-emerald-600">Thu nhập</span>
+                                <span x-text="formatMoney(reportData.income)"></span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-2.5">
+                                <div class="bg-emerald-500 h-2.5 rounded-full" :style="`width: ${reportData.total > 0 ? (reportData.income / reportData.total * 100) : 0}%`"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-red-500">Chi tiêu</span>
+                                <span x-text="formatMoney(reportData.expense)"></span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-2.5">
+                                <div class="bg-red-500 h-2.5 rounded-full" :style="`width: ${reportData.total > 0 ? (reportData.expense / reportData.total * 100) : 0}%`"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm space-y-2">
+                    <h3 class="text-sm font-bold text-gray-800">💡 Thống kê chi tiết</h3>
+                    <div class="flex justify-between items-center text-xs py-2 border-b">
+                        <span class="text-gray-600">Tổng dư / Thâm hụt:</span>
+                        <span class="font-bold text-sm" :class="(reportData.income - reportData.expense) >= 0 ? 'text-emerald-600' : 'text-red-500'" x-text="formatMoney(reportData.income - reportData.expense)"></span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs py-2">
+                        <span class="text-gray-600">Tỷ lệ tiết kiệm:</span>
+                        <span class="font-bold text-blue-600" x-text="reportData.income > 0 ? Math.max(0, (((reportData.income - reportData.expense) / reportData.income) * 100)).toFixed(1) + '%' : '0%'"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: Ví tiền -->
+            <div x-show="activeTab === 'accounts'" class="p-4 space-y-5 flex-1" style="display: none;">
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h2 class="font-bold text-base">Danh sách ví tài khoản</h2>
+                        <button @click="openAccountModal()" class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium shadow">+ Thêm ví</button>
+                    </div>
+                    <div class="space-y-2">
+                        <template x-for="acc in accounts" :key="acc.id">
+                            <div class="bg-white p-3 rounded-xl shadow-sm flex items-center justify-between">
+                                <div>
+                                    <div class="font-bold text-sm" x-text="acc.name"></div>
+                                    <div class="text-xs text-blue-600 font-semibold mt-0.5" x-text="formatMoney(acc.balance)"></div>
+                                </div>
+                                <button @click="deleteAccount(acc.id)" class="text-gray-400 hover:text-red-500 p-1">🗑️</button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="space-y-3 pt-2">
+                    <div class="flex items-center justify-between">
+                        <h2 class="font-bold text-base">Danh mục tùy chỉnh</h2>
+                        <button @click="showCatModal = true" class="bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium shadow">+ Tạo danh mục</button>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl shadow-sm space-y-2">
+                        <template x-if="customCategories.length === 0">
+                            <div class="text-xs text-gray-400 text-center py-2">Chưa có danh mục tự tạo nào</div>
+                        </template>
+                        <template x-for="cat in customCategories" :key="cat.id">
+                            <div class="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0 text-xs">
+                                <div class="flex items-center gap-2">
+                                    <span x-text="cat.icon" class="text-base"></span>
+                                    <span x-text="cat.name" class="font-medium"></span>
+                                    <span :class="cat.type === 'expense' ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-600'" class="px-1.5 py-0.5 rounded text-[10px]" x-text="cat.type === 'expense' ? 'Chi' : 'Thu'"></span>
+                                </div>
+                                <button @click="deleteCategory(cat.id)" class="text-gray-400 hover:text-red-500">🗑️</button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: Lịch sử Giao dịch -->
+            <div x-show="activeTab === 'history'" class="p-4 space-y-3 flex-1" style="display: none;">
+                <div class="flex items-center justify-between">
+                    <h2 class="font-bold text-base">Lịch sử giao dịch</h2>
+                    <button @click="openTxModal()" class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium shadow">+ Tạo mới</button>
+                </div>
+
+                <div class="bg-white p-2 rounded-xl shadow-sm space-y-2">
+                    <div class="flex items-center justify-between text-xs font-medium text-gray-600">
+                        <button @click="historyFilterType = 'day'" :class="historyFilterType === 'day' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center mr-1">Ngày</button>
+                        <button @click="historyFilterType = 'month'" :class="historyFilterType === 'month' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center mr-1">Tháng</button>
+                        <button @click="historyFilterType = 'year'" :class="historyFilterType === 'year' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center mr-1">Năm</button>
+                        <button @click="historyFilterType = 'all'" :class="historyFilterType === 'all' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center">Tất cả</button>
+                    </div>
+
+                    <div class="pt-1 flex items-center justify-between gap-2 text-xs">
+                        <template x-if="historyFilterType === 'day'">
+                            <input type="date" x-model="historyFilterDate" class="w-full border rounded-lg px-3 py-1.5 text-xs text-gray-700 outline-none focus:border-blue-500">
+                        </template>
+                        <template x-if="historyFilterType === 'month'">
+                            <input type="month" x-model="historyFilterMonth" class="w-full border rounded-lg px-3 py-1.5 text-xs text-gray-700 outline-none focus:border-blue-500">
+                        </template>
+                        <template x-if="historyFilterType === 'year'">
+                            <select x-model="historyFilterYear" class="w-full border rounded-lg px-3 py-1.5 text-xs text-gray-700 outline-none focus:border-blue-500">
+                                <template x-for="y in availableYears" :key="y">
+                                    <option :value="y" x-text="'Năm ' + y"></option>
+                                </template>
+                            </select>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <template x-if="filteredHistoryTransactions.length === 0">
+                        <div class="bg-white p-6 rounded-xl text-center text-xs text-gray-400">
+                            Không có giao dịch nào trong khoảng thời gian này
+                        </div>
+                    </template>
+                    <template x-for="tx in filteredHistoryTransactions" :key="tx.id">
+                        <div class="bg-white p-3 rounded-xl shadow-sm flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-full flex items-center justify-center text-base" :class="getTxTypeBg(tx.type)" x-text="getTxIcon(tx)"></div>
+                                <div>
+                                    <div class="font-bold text-xs" x-text="getTxTitle(tx)"></div>
+                                    <div class="text-[10px] text-gray-500 font-medium mt-0.5">
+                                        <span class="text-blue-600 font-semibold" x-text="getAccountName(tx.accountId)"></span>
+                                        <template x-if="tx.type === 'transfer'">
+                                            <span> ➔ <span class="text-blue-600 font-semibold" x-text="getAccountName(tx.targetAccountId)"></span></span>
+                                        </template>
+                                        <span x-text="' • ' + formatDate(tx.date)"></span>
+                                    </div>
+                                    <template x-if="tx.note">
+                                        <div class="text-[10px] text-gray-400 italic" x-text="tx.note"></div>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold text-xs" :class="getTxColorClass(tx.type)" x-text="getTxPrefix(tx.type) + formatMoney(tx.amount)"></div>
+                                <button @click="deleteTransaction(tx.id)" class="text-[10px] text-gray-400 hover:text-red-500 mt-0.5">Xóa</button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Bottom Nav -->
+            <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 flex items-center justify-between py-2 px-3 z-10">
+                <button @click="activeTab = 'home'" :class="activeTab === 'home' ? 'text-blue-600 font-bold' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-[10px] flex-1">
+                    <span class="text-base">📊</span>
+                    <span>Tổng quan</span>
+                </button>
+                <button @click="activeTab = 'analytics'" :class="activeTab === 'analytics' ? 'text-blue-600 font-bold' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-[10px] flex-1">
+                    <span class="text-base">📈</span>
+                    <span>Báo cáo</span>
+                </button>
+                
+                <div class="flex-1 flex justify-center">
+                    <button @click="openTxModal()" class="bg-blue-600 text-white p-3 rounded-full -mt-6 shadow-lg hover:bg-blue-700 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                    </button>
+                </div>
+
+                <button @click="activeTab = 'accounts'" :class="activeTab === 'accounts' ? 'text-blue-600 font-bold' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-[10px] flex-1">
+                    <span class="text-base">💳</span>
+                    <span>Ví tiền</span>
+                </button>
+                <button @click="activeTab = 'history'" :class="activeTab === 'history' ? 'text-blue-600 font-bold' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-[10px] flex-1">
+                    <span class="text-base">📜</span>
+                    <span>Lịch sử</span>
+                </button>
+            </div>
+
+            <!-- Modals -->
+            <div x-show="showAccModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" style="display: none;">
+                <div class="bg-white rounded-2xl w-full max-w-xs p-5 space-y-4">
+                    <h3 class="font-bold text-sm text-gray-800">Thêm Ví Mới</h3>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Tên ví</label>
+                        <input type="text" x-model="newAcc.name" class="w-full border rounded-lg px-3 py-2 text-xs outline-none focus:border-blue-500" placeholder="VD: Tiền mặt, MB Bank...">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Số dư ban đầu</label>
+                        <input type="text" x-model="newAcc.formattedBalance" @input="formatInputMoney($event, 'newAcc', 'balance', 'formattedBalance')" class="w-full border rounded-lg px-3 py-2 text-xs outline-none focus:border-blue-500" placeholder="0">
+                    </div>
+                    <div class="flex gap-2">
+                        <button @click="showAccModal = false" class="flex-1 py-2 text-xs bg-gray-100 rounded-lg">Hủy</button>
+                        <button @click="addAccount()" class="flex-1 py-2 text-xs bg-blue-600 text-white rounded-lg font-bold">Thêm</button>
+                    </div>
+                </div>
+            </div>
+
+            <div x-show="showTxModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" style="display: none;">
+                <div class="bg-white rounded-2xl w-full max-w-xs p-5 space-y-3">
+                    <h3 class="font-bold text-sm text-gray-800">Ghi Chép Giao Dịch</h3>
+                    
+                    <div>
+                        <label class="block text-[11px] text-gray-500 mb-1">Loại giao dịch</label>
+                        <select x-model="newTx.type" @change="onTxTypeChange()" class="w-full border rounded-lg px-3 py-2 text-xs">
+                            <option value="expense">Khoản Chi (-)</option>
+                            <option value="income">Khoản Thu (+)</option>
+                            <option value="transfer">Chuyển ví (🔄)</option>
+                        </select>
+                    </div>
+
+                    <div x-show="newTx.type !== 'transfer'">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-[11px] text-gray-500">Danh mục</label>
+                            <button @click="newCat.type = newTx.type; showCatModal = true" class="text-[10px] text-blue-600 font-bold hover:underline">+ Tạo danh mục</button>
+                        </div>
+                        <select x-model="newTx.category" class="w-full border rounded-lg px-3 py-2 text-xs">
+                            <template x-for="cat in currentCategories" :key="cat.name">
+                                <option :value="cat.name" x-text="cat.icon + ' ' + cat.name"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] text-gray-500 mb-1">Số tiền</label>
+                        <input type="text" x-model="newTx.formattedAmount" @input="formatInputMoney($event, 'newTx', 'amount', 'formattedAmount')" class="w-full border rounded-lg px-3 py-2 text-xs font-bold text-blue-600" placeholder="0">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] text-gray-500 mb-1" x-text="newTx.type === 'transfer' ? 'Từ ví' : 'Ví sử dụng'"></label>
+                        <select x-model="newTx.accountId" class="w-full border rounded-lg px-3 py-2 text-xs">
+                            <template x-for="acc in accounts" :key="acc.id">
+                                <option :value="acc.id" x-text="acc.name + ' (' + formatMoney(acc.balance) + ')'"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <div x-show="newTx.type === 'transfer'">
+                        <label class="block text-[11px] text-gray-500 mb-1">Đến ví</label>
+                        <select x-model="newTx.targetAccountId" class="w-full border rounded-lg px-3 py-2 text-xs">
+                            <template x-for="acc in accounts" :key="acc.id">
+                                <option :value="acc.id" x-text="acc.name + ' (' + formatMoney(acc.balance) + ')'"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] text-gray-500 mb-1">Ghi chú</label>
+                        <input type="text" x-model="newTx.note" class="w-full border rounded-lg px-3 py-2 text-xs" placeholder="Ghi chú...">
+                    </div>
+
+                    <div class="flex gap-2 pt-2">
+                        <button @click="showTxModal = false" class="flex-1 py-2 text-xs bg-gray-100 rounded-lg">Hủy</button>
+                        <button @click="addTransaction()" class="flex-1 py-2 text-xs bg-blue-600 text-white rounded-lg font-bold">Lưu</button>
+                    </div>
+                </div>
+            </div>
+
+            <div x-show="showCatModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4" style="display: none;">
+                <div class="bg-white rounded-2xl w-full max-w-xs p-5 space-y-3">
+                    <h3 class="font-bold text-sm text-gray-800">Thêm Danh Mục Mới</h3>
+                    
+                    <div>
+                        <label class="block text-[11px] text-gray-500 mb-1">Loại danh mục</label>
+                        <select x-model="newCat.type" class="w-full border rounded-lg px-3 py-2 text-xs">
+                            <option value="expense">Khoản Chi (-)</option>
+                            <option value="income">Khoản Thu (+)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] text-gray-500 mb-1">Chọn nhanh biểu tượng</label>
+                        <div class="flex flex-wrap gap-1.5 p-2 bg-gray-50 rounded-lg mb-2">
+                            <template x-for="emoji in quickEmojis" :key="emoji">
+                                <button type="button" @click="newCat.icon = emoji" class="w-7 h-7 flex items-center justify-center bg-white rounded border border-gray-200 text-sm hover:bg-blue-50 hover:border-blue-300">
+                                    <span x-text="emoji"></span>
+                                </button>
+                            </template>
+                        </div>
+                        <input type="text" x-model="newCat.icon" class="w-full border rounded-lg px-3 py-2 text-xs" placeholder="Nhập Emoji khác...">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] text-gray-500 mb-1">Tên danh mục</label>
+                        <input type="text" x-model="newCat.name" class="w-full border rounded-lg px-3 py-2 text-xs" placeholder="VD: Đầu tư, Đồ gia dụng...">
+                    </div>
+
+                    <div class="flex gap-2 pt-2">
+                        <button @click="showCatModal = false" class="flex-1 py-2 text-xs bg-gray-100 rounded-lg">Hủy</button>
+                        <button @click="addCategory()" class="flex-1 py-2 text-xs bg-blue-600 text-white rounded-lg font-bold">Thêm</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
-        <p id="total-balance" class="text-2xl font-bold tracking-tight">0 đ</p>
-      </div>
-    </div>
+    </template>
 
-    <!-- VIEW BÁO CÁO -->
-    <div id="view-report" class="p-4 space-y-4">
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-        <p class="text-xs font-semibold text-gray-500 mb-3">Thời gian báo cáo:</p>
-        
-        <div class="flex justify-between bg-gray-100 p-1 rounded-xl mb-3">
-          <button class="tab-btn active" onclick="setTimeFilter('day', this)">Ngày</button>
-          <button class="tab-btn" onclick="setTimeFilter('month', this)">Tháng</button>
-          <button class="tab-btn" onclick="setTimeFilter('year', this)">Năm</button>
-          <button class="tab-btn" onclick="setTimeFilter('custom', this)">Tùy chỉnh</button>
-          <button class="tab-btn" onclick="setTimeFilter('all', this)">Tất cả</button>
-        </div>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyD60xItsgAdFomunCdhypi26yyI5xrp0P0",
+            authDomain: "appthuchimoi.firebaseapp.com",
+            databaseURL: "https://appthuchimoi-default-rtdb.firebaseio.com",
+            projectId: "appthuchimoi",
+            storageBucket: "appthuchimoi.firebasestorage.app",
+            messagingSenderId: "77316598744",
+            appId: "1:77316598744:web:e0da4f203841cdfcee60ad",
+            measurementId: "G-LDYPBV32N6"
+        };
 
-        <div id="standard-date-picker">
-          <input type="date" id="report-single-date" class="w-full p-2.5 border rounded-xl text-sm outline-none focus:border-blue-500" onchange="renderReport()">
-        </div>
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
 
-        <div id="custom-date-picker" class="hidden">
-          <div class="flex items-center space-x-2">
-            <input type="date" id="report-start-date" class="w-1/2 p-2 border rounded-xl text-sm outline-none focus:border-blue-500" onchange="renderReport()">
-            <span class="text-xs text-gray-400 font-medium">đến</span>
-            <input type="date" id="report-end-date" class="w-1/2 p-2 border rounded-xl text-sm outline-none focus:border-blue-500" onchange="renderReport()">
-          </div>
-        </div>
-      </div>
+        let chartInstance = null;
 
-      <div class="grid grid-cols-2 gap-3">
-        <div class="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-100">
-          <p class="text-xs text-emerald-600 font-medium mb-1"><i class="fa-solid fa-arrow-down-left mr-1"></i>Tổng thu</p>
-          <p id="report-income" class="text-lg font-bold text-emerald-700">0 đ</p>
-        </div>
-        <div class="bg-rose-50 p-3.5 rounded-2xl border border-rose-100">
-          <p class="text-xs text-rose-600 font-medium mb-1"><i class="fa-solid fa-arrow-up-right mr-1"></i>Tổng chi</p>
-          <p id="report-expense" class="text-lg font-bold text-rose-700">0 đ</p>
-        </div>
-      </div>
+        function getTodayString() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
 
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-        <canvas id="report-chart" class="max-h-56"></canvas>
-      </div>
-    </div>
+        function getMonthString() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            return `${yyyy}-${mm}`;
+        }
 
-    <!-- VIEW LỊCH SỬ -->
-    <div id="view-history" class="p-4 hidden">
-      <h3 class="text-sm font-semibold text-gray-700 mb-3">Lịch sử giao dịch</h3>
-      <div id="transaction-list" class="space-y-2"></div>
-    </div>
-  </div>
+        function app() {
+            return {
+                user: null,
+                activeTab: 'home',
+                authTab: 'google',
+                emailInput: '',
+                passwordInput: '',
+                isLoggingIn: false,
+                hideBalance: false,
+                timeFilter: 'month',
+                accounts: [],
+                transactions: [],
+                customCategories: [],
+                filteredIncome: 0,
+                filteredExpense: 0,
+                filteredCategoryPercentages: [],
+                showAccModal: false,
+                showTxModal: false,
+                showCatModal: false,
+                newAcc: { name: '', balance: 0, formattedBalance: '' },
+                newTx: { type: 'expense', category: 'Ăn uống', accountId: '', targetAccountId: '', amount: 0, formattedAmount: '', note: '' },
+                newCat: { type: 'expense', icon: '🍔', name: '' },
 
-  <!-- Bottom Nav -->
-  <div id="bottom-nav" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white border-t border-gray-100 px-6 py-2 flex justify-around items-center z-40 hidden">
-    <button onclick="switchTab('report')" id="nav-report" class="bottom-nav-btn active flex flex-col items-center text-gray-400">
-      <i class="fa-solid fa-chart-pie text-lg"></i>
-      <span class="text-[10px] mt-1">Báo cáo</span>
-    </button>
-    
-    <button onclick="openAddModal()" class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl shadow-lg active:scale-95 transition -mt-5">
-      <i class="fa-solid fa-plus"></i>
-    </button>
+                historyFilterType: 'day',
+                historyFilterDate: getTodayString(),
+                historyFilterMonth: getMonthString(),
+                historyFilterYear: new Date().getFullYear(),
 
-    <button onclick="switchTab('history')" id="nav-history" class="bottom-nav-btn flex flex-col items-center text-gray-400">
-      <i class="fa-solid fa-clock-rotate-left text-lg"></i>
-      <span class="text-[10px] mt-1">Lịch sử</span>
-    </button>
-  </div>
-</div>
+                reportFilterType: 'day',
+                reportFilterDate: getTodayString(),
+                reportFilterMonth: getMonthString(),
+                reportFilterYear: new Date().getFullYear(),
 
-<!-- Modal Thêm Giao Dịch -->
-<div id="add-modal" class="fixed inset-0 bg-black/50 z-50 flex items-end justify-center hidden">
-  <div class="bg-white w-full max-w-[480px] rounded-t-3xl p-5 space-y-4">
-    <div class="flex justify-between items-center border-b pb-3">
-      <h3 class="font-bold text-gray-800">Thêm giao dịch mới</h3>
-      <button onclick="closeAddModal()" class="text-gray-400 text-lg"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    
-    <div class="flex bg-gray-100 p-1 rounded-xl">
-      <button id="type-expense" onclick="setTxType('expense')" class="flex-1 py-2 text-xs font-semibold rounded-lg bg-white text-rose-600 shadow-sm">Chi tiền</button>
-      <button id="type-income" onclick="setTxType('income')" class="flex-1 py-2 text-xs font-semibold rounded-lg text-gray-500">Thu tiền</button>
-    </div>
+                quickEmojis: ['🍔', '☕', '🛒', '🚗', '🏠', '🎬', '💊', '🎁', '💵', '🎮', '✈️', '🐶'],
 
-    <div>
-      <label class="text-xs text-gray-500">Số tiền (đ)</label>
-      <input type="number" id="tx-amount" placeholder="0" class="w-full p-3 border rounded-xl text-lg font-bold text-gray-800 outline-none focus:border-blue-500">
-    </div>
+                defaultExpenseCategories: [
+                    { name: 'Ăn uống', icon: '🍜' },
+                    { name: 'Đi lại', icon: '⛽' },
+                    { name: 'Cafe/Trà sữa', icon: '☕' },
+                    { name: 'Mua sắm', icon: '🛒' },
+                    { name: 'Dịch vụ gia đình', icon: '🏠' },
+                    { name: 'Giải trí', icon: '🎬' },
+                    { name: 'Sức khỏe', icon: '💊' },
+                    { name: 'Chi khác', icon: '❓' }
+                ],
+                defaultIncomeCategories: [
+                    { name: 'Lương', icon: '💵' },
+                    { name: 'Thưởng', icon: '🎁' },
+                    { name: 'Bán hàng', icon: '🛍️' },
+                    { name: 'Thu khác', icon: '💰' }
+                ],
 
-    <div>
-      <label class="text-xs text-gray-500">Danh mục</label>
-      <input type="text" id="tx-category" placeholder="Ví dụ: Ăn uống, Lương..." class="w-full p-3 border rounded-xl text-sm outline-none focus:border-blue-500">
-    </div>
+                get availableYears() {
+                    const currentYear = new Date().getFullYear();
+                    const years = [];
+                    for (let y = currentYear; y >= currentYear - 5; y--) {
+                        years.push(y);
+                    }
+                    return years;
+                },
 
-    <div>
-      <label class="text-xs text-gray-500">Ngày giao dịch</label>
-      <input type="date" id="tx-date" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-blue-500">
-    </div>
+                get expenseCategories() {
+                    const custom = this.customCategories.filter(c => c.type === 'expense');
+                    return [...this.defaultExpenseCategories, ...custom];
+                },
 
-    <button onclick="saveTransaction()" class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-semibold shadow-md active:scale-95 transition">
-      Lưu giao dịch
-    </button>
-  </div>
-</div>
+                get incomeCategories() {
+                    const custom = this.customCategories.filter(c => c.type === 'income');
+                    return [...this.defaultIncomeCategories, ...custom];
+                },
 
-<!-- Firebase Modular SDK -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } 
-    from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { getDatabase, ref, set, push, onValue } 
-    from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+                get currentCategories() {
+                    return this.newTx.type === 'expense' ? this.expenseCategories : this.incomeCategories;
+                },
 
-  // Cấu hình Firebase THẬT
-  const firebaseConfig = {
-    apiKey: "AIzaSyD60xItsgAdFomunCdhypiI5xrp0P0",
-    authDomain: "appthuchimoi.firebaseapp.com",
-    databaseURL: "https://appthuchimoi-default-rtdb.firebaseio.com",
-    projectId: "appthuchimoi",
-    storageBucket: "appthuchimoi.appspot.com",
-    messagingSenderId: "77316598744",
-    appId: "1:77316598744:web:e0da4f203841cdfee60ad"
-  };
+                get sortedTransactions() {
+                    return [...this.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+                },
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getDatabase(app);
+                get filteredHistoryTransactions() {
+                    return this.sortedTransactions.filter(tx => this.checkTimeMatch(tx.date, this.historyFilterType, this.historyFilterDate, this.historyFilterMonth, this.historyFilterYear));
+                },
 
-  let currentUser = null;
-  let allTransactions = [];
-  let currentFilterMode = 'day';
-  let currentTxType = 'expense';
-  let isBalanceHidden = false;
-  let myChart = null;
+                get reportData() {
+                    const filtered = this.transactions.filter(tx => this.checkTimeMatch(tx.date, this.reportFilterType, this.reportFilterDate, this.reportFilterMonth, this.reportFilterYear));
+                    const income = filtered.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+                    const expense = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+                    return {
+                        income: income,
+                        expense: expense,
+                        total: income + expense
+                    };
+                },
 
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('report-single-date').value = today;
-  document.getElementById('tx-date').value = today;
+                checkTimeMatch(dateStr, filterType, filterDate, filterMonth, filterYear) {
+                    if (!dateStr) return false;
+                    const d = new Date(dateStr);
+                    
+                    if (filterType === 'day') {
+                        const yyyy = d.getFullYear();
+                        const mm = String(d.getMonth() + 1).padStart(2, '0');
+                        const dd = String(d.getDate()).padStart(2, '0');
+                        return `${yyyy}-${mm}-${dd}` === filterDate;
+                    } 
+                    else if (filterType === 'month') {
+                        const yyyy = d.getFullYear();
+                        const mm = String(d.getMonth() + 1).padStart(2, '0');
+                        return `${yyyy}-${mm}` === filterMonth;
+                    } 
+                    else if (filterType === 'year') {
+                        return d.getFullYear() === Number(filterYear);
+                    }
+                    return true;
+                },
 
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      currentUser = user;
-      document.getElementById('auth-screen').classList.add('hidden');
-      document.getElementById('main-app').classList.remove('hidden');
-      document.getElementById('bottom-nav').classList.remove('hidden');
-      document.getElementById('user-display-email').innerText = user.email || user.displayName;
-      listenToUserData();
-    } else {
-      currentUser = null;
-      document.getElementById('auth-screen').classList.remove('hidden');
-      document.getElementById('main-app').classList.add('hidden');
-      document.getElementById('bottom-nav').classList.add('hidden');
-    }
-  });
+                formatInputMoney(event, targetObj, keyRaw, keyFormatted) {
+                    let rawValue = event.target.value.replace(/\D/g, '');
+                    if (!rawValue) {
+                        this[targetObj][keyRaw] = 0;
+                        this[targetObj][keyFormatted] = '';
+                        return;
+                    }
+                    this[targetObj][keyRaw] = Number(rawValue);
+                    this[targetObj][keyFormatted] = new Intl.NumberFormat('vi-VN').format(rawValue);
+                },
 
-  // Đăng nhập bằng Google
-  window.handleGoogleLogin = () => {
-    const provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider).catch(err => alert("Lỗi đăng nhập Google: " + err.message));
-  };
+                onTxTypeChange() {
+                    if (this.newTx.type === 'expense') {
+                        this.newTx.category = this.expenseCategories[0]?.name || 'Ăn uống';
+                    } else if (this.newTx.type === 'income') {
+                        this.newTx.category = this.incomeCategories[0]?.name || 'Lương';
+                    }
+                },
 
-  window.handleLogin = () => {
-    const email = document.getElementById('auth-email').value;
-    const pass = document.getElementById('auth-password').value;
-    signInWithEmailAndPassword(auth, email, pass).catch(err => alert("Lỗi đăng nhập: " + err.message));
-  };
+                init() {
+                    auth.onAuthStateChanged(user => {
+                        this.user = user;
+                        if (user) {
+                            this.loadData();
+                        }
+                    });
+                },
 
-  window.handleRegister = () => {
-    const email = document.getElementById('auth-email').value;
-    const pass = document.getElementById('auth-password').value;
-    createUserWithEmailAndPassword(auth, email, pass)
-      .then(() => alert("Đăng ký thành công!"))
-      .catch(err => alert("Lỗi đăng ký: " + err.message));
-  };
+                loginWithGoogle() {
+                    this.isLoggingIn = true;
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    auth.signInWithPopup(provider)
+                        .catch(err => alert("Lỗi đăng nhập: " + err.message))
+                        .finally(() => this.isLoggingIn = false);
+                },
 
-  window.handleLogout = () => signOut(auth);
+                loginWithEmail() {
+                    if (!this.emailInput || !this.passwordInput) return alert("Vui lòng nhập Email và Mật khẩu!");
+                    auth.signInWithEmailAndPassword(this.emailInput, this.passwordInput)
+                        .catch(err => alert("Lỗi đăng nhập: " + err.message));
+                },
 
-  function listenToUserData() {
-    const userRef = ref(db, `users/${currentUser.uid}/transactions`);
-    onValue(userRef, (snapshot) => {
-      const data = snapshot.val();
-      allTransactions = [];
-      if (data) {
-        Object.keys(data).forEach(key => {
-          allTransactions.push({ id: key, ...data[key] });
-        });
-      }
-      renderReport();
-      renderHistory();
-    });
-  }
+                registerWithEmail() {
+                    if (!this.emailInput || !this.passwordInput) return alert("Vui lòng nhập Email và Mật khẩu!");
+                    auth.createUserWithEmailAndPassword(this.emailInput, this.passwordInput)
+                        .catch(err => alert("Lỗi đăng ký: " + err.message));
+                },
 
-  window.setTimeFilter = (mode, btnElement) => {
-    currentFilterMode = mode;
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    if (btnElement) btnElement.classList.add('active');
+                logout() {
+                    auth.signOut();
+                },
 
-    const stdPicker = document.getElementById('standard-date-picker');
-    const custPicker = document.getElementById('custom-date-picker');
+                loadData() {
+                    if (!this.user) return;
+                    const uid = this.user.uid;
 
-    if (mode === 'custom') {
-      stdPicker.classList.add('hidden');
-      custPicker.classList.remove('hidden');
-    } else if (mode === 'all') {
-      stdPicker.classList.add('hidden');
-      custPicker.classList.add('hidden');
-    } else {
-      stdPicker.classList.remove('hidden');
-      custPicker.classList.add('hidden');
-    }
-    renderReport();
-  };
+                    db.ref(`users/${uid}/accounts`).on('value', snapshot => {
+                        const val = snapshot.val();
+                        this.accounts = val ? Object.keys(val).map(k => ({ id: k, ...val[k] })) : [];
+                        if (this.accounts.length === 0) {
+                            this.createDefaultAccount();
+                        }
+                    });
 
-  function getFilteredTransactions() {
-    return allTransactions.filter(t => {
-      if (!t.date) return false;
-      const txDateStr = t.date.split('T')[0];
+                    db.ref(`users/${uid}/transactions`).on('value', snapshot => {
+                        const val = snapshot.val();
+                        this.transactions = val ? Object.keys(val).map(k => ({ id: k, ...val[k] })) : [];
+                        this.updateOverviewChart();
+                    });
 
-      if (currentFilterMode === 'day') {
-        const selectedDate = document.getElementById('report-single-date').value;
-        return selectedDate ? txDateStr === selectedDate : true;
-      }
+                    db.ref(`users/${uid}/customCategories`).on('value', snapshot => {
+                        const val = snapshot.val();
+                        this.customCategories = val ? Object.keys(val).map(k => ({ id: k, ...val[k] })) : [];
+                    });
+                },
 
-      if (currentFilterMode === 'custom') {
-        const startDate = document.getElementById('report-start-date').value;
-        const endDate = document.getElementById('report-end-date').value;
-        if (startDate && endDate) return txDateStr >= startDate && txDateStr <= endDate;
-        if (startDate) return txDateStr >= startDate;
-        if (endDate) return txDateStr <= endDate;
-        return true;
-      }
+                createDefaultAccount() {
+                    const uid = this.user.uid;
+                    const newRef = db.ref(`users/${uid}/accounts`).push();
+                    newRef.set({ name: 'TIỀN MẶT', balance: 0 });
+                },
 
-      const txDate = new Date(txDateStr);
-      const now = new Date();
+                calculateTotalBalance() {
+                    return this.accounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
+                },
 
-      if (currentFilterMode === 'month') {
-        return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
-      }
+                formatMoney(amount) {
+                    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
+                },
 
-      if (currentFilterMode === 'year') {
-        return txDate.getFullYear() === now.getFullYear();
-      }
+                formatDate(dateStr) {
+                    if (!dateStr) return '';
+                    const d = new Date(dateStr);
+                    return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+                },
 
-      return true;
-    });
-  }
+                openAccountModal() {
+                    this.newAcc = { name: '', balance: 0, formattedBalance: '' };
+                    this.showAccModal = true;
+                },
 
-  window.renderReport = () => {
-    const filtered = getFilteredTransactions();
-    let totalIncome = 0;
-    let totalExpense = 0;
-    let netBalance = 0;
+                addAccount() {
+                    if (!this.newAcc.name) return alert("Vui lòng nhập tên ví!");
+                    const uid = this.user.uid;
+                    db.ref(`users/${uid}/accounts`).push({
+                        name: this.newAcc.name,
+                        balance: this.newAcc.balance
+                    });
+                    this.showAccModal = false;
+                },
 
-    allTransactions.forEach(t => {
-      const amt = Number(t.amount) || 0;
-      if (t.type === 'income') netBalance += amt;
-      else netBalance -= amt;
-    });
+                deleteAccount(accId) {
+                    if (confirm("Bạn có chắc chắn muốn xóa ví này?")) {
+                        db.ref(`users/${this.user.uid}/accounts/${accId}`).remove();
+                    }
+                },
 
-    filtered.forEach(t => {
-      const amt = Number(t.amount) || 0;
-      if (t.type === 'income') totalIncome += amt;
-      else totalExpense += amt;
-    });
+                addCategory() {
+                    if (!this.newCat.name) return alert("Vui lòng nhập tên danh mục!");
+                    const uid = this.user.uid;
+                    db.ref(`users/${uid}/customCategories`).push({
+                        type: this.newCat.type,
+                        icon: this.newCat.icon || '📁',
+                        name: this.newCat.name
+                    });
+                    this.showCatModal = false;
+                    this.newCat.name = '';
+                },
 
-    document.getElementById('total-balance').innerText = isBalanceHidden 
-      ? '****** đ' 
-      : netBalance.toLocaleString('vi-VN') + ' đ';
+                deleteCategory(catId) {
+                    if (confirm("Bạn có chắc muốn xóa danh mục này?")) {
+                        db.ref(`users/${this.user.uid}/customCategories/${catId}`).remove();
+                    }
+                },
 
-    document.getElementById('report-income').innerText = totalIncome.toLocaleString('vi-VN') + ' đ';
-    document.getElementById('report-expense').innerText = totalExpense.toLocaleString('vi-VN') + ' đ';
+                openTxModal() {
+                    if (this.accounts.length === 0) return alert("Vui lòng tạo ít nhất 1 ví trước khi ghi chép!");
+                    this.newTx = {
+                        type: 'expense',
+                        category: this.expenseCategories[0]?.name || 'Ăn uống',
+                        accountId: this.accounts[0].id,
+                        targetAccountId: this.accounts[1]?.id || this.accounts[0].id,
+                        amount: 0,
+                        formattedAmount: '',
+                        note: ''
+                    };
+                    this.showTxModal = true;
+                },
 
-    updateChart(totalIncome, totalExpense);
-  };
+                addTransaction() {
+                    if (!this.newTx.amount || this.newTx.amount <= 0) return alert("Vui lòng nhập số tiền hợp lệ!");
 
-  function updateChart(income, expense) {
-    const ctx = document.getElementById('report-chart').getContext('2d');
-    if (myChart) myChart.destroy();
+                    const uid = this.user.uid;
+                    const txData = {
+                        type: this.newTx.type,
+                        amount: this.newTx.amount,
+                        accountId: this.newTx.accountId,
+                        note: this.newTx.note,
+                        date: new Date().toISOString()
+                    };
 
-    myChart = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Thu nhập', 'Chi tiêu'],
-        datasets: [{
-          data: [income, expense],
-          backgroundColor: ['#10b981', '#f43f5e']
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { position: 'bottom' } }
-      }
-    });
-  }
+                    if (this.newTx.type === 'transfer') {
+                        if (this.newTx.accountId === this.newTx.targetAccountId) {
+                            return alert("Ví nhận phải khác ví chuyển!");
+                        }
+                        txData.targetAccountId = this.newTx.targetAccountId;
+                    } else {
+                        txData.category = this.newTx.category;
+                    }
 
-  function renderHistory() {
-    const listEl = document.getElementById('transaction-list');
-    listEl.innerHTML = '';
+                    if (this.newTx.type === 'expense') {
+                        this.updateAccountBalance(this.newTx.accountId, -this.newTx.amount);
+                    } else if (this.newTx.type === 'income') {
+                        this.updateAccountBalance(this.newTx.accountId, this.newTx.amount);
+                    } else if (this.newTx.type === 'transfer') {
+                        this.updateAccountBalance(this.newTx.accountId, -this.newTx.amount);
+                        this.updateAccountBalance(this.newTx.targetAccountId, this.newTx.amount);
+                    }
 
-    if (allTransactions.length === 0) {
-      listEl.innerHTML = '<p class="text-center text-xs text-gray-400 py-6">Chưa có giao dịch nào</p>';
-      return;
-    }
+                    db.ref(`users/${uid}/transactions`).push(txData);
+                    this.showTxModal = false;
+                },
 
-    const sorted = [...allTransactions].sort((a,b) => new Date(b.date) - new Date(a.date));
+                updateAccountBalance(accId, delta) {
+                    const acc = this.accounts.find(a => a.id === accId);
+                    if (acc) {
+                        const newBal = (acc.balance || 0) + delta;
+                        db.ref(`users/${this.user.uid}/accounts/${accId}/balance`).set(newBal);
+                    }
+                },
 
-    sorted.forEach(t => {
-      const isInc = t.type === 'income';
-      const item = document.createElement('div');
-      item.className = "flex justify-between items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm";
-      item.innerHTML = `
-        <div class="flex items-center space-x-3">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center ${isInc ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}">
-            <i class="fa-solid ${isInc ? 'fa-arrow-down' : 'fa-arrow-up'} text-xs"></i>
-          </div>
-          <div>
-            <p class="text-xs font-semibold text-gray-800">${t.category || 'Không phân loại'}</p>
-            <p class="text-[10px] text-gray-400">${t.date}</p>
-          </div>
-        </div>
-        <span class="text-sm font-bold ${isInc ? 'text-emerald-600' : 'text-rose-600'}">
-          ${isInc ? '+' : '-'}${Number(t.amount).toLocaleString('vi-VN')} đ
-        </span>
-      `;
-      listEl.appendChild(item);
-    });
-  }
+                deleteTransaction(txId) {
+                    const tx = this.transactions.find(t => t.id === txId);
+                    if (!tx) return;
 
-  window.toggleBalanceVisibility = () => {
-    isBalanceHidden = !isBalanceHidden;
-    document.getElementById('eye-icon').className = isBalanceHidden ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
-    document.getElementById('eye-text').innerText = isBalanceHidden ? 'Hiện' : 'Ẩn';
-    renderReport();
-  };
+                    if (confirm("Xóa giao dịch này và hoàn trả lại số dư ví?")) {
+                        if (tx.type === 'expense') {
+                            this.updateAccountBalance(tx.accountId, tx.amount);
+                        } else if (tx.type === 'income') {
+                            this.updateAccountBalance(tx.accountId, -tx.amount);
+                        } else if (tx.type === 'transfer') {
+                            this.updateAccountBalance(tx.accountId, tx.amount);
+                            this.updateAccountBalance(tx.targetAccountId, -tx.amount);
+                        }
 
-  window.switchTab = (tab) => {
-    document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
-    if (tab === 'report') {
-      document.getElementById('view-report').classList.remove('hidden');
-      document.getElementById('view-history').classList.add('hidden');
-      document.getElementById('nav-report').classList.add('active');
-    } else {
-      document.getElementById('view-report').classList.add('hidden');
-      document.getElementById('view-history').classList.remove('hidden');
-      document.getElementById('nav-history').classList.add('active');
-    }
-  };
+                        db.ref(`users/${this.user.uid}/transactions/${txId}`).remove();
+                    }
+                },
 
-  window.openAddModal = () => document.getElementById('add-modal').classList.remove('hidden');
-  window.closeAddModal = () => document.getElementById('add-modal').classList.add('hidden');
+                getAccountName(accId) {
+                    const acc = this.accounts.find(a => a.id === accId);
+                    return acc ? acc.name : 'Chưa xác định';
+                },
 
-  window.setTxType = (type) => {
-    currentTxType = type;
-    const btnExp = document.getElementById('type-expense');
-    const btnInc = document.getElementById('type-income');
-    if (type === 'expense') {
-      btnExp.className = "flex-1 py-2 text-xs font-semibold rounded-lg bg-white text-rose-600 shadow-sm";
-      btnInc.className = "flex-1 py-2 text-xs font-semibold rounded-lg text-gray-500";
-    } else {
-      btnInc.className = "flex-1 py-2 text-xs font-semibold rounded-lg bg-white text-emerald-600 shadow-sm";
-      btnExp.className = "flex-1 py-2 text-xs font-semibold rounded-lg text-gray-500";
-    }
-  };
+                getTxTypeBg(type) {
+                    if (type === 'expense') return 'bg-red-100 text-red-600';
+                    if (type === 'income') return 'bg-emerald-100 text-emerald-600';
+                    return 'bg-blue-100 text-blue-600';
+                },
 
-  window.saveTransaction = () => {
-    const amount = document.getElementById('tx-amount').value;
-    const category = document.getElementById('tx-category').value;
-    const date = document.getElementById('tx-date').value;
+                getTxIcon(tx) {
+                    if (tx.type === 'transfer') return '🔄';
+                    const allCat = [...this.expenseCategories, ...this.incomeCategories];
+                    const cat = allCat.find(c => c.name === tx.category);
+                    return cat ? cat.icon : '💸';
+                },
 
-    if (!amount || !date) {
-      alert("Vui lòng điền đầy đủ số tiền và ngày!");
-      return;
-    }
+                getTxTitle(tx) {
+                    if (tx.type === 'transfer') return 'Chuyển tiền nội bộ';
+                    return tx.category || 'Giao dịch';
+                },
 
-    const newTxRef = push(ref(db, `users/${currentUser.uid}/transactions`));
-    set(newTxRef, {
-      amount: Number(amount),
-      category: category || 'Giao dịch khác',
-      date: date,
-      type: currentTxType,
-      createdAt: Date.now()
-    }).then(() => {
-      closeAddModal();
-      document.getElementById('tx-amount').value = '';
-      document.getElementById('tx-category').value = '';
-    }).catch(err => alert("Lỗi lưu dữ liệu: " + err.message));
-  };
-</script>
+                getTxColorClass(type) {
+                    if (type === 'expense') return 'text-red-500';
+                    if (type === 'income') return 'text-emerald-600';
+                    return 'text-blue-600';
+                },
 
+                getTxPrefix(type) {
+                    if (type === 'expense') return '-';
+                    if (type === 'income') return '+';
+                    return '';
+                },
+
+                filterTransactionsByTime() {
+                    const now = new Date();
+                    return this.transactions.filter(tx => {
+                        const d = new Date(tx.date);
+                        if (this.timeFilter === 'today') {
+                            return d.toDateString() === now.toDateString();
+                        }
+                        if (this.timeFilter === 'week') {
+                            const diffTime = Math.abs(now - d);
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            return diffDays <= 7;
+                        }
+                        if (this.timeFilter === 'month') {
+                            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                        }
+                        if (this.timeFilter === 'year') {
+                            return d.getFullYear() === now.getFullYear();
+                        }
+                        return true;
+                    });
+                },
+
+                updateOverviewChart() {
+                    const filtered = this.filterTransactionsByTime();
+
+                    this.filteredIncome = filtered.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+                    this.filteredExpense = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+
+                    const catTotals = {};
+                    filtered.filter(t => t.type === 'expense').forEach(t => {
+                        catTotals[t.category] = (catTotals[t.category] || 0) + t.amount;
+                    });
+
+                    const colors = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6', '#6366F1'];
+                    const labels = Object.keys(catTotals);
+                    const data = Object.values(catTotals);
+
+                    this.filteredCategoryPercentages = labels.map((cat, idx) => ({
+                        category: cat,
+                        amount: catTotals[cat],
+                        percentage: this.filteredExpense > 0 ? ((catTotals[cat] / this.filteredExpense) * 100).toFixed(1) : 0,
+                        color: colors[idx % colors.length]
+                    }));
+
+                    this.$nextTick(() => {
+                        const ctx = document.getElementById('categoryDoughnutChart');
+                        if (!ctx) return;
+
+                        if (chartInstance) chartInstance.destroy();
+
+                        chartInstance = new Chart(ctx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: labels.length ? labels : ['Chưa có dữ liệu'],
+                                datasets: [{
+                                    data: data.length ? data : [1],
+                                    backgroundColor: data.length ? colors.slice(0, labels.length) : ['#E5E7EB']
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false }
+                                }
+                            }
+                        });
+                    });
+                }
+            };
+        }
+    </script>
 </body>
 </html>
