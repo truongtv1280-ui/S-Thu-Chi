@@ -3,239 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>S-Thu Chi Quản Lý Tài Chính</title>
-  <!-- Tailwind CSS -->
+  <title>S-Thu-Chi</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <style>
-    body {
-      background-color: #f3f4f6;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-    .app-container {
-      max-width: 480px;
-      margin: 0 auto;
-      min-height: 100vh;
-      background: #ffffff;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      box-shadow: 0 0 20px rgba(0,0,0,0.05);
-    }
-    .tab-btn {
-      padding: 6px 10px;
-      font-size: 12px;
-      border-radius: 8px;
-      color: #4b5563;
-      background: #f3f4f6;
-      transition: all 0.2s;
-    }
-    .tab-btn.active {
-      background: #2563eb;
-      color: #ffffff;
-      font-weight: 600;
-    }
-    .bottom-nav-btn.active {
-      color: #2563eb;
-    }
-  </style>
 </head>
-<body>
+<body class="bg-gray-100 font-sans">
 
-<div class="app-container pb-20">
-  <!-- Khung Đăng Nhập -->
-  <div id="auth-screen" class="p-6 flex flex-col justify-center items-center my-auto min-h-[80vh]">
-    <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold mb-4 shadow-lg">
-      S
-    </div>
-    <h2 class="text-2xl font-bold text-gray-800 mb-2">S-Thu-Chi</h2>
-    <p class="text-sm text-gray-500 text-center mb-6">Quản lý thu chi cá nhân an toàn & hiệu quả</p>
+<div class="max-w-md mx-auto min-h-screen bg-white shadow-lg p-4 pb-20">
+  <!-- Màn hình Đăng Nhập -->
+  <div id="auth-screen" class="py-10 text-center space-y-4">
+    <h1 class="text-3xl font-bold text-blue-600">S-Thu-Chi</h1>
+    <p class="text-gray-500 text-sm">Quản lý thu chi đơn giản</p>
     
-    <div class="w-full space-y-3">
-      <!-- Nút Đăng nhập nhanh bằng Gmail -->
-      <button onclick="handleGoogleLogin()" class="w-full bg-white border border-gray-300 text-gray-700 py-3 rounded-xl font-semibold shadow-sm flex items-center justify-center space-x-2 active:scale-95 transition hover:bg-gray-50">
-        <svg class="w-5 h-5" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-        </svg>
-        <span>Đăng nhập bằng Gmail</span>
-      </button>
-
-      <div class="my-3 flex items-center justify-center space-x-2">
-        <div class="h-px bg-gray-200 flex-1"></div>
-        <span class="text-xs text-gray-400">hoặc Email</span>
-        <div class="h-px bg-gray-200 flex-1"></div>
-      </div>
-
-      <input type="email" id="auth-email" placeholder="Email" class="w-full p-3 border rounded-xl outline-none focus:border-blue-500">
-      <input type="password" id="auth-password" placeholder="Mật khẩu" class="w-full p-3 border rounded-xl outline-none focus:border-blue-500">
-      <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold shadow-md active:scale-95 transition">Đăng nhập</button>
-      <button onclick="handleRegister()" class="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold active:scale-95 transition">Đăng ký tài khoản mới</button>
-    </div>
+    <button onclick="loginGoogle()" class="w-full bg-white border p-3 rounded-xl font-semibold shadow-sm flex items-center justify-center space-x-2">
+      <span>Đăng nhập bằng Gmail</span>
+    </button>
+    <div class="text-xs text-gray-400">hoặc</div>
+    <input type="email" id="email" placeholder="Email" class="w-full p-3 border rounded-xl">
+    <input type="password" id="pass" placeholder="Mật khẩu" class="w-full p-3 border rounded-xl">
+    <button onclick="loginEmail()" class="w-full bg-blue-600 text-white p-3 rounded-xl font-bold">Đăng nhập</button>
+    <button onclick="registerEmail()" class="w-full bg-gray-200 text-gray-700 p-3 rounded-xl font-bold">Đăng ký mới</button>
   </div>
 
-  <!-- Giao diện Chính -->
-  <div id="main-app" class="hidden">
-    <!-- Header -->
-    <div class="bg-blue-600 text-white p-5 rounded-b-3xl shadow-md">
-      <div class="flex justify-between items-center mb-4">
-        <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-lg font-bold">
-            <i class="fa-solid fa-user"></i>
-          </div>
-          <div>
-            <p class="text-xs text-blue-100">Xin chào,</p>
-            <p id="user-display-email" class="text-sm font-semibold truncate max-w-[150px]">User</p>
-          </div>
-        </div>
-        
-        <!-- Nút thao tác Header: Xóa dữ liệu & Đăng xuất -->
-        <div class="flex items-center space-x-2">
-          <button onclick="clearAllData()" class="bg-rose-500/80 hover:bg-rose-600 text-white text-xs px-2.5 py-1.5 rounded-lg font-medium transition flex items-center space-x-1" title="Xóa toàn bộ dữ liệu để làm mới">
-            <i class="fa-solid fa-trash-can text-xs"></i>
-            <span>Tạo mới</span>
-          </button>
-          <button onclick="handleLogout()" class="bg-white/20 hover:bg-white/30 text-xs px-2.5 py-1.5 rounded-lg font-medium transition">
-            Thoát
-          </button>
-        </div>
-      </div>
-
-      <div class="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10">
-        <div class="flex justify-between items-center mb-1">
-          <span class="text-xs text-blue-100">Tổng số dư tài khoản</span>
-          <button onclick="toggleBalanceVisibility()" class="text-xs text-blue-100">
-            <i id="eye-icon" class="fa-solid fa-eye"></i> <span id="eye-text">Ẩn</span>
-          </button>
-        </div>
-        <p id="total-balance" class="text-2xl font-bold tracking-tight">0 đ</p>
-      </div>
-    </div>
-
-    <!-- VIEW BÁO CÁO -->
-    <div id="view-report" class="p-4 space-y-4">
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-        <p class="text-xs font-semibold text-gray-500 mb-3">Thời gian báo cáo:</p>
-        
-        <!-- Tab Chọn Lọc Thời Gian -->
-        <div class="grid grid-cols-5 gap-1 bg-gray-100 p-1 rounded-xl mb-3">
-          <button class="tab-btn active" onclick="setTimeFilter('day', this)">Ngày</button>
-          <button class="tab-btn" onclick="setTimeFilter('month', this)">Tháng</button>
-          <button class="tab-btn" onclick="setTimeFilter('year', this)">Năm</button>
-          <button class="tab-btn" onclick="setTimeFilter('custom', this)">Tùy chọn</button>
-          <button class="tab-btn" onclick="setTimeFilter('all', this)">Tất cả</button>
-        </div>
-
-        <!-- Chọn 1 Ngày -->
-        <div id="standard-date-picker">
-          <input type="date" id="report-single-date" class="w-full p-2.5 border rounded-xl text-sm outline-none focus:border-blue-500" onchange="renderReport()">
-        </div>
-
-        <!-- Chức năng Lọc Từ ngày - Đến ngày (Tùy chọn) -->
-        <div id="custom-date-picker" class="hidden space-y-2">
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="text-[10px] text-gray-400 block mb-1">Từ ngày:</label>
-              <input type="date" id="report-start-date" class="w-full p-2 border rounded-xl text-xs outline-none focus:border-blue-500" onchange="renderReport()">
-            </div>
-            <div>
-              <label class="text-[10px] text-gray-400 block mb-1">Đến ngày:</label>
-              <input type="date" id="report-end-date" class="w-full p-2 border rounded-xl text-xs outline-none focus:border-blue-500" onchange="renderReport()">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-2 gap-3">
-        <div class="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-100">
-          <p class="text-xs text-emerald-600 font-medium mb-1"><i class="fa-solid fa-arrow-down-left mr-1"></i>Tổng thu</p>
-          <p id="report-income" class="text-lg font-bold text-emerald-700">0 đ</p>
-        </div>
-        <div class="bg-rose-50 p-3.5 rounded-2xl border border-rose-100">
-          <p class="text-xs text-rose-600 font-medium mb-1"><i class="fa-solid fa-arrow-up-right mr-1"></i>Tổng chi</p>
-          <p id="report-expense" class="text-lg font-bold text-rose-700">0 đ</p>
-        </div>
-      </div>
-
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-        <canvas id="report-chart" class="max-h-56"></canvas>
-      </div>
-    </div>
-
-    <!-- VIEW LỊCH SỬ -->
-    <div id="view-history" class="p-4 hidden">
-      <h3 class="text-sm font-semibold text-gray-700 mb-3">Lịch sử giao dịch</h3>
-      <div id="transaction-list" class="space-y-2"></div>
-    </div>
-  </div>
-
-  <!-- Bottom Nav -->
-  <div id="bottom-nav" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white border-t border-gray-100 px-6 py-2 flex justify-around items-center z-40 hidden">
-    <button onclick="switchTab('report')" id="nav-report" class="bottom-nav-btn active flex flex-col items-center text-gray-400">
-      <i class="fa-solid fa-chart-pie text-lg"></i>
-      <span class="text-[10px] mt-1">Báo cáo</span>
-    </button>
-    
-    <button onclick="openAddModal()" class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl shadow-lg active:scale-95 transition -mt-5">
-      <i class="fa-solid fa-plus"></i>
-    </button>
-
-    <button onclick="switchTab('history')" id="nav-history" class="bottom-nav-btn flex flex-col items-center text-gray-400">
-      <i class="fa-solid fa-clock-rotate-left text-lg"></i>
-      <span class="text-[10px] mt-1">Lịch sử</span>
-    </button>
-  </div>
-</div>
-
-<!-- Modal Thêm Giao Dịch -->
-<div id="add-modal" class="fixed inset-0 bg-black/50 z-50 flex items-end justify-center hidden">
-  <div class="bg-white w-full max-w-[480px] rounded-t-3xl p-5 space-y-4">
+  <!-- Màn hình Chính -->
+  <div id="main-app" class="hidden space-y-4">
+    <!-- Top Bar -->
     <div class="flex justify-between items-center border-b pb-3">
-      <h3 class="font-bold text-gray-800">Thêm giao dịch mới</h3>
-      <button onclick="closeAddModal()" class="text-gray-400 text-lg"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    
-    <div class="flex bg-gray-100 p-1 rounded-xl">
-      <button id="type-expense" onclick="setTxType('expense')" class="flex-1 py-2 text-xs font-semibold rounded-lg bg-white text-rose-600 shadow-sm">Chi tiền</button>
-      <button id="type-income" onclick="setTxType('income')" class="flex-1 py-2 text-xs font-semibold rounded-lg text-gray-500">Thu tiền</button>
+      <div>
+        <p class="text-xs text-gray-400">Tài khoản:</p>
+        <p id="user-email" class="text-sm font-bold truncate max-w-[150px]"></p>
+      </div>
+      <div class="space-x-2">
+        <button onclick="deleteAllData()" class="bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg font-bold">Xóa tất cả</button>
+        <button onclick="logout()" class="bg-gray-200 text-xs px-3 py-1.5 rounded-lg">Thoát</button>
+      </div>
     </div>
 
+    <!-- Ô Báo Cáo Tổng -->
+    <div class="bg-blue-50 p-4 rounded-xl text-center">
+      <p class="text-xs text-gray-500">Số dư hiện tại</p>
+      <p id="total-balance" class="text-2xl font-bold text-blue-600">0 đ</p>
+      <div class="flex justify-around mt-3 text-sm">
+        <span class="text-green-600">Thu: <b id="total-in">0</b></span>
+        <span class="text-red-600">Chi: <b id="total-out">0</b></span>
+      </div>
+    </div>
+
+    <!-- Lọc Theo Ngày -->
+    <div class="bg-gray-50 p-3 rounded-xl space-y-2">
+      <p class="text-xs font-bold text-gray-600">Lọc theo khoảng thời gian:</p>
+      <div class="flex space-x-2">
+        <input type="date" id="from-date" onchange="render()" class="w-1/2 p-2 border rounded-lg text-xs">
+        <input type="date" id="to-date" onchange="render()" class="w-1/2 p-2 border rounded-lg text-xs">
+      </div>
+    </div>
+
+    <!-- Form Nhập Giao Dịch -->
+    <div class="bg-gray-50 p-3 rounded-xl space-y-2">
+      <div class="flex space-x-2">
+        <select id="tx-type" class="p-2 border rounded-lg text-xs font-bold">
+          <option value="out">Chi tiền (-)</option>
+          <option value="in">Thu tiền (+)</option>
+        </select>
+        <input type="number" id="tx-amount" placeholder="Số tiền" class="flex-1 p-2 border rounded-lg text-sm">
+      </div>
+      <div class="flex space-x-2">
+        <input type="text" id="tx-note" placeholder="Ghi chú (ví dụ: Cơm trưa)" class="flex-1 p-2 border rounded-lg text-xs">
+        <input type="date" id="tx-date" class="p-2 border rounded-lg text-xs">
+      </div>
+      <button onclick="addTx()" class="w-full bg-blue-600 text-white p-2.5 rounded-lg text-sm font-bold">+ Thêm giao dịch</button>
+    </div>
+
+    <!-- Danh sách lịch sử -->
     <div>
-      <label class="text-xs text-gray-500">Số tiền (đ)</label>
-      <input type="number" id="tx-amount" placeholder="0" class="w-full p-3 border rounded-xl text-lg font-bold text-gray-800 outline-none focus:border-blue-500">
+      <p class="text-xs font-bold text-gray-600 mb-2">Danh sách thu chi:</p>
+      <div id="tx-list" class="space-y-2"></div>
     </div>
-
-    <div>
-      <label class="text-xs text-gray-500">Danh mục</label>
-      <input type="text" id="tx-category" placeholder="Ví dụ: Ăn uống, Lương..." class="w-full p-3 border rounded-xl text-sm outline-none focus:border-blue-500">
-    </div>
-
-    <div>
-      <label class="text-xs text-gray-500">Ngày giao dịch</label>
-      <input type="date" id="tx-date" class="w-full p-3 border rounded-xl text-sm outline-none focus:border-blue-500">
-    </div>
-
-    <button onclick="saveTransaction()" class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-semibold shadow-md active:scale-95 transition">
-      Lưu giao dịch
-    </button>
   </div>
 </div>
 
-<!-- Firebase Modular SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } 
-    from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { getDatabase, ref, set, push, onValue, remove } 
-    from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-  // Cấu hình Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyD60xItsgAdFomunCdhypiI5xrp0P0",
     authDomain: "appthuchimoi.firebaseapp.com",
@@ -250,286 +101,89 @@
   const auth = getAuth(app);
   const db = getDatabase(app);
 
-  let currentUser = null;
-  let allTransactions = [];
-  let currentFilterMode = 'day';
-  let currentTxType = 'expense';
-  let isBalanceHidden = false;
-  let myChart = null;
+  let user = null;
+  let items = [];
 
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('report-single-date').value = today;
-  document.getElementById('tx-date').value = today;
+  document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
 
-  onAuthStateChanged(auth, (user) => {
+  onAuthStateChanged(auth, u => {
+    user = u;
     if (user) {
-      currentUser = user;
       document.getElementById('auth-screen').classList.add('hidden');
       document.getElementById('main-app').classList.remove('hidden');
-      document.getElementById('bottom-nav').classList.remove('hidden');
-      document.getElementById('user-display-email').innerText = user.email || user.displayName;
-      listenToUserData();
+      document.getElementById('user-email').innerText = user.email || user.displayName;
+      onValue(ref(db, `users/${user.uid}/txs`), snap => {
+        const val = snap.val();
+        items = val ? Object.keys(val).map(k => ({id: k, ...val[k]})) : [];
+        render();
+      });
     } else {
-      currentUser = null;
       document.getElementById('auth-screen').classList.remove('hidden');
       document.getElementById('main-app').classList.add('hidden');
-      document.getElementById('bottom-nav').classList.add('hidden');
     }
   });
 
-  // Đăng nhập bằng Google
-  window.handleGoogleLogin = () => {
-    const provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider).catch(err => alert("Lỗi đăng nhập Google: " + err.message));
-  };
+  window.loginGoogle = () => signInWithPopup(auth, new GoogleAuthProvider());
+  window.loginEmail = () => signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('pass').value);
+  window.registerEmail = () => createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('pass').value);
+  window.logout = () => signOut(auth);
 
-  window.handleLogin = () => {
-    const email = document.getElementById('auth-email').value;
-    const pass = document.getElementById('auth-password').value;
-    signInWithEmailAndPassword(auth, email, pass).catch(err => alert("Lỗi đăng nhập: " + err.message));
-  };
+  window.addTx = () => {
+    const amount = Number(document.getElementById('tx-amount').value);
+    const note = document.getElementById('tx-note').value;
+    const date = document.getElementById('tx-date').value;
+    const type = document.getElementById('tx-type').value;
 
-  window.handleRegister = () => {
-    const email = document.getElementById('auth-email').value;
-    const pass = document.getElementById('auth-password').value;
-    createUserWithEmailAndPassword(auth, email, pass)
-      .then(() => alert("Đăng ký thành công!"))
-      .catch(err => alert("Lỗi đăng ký: " + err.message));
-  };
+    if (!amount || !date) return alert("Vui lòng nhập đủ số tiền và ngày!");
 
-  window.handleLogout = () => signOut(auth);
-
-  function listenToUserData() {
-    const userRef = ref(db, `users/${currentUser.uid}/transactions`);
-    onValue(userRef, (snapshot) => {
-      const data = snapshot.val();
-      allTransactions = [];
-      if (data) {
-        Object.keys(data).forEach(key => {
-          allTransactions.push({ id: key, ...data[key] });
-        });
-      }
-      renderReport();
-      renderHistory();
+    push(ref(db, `users/${user.uid}/txs`), { amount, note, date, type }).then(() => {
+      document.getElementById('tx-amount').value = '';
+      document.getElementById('tx-note').value = '';
     });
-  }
+  };
 
-  // Chức năng XÓA TOÀN BỘ DỮ LIỆU ĐỂ TẠO MỚI
-  window.clearAllData = () => {
-    if (!currentUser) return;
-    const confirmDelete = confirm("⚠️ CẢNH BÁO: Bạn có chắc chắn muốn xóa toàn bộ lịch sử thu chi để tạo mới không? Dữ liệu đã xóa sẽ không thể phục hồi!");
-    
-    if (confirmDelete) {
-      const userRef = ref(db, `users/${currentUser.uid}/transactions`);
-      remove(userRef)
-        .then(() => alert("Đã xóa toàn bộ dữ liệu thành công! Tài khoản của bạn đã được làm mới."))
-        .catch(err => alert("Lỗi khi xóa dữ liệu: " + err.message));
+  window.deleteAllData = () => {
+    if (confirm("Bạn có chắc chắn muốn XÓA HẾT dữ liệu để tạo mới không?")) {
+      remove(ref(db, `users/${user.uid}/txs`));
     }
   };
 
-  // Chức năng chọn Tab lọc thời gian
-  window.setTimeFilter = (mode, btnElement) => {
-    currentFilterMode = mode;
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    if (btnElement) btnElement.classList.add('active');
+  window.render = () => {
+    const from = document.getElementById('from-date').value;
+    const to = document.getElementById('to-date').value;
 
-    const stdPicker = document.getElementById('standard-date-picker');
-    const custPicker = document.getElementById('custom-date-picker');
-
-    if (mode === 'custom') {
-      stdPicker.classList.add('hidden');
-      custPicker.classList.remove('hidden');
-    } else if (mode === 'all') {
-      stdPicker.classList.add('hidden');
-      custPicker.classList.add('hidden');
-    } else {
-      stdPicker.classList.remove('hidden');
-      custPicker.classList.add('hidden');
-    }
-    renderReport();
-  };
-
-  // Thuật toán lọc khoảng thời gian từ ngày -> đến ngày
-  function getFilteredTransactions() {
-    return allTransactions.filter(t => {
-      if (!t.date) return false;
-      const txDateStr = t.date.split('T')[0];
-
-      if (currentFilterMode === 'day') {
-        const selectedDate = document.getElementById('report-single-date').value;
-        return selectedDate ? txDateStr === selectedDate : true;
-      }
-
-      if (currentFilterMode === 'custom') {
-        const startDate = document.getElementById('report-start-date').value;
-        const endDate = document.getElementById('report-end-date').value;
-        
-        if (startDate && endDate) {
-          return txDateStr >= startDate && txDateStr <= endDate;
-        } else if (startDate) {
-          return txDateStr >= startDate;
-        } else if (endDate) {
-          return txDateStr <= endDate;
-        }
-        return true;
-      }
-
-      const txDate = new Date(txDateStr);
-      const now = new Date();
-
-      if (currentFilterMode === 'month') {
-        return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
-      }
-
-      if (currentFilterMode === 'year') {
-        return txDate.getFullYear() === now.getFullYear();
-      }
-
+    let filtered = items.filter(i => {
+      if (from && i.date < from) return false;
+      if (to && i.date > to) return false;
       return true;
     });
-  }
 
-  window.renderReport = () => {
-    const filtered = getFilteredTransactions();
-    let totalIncome = 0;
-    let totalExpense = 0;
-    let netBalance = 0;
-
-    allTransactions.forEach(t => {
-      const amt = Number(t.amount) || 0;
-      if (t.type === 'income') netBalance += amt;
-      else netBalance -= amt;
+    let totalIn = 0, totalOut = 0;
+    filtered.forEach(i => {
+      if (i.type === 'in') totalIn += i.amount;
+      else totalOut += i.amount;
     });
 
-    filtered.forEach(t => {
-      const amt = Number(t.amount) || 0;
-      if (t.type === 'income') totalIncome += amt;
-      else totalExpense += amt;
-    });
+    document.getElementById('total-balance').innerText = (totalIn - totalOut).toLocaleString() + ' đ';
+    document.getElementById('total-in').innerText = totalIn.toLocaleString() + ' đ';
+    document.getElementById('total-out').innerText = totalOut.toLocaleString() + ' đ';
 
-    document.getElementById('total-balance').innerText = isBalanceHidden 
-      ? '****** đ' 
-      : netBalance.toLocaleString('vi-VN') + ' đ';
-
-    document.getElementById('report-income').innerText = totalIncome.toLocaleString('vi-VN') + ' đ';
-    document.getElementById('report-expense').innerText = totalExpense.toLocaleString('vi-VN') + ' đ';
-
-    updateChart(totalIncome, totalExpense);
-  };
-
-  function updateChart(income, expense) {
-    const ctx = document.getElementById('report-chart').getContext('2d');
-    if (myChart) myChart.destroy();
-
-    myChart = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Thu nhập', 'Chi tiêu'],
-        datasets: [{
-          data: [income, expense],
-          backgroundColor: ['#10b981', '#f43f5e']
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { position: 'bottom' } }
-      }
-    });
-  }
-
-  function renderHistory() {
-    const listEl = document.getElementById('transaction-list');
-    listEl.innerHTML = '';
-
-    if (allTransactions.length === 0) {
-      listEl.innerHTML = '<p class="text-center text-xs text-gray-400 py-6">Chưa có giao dịch nào</p>';
-      return;
-    }
-
-    const sorted = [...allTransactions].sort((a,b) => new Date(b.date) - new Date(a.date));
-
-    sorted.forEach(t => {
-      const isInc = t.type === 'income';
-      const item = document.createElement('div');
-      item.className = "flex justify-between items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm";
-      item.innerHTML = `
-        <div class="flex items-center space-x-3">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center ${isInc ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}">
-            <i class="fa-solid ${isInc ? 'fa-arrow-down' : 'fa-arrow-up'} text-xs"></i>
-          </div>
+    const list = document.getElementById('tx-list');
+    list.innerHTML = '';
+    filtered.sort((a,b) => b.date.localeCompare(a.date)).forEach(i => {
+      list.innerHTML += `
+        <div class="flex justify-between items-center p-2 border-b text-sm">
           <div>
-            <p class="text-xs font-semibold text-gray-800">${t.category || 'Không phân loại'}</p>
-            <p class="text-[10px] text-gray-400">${t.date}</p>
+            <p class="font-bold">${i.note || 'Không ghi chú'}</p>
+            <p class="text-xs text-gray-400">${i.date}</p>
           </div>
+          <span class="font-bold ${i.type === 'in' ? 'text-green-600' : 'text-red-600'}">
+            ${i.type === 'in' ? '+' : '-'}${i.amount.toLocaleString()} đ
+          </span>
         </div>
-        <span class="text-sm font-bold ${isInc ? 'text-emerald-600' : 'text-rose-600'}">
-          ${isInc ? '+' : '-'}${Number(t.amount).toLocaleString('vi-VN')} đ
-        </span>
       `;
-      listEl.appendChild(item);
     });
-  }
-
-  window.toggleBalanceVisibility = () => {
-    isBalanceHidden = !isBalanceHidden;
-    document.getElementById('eye-icon').className = isBalanceHidden ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
-    document.getElementById('eye-text').innerText = isBalanceHidden ? 'Hiện' : 'Ẩn';
-    renderReport();
-  };
-
-  window.switchTab = (tab) => {
-    document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
-    if (tab === 'report') {
-      document.getElementById('view-report').classList.remove('hidden');
-      document.getElementById('view-history').classList.add('hidden');
-      document.getElementById('nav-report').classList.add('active');
-    } else {
-      document.getElementById('view-report').classList.add('hidden');
-      document.getElementById('view-history').classList.remove('hidden');
-      document.getElementById('nav-history').classList.add('active');
-    }
-  };
-
-  window.openAddModal = () => document.getElementById('add-modal').classList.remove('hidden');
-  window.closeAddModal = () => document.getElementById('add-modal').classList.add('hidden');
-
-  window.setTxType = (type) => {
-    currentTxType = type;
-    const btnExp = document.getElementById('type-expense');
-    const btnInc = document.getElementById('type-income');
-    if (type === 'expense') {
-      btnExp.className = "flex-1 py-2 text-xs font-semibold rounded-lg bg-white text-rose-600 shadow-sm";
-      btnInc.className = "flex-1 py-2 text-xs font-semibold rounded-lg text-gray-500";
-    } else {
-      btnInc.className = "flex-1 py-2 text-xs font-semibold rounded-lg bg-white text-emerald-600 shadow-sm";
-      btnExp.className = "flex-1 py-2 text-xs font-semibold rounded-lg text-gray-500";
-    }
-  };
-
-  window.saveTransaction = () => {
-    const amount = document.getElementById('tx-amount').value;
-    const category = document.getElementById('tx-category').value;
-    const date = document.getElementById('tx-date').value;
-
-    if (!amount || !date) {
-      alert("Vui lòng điền đầy đủ số tiền và ngày!");
-      return;
-    }
-
-    const newTxRef = push(ref(db, `users/${currentUser.uid}/transactions`));
-    set(newTxRef, {
-      amount: Number(amount),
-      category: category || 'Giao dịch khác',
-      date: date,
-      type: currentTxType,
-      createdAt: Date.now()
-    }).then(() => {
-      closeAddModal();
-      document.getElementById('tx-amount').value = '';
-      document.getElementById('tx-category').value = '';
-    }).catch(err => alert("Lỗi lưu dữ liệu: " + err.message));
   };
 </script>
-
 </body>
 </html>
