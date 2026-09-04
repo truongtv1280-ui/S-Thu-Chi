@@ -470,6 +470,23 @@
                 { name: 'Điều chỉnh', icon: '⚙️', color: '#6B7280' },
                 { name: 'Khác', icon: '📌', color: '#9CA3AF' }
             ],
+            // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyCNVHhTsp--ZWj_U-WFDFkJFXBBLR-Nvzg",
+  authDomain: "quanlythuchi-7d202.firebaseapp.com",
+  projectId: "quanlythuchi-7d202",
+  storageBucket: "quanlythuchi-7d202.firebasestorage.app",
+  messagingSenderId: "1072192237025",
+  appId: "1:1072192237025:web:7b126514825b414822f6a0"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
             // Lifecycle Initialization
             init() {
