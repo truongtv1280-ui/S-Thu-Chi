@@ -1,442 +1,866 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sổ Thu Chi Quản Lý Tài Chính</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Alpine.js -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Firebase SDK (v8) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <style>
-        input[type="text"],
-        input[type="number"],
-        input[type="email"],
-        input[type="password"],
-        input[type="date"],
-        input[type="month"],
-        select,
-        textarea {
-            font-size: 16px !important;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quản Lý Thu Chi Cá Nhân</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Alpine.js CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Firebase SDK (v8 Compatible Version) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+      // TODO: Thay thế cấu hình Firebase của bạn vào đây
+      const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+      };
+
+      // Khởi tạo Firebase
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+    </script>
 </head>
-<body class="bg-gray-100 min-h-screen text-gray-800" x-data="app()" x-init="init()">
+<body class="bg-gray-100 font-sans text-gray-800 antialiased select-none pb-20" x-data="app()" x-init="init()">
 
-    <!-- Màn hình chưa đăng nhập -->
-    <template x-if="!user">
-        <div class="min-h-screen flex flex-col items-center justify-center p-4">
-            <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-6">
-                <div class="text-center space-y-2">
-                    <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full text-blue-600 mb-2">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                    </div>
-                    <h1 class="text-2xl font-bold text-gray-900">Đăng Nhập Tài Khoản</h1>
-                    <p class="text-sm text-gray-500">Đồng bộ dữ liệu an toàn trên đa thiết bị</p>
-                </div>
+    <!-- 1. MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ (Nếu chưa đăng nhập) -->
+    <template x-if="!user">
+        <div class="min-h-screen flex items-center justify-center p-4 bg-slate-50">
+            <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm text-center">
+                <div class="text-4xl mb-3">💰</div>
+                <h1 class="text-xl font-bold text-gray-800 mb-1">Quản Lý Thu Chi</h1>
+                <p class="text-xs text-gray-500 mb-6">Theo dõi tài chính cá nhân dễ dàng</p>
 
-                <!-- Tabs Đăng nhập -->
-                <div class="flex border-b border-gray-200">
-                    <button @click="authTab = 'google'" :class="authTab === 'google' ? 'border-blue-600 text-blue-600 font-semibold' : 'text-gray-500 border-transparent'" class="w-1/2 py-2 text-center border-b-2 text-sm transition-colors">
-                        Google
-                    </button>
-                    <button @click="authTab = 'email'" :class="authTab === 'email' ? 'border-blue-600 text-blue-600 font-semibold' : 'text-gray-500 border-transparent'" class="w-1/2 py-2 text-center border-b-2 text-sm transition-colors">
-                        Email
-                    </button>
-                </div>
+                <!-- Tab Auth Toggle -->
+                <div class="flex border-b border-gray-200 mb-4 text-xs font-semibold">
+                    <button @click="authTab = 'google'" :class="authTab === 'google' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-400'" class="flex-1 pb-2">Google</button>
+                    <button @click="authTab = 'login'" :class="authTab === 'login' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-400'" class="flex-1 pb-2">Đăng Nhập</button>
+                    <button @click="authTab = 'register'" :class="authTab === 'register' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-400'" class="flex-1 pb-2">Đăng Ký</button>
+                </div>
 
-                <!-- Tab Google -->
-                <div x-show="authTab === 'google'" class="space-y-4">
-                    <button @click="loginWithGoogle()" :disabled="isLoggingIn" class="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-700 font-medium hover:bg-gray-50 transition shadow-sm disabled:opacity-50">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-                        <span x-text="isLoggingIn ? 'Đang kết nối...' : 'Tiếp tục với Google'"></span>
-                    </button>
-                </div>
+                <!-- Google Login -->
+                <div x-show="authTab === 'google'" class="space-y-4">
+                    <button @click="loginWithGoogle()" :disabled="isLoggingIn" class="w-full bg-white border border-gray-300 py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm text-xs font-medium hover:bg-gray-50 transition active:scale-95">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                        Đăng nhập với Google
+                    </button>
+                </div>
 
-                <!-- Tab Email -->
-                <div x-show="authTab === 'email'" class="space-y-4" style="display: none;">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Email</label>
-                        <input type="email" x-model="emailInput" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="nhap@email.com">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Mật khẩu</label>
-                        <input type="password" x-model="passwordInput" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="••••••••">
-                    </div>
-                    <div class="flex gap-2 pt-2">
-                        <button @click="loginWithEmail()" class="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-medium hover:bg-blue-700 transition">Đăng nhập</button>
-                        <button @click="registerWithEmail()" class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl font-medium hover:bg-gray-200 transition">Đăng ký</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </template>
+                <!-- Form Login/Register -->
+                <div x-show="authTab === 'login' || authTab === 'register'" class="space-y-3">
+                    <input type="email" x-model="emailInput" placeholder="Email" class="w-full px-3 py-2 text-xs border rounded-xl focus:outline-none focus:border-blue-500">
+                    <input type="password" x-model="passwordInput" placeholder="Mật khẩu" class="w-full px-3 py-2 text-xs border rounded-xl focus:outline-none focus:border-blue-500">
+                    <button x-show="authTab === 'login'" @click="loginWithEmail()" class="w-full bg-blue-600 text-white py-2.5 rounded-xl text-xs font-semibold shadow-md active:scale-95">Đăng Nhập</button>
+                    <button x-show="authTab === 'register'" @click="registerWithEmail()" class="w-full bg-emerald-600 text-white py-2.5 rounded-xl text-xs font-semibold shadow-md active:scale-95">Đăng Ký Tài Khoản</button>
+                </div>
+            </div>
+        </div>
+    </template>
 
-    <!-- Màn hình chính -->
-    <template x-if="user">
-        <div class="max-w-md mx-auto pb-24 min-h-screen bg-gray-50 flex flex-col">
-            <!-- Header -->
-            <div class="bg-blue-600 text-white p-4 rounded-b-2xl shadow-md">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        <img :src="user.photoURL || 'https://via.placeholder.com/40'" class="w-10 h-10 rounded-full border-2 border-white/50">
-                        <div>
-                            <div class="text-xs text-blue-100">Xin chào,</div>
-                            <div class="font-bold text-sm" x-text="user.email"></div>
-                        </div>
-                    </div>
-                    <button @click="logout()" class="p-2 bg-blue-700 hover:bg-blue-800 rounded-lg text-xs transition">Đăng xuất</button>
-                </div>
+    <!-- 2. GIAO DIỆN CHÍNH NẾU ĐÃ ĐĂNG NHẬP -->
+    <template x-if="user">
+        <div class="max-w-md mx-auto min-h-screen relative bg-gray-50">
+            <!-- Header -->
+            <header class="bg-white px-4 py-3 border-b flex items-center justify-between sticky top-0 z-10 shadow-sm">
+                <div class="flex items-center gap-2">
+                    <img :src="user.photoURL || 'https://via.placeholder.com/40'" class="w-8 h-8 rounded-full border">
+                    <div>
+                        <div class="text-xs font-bold text-gray-800 leading-none" x-text="user.displayName || 'Người dùng'"></div>
+                        <div class="text-[10px] text-gray-400 mt-0.5" x-text="user.email"></div>
+                    </div>
+                </div>
+                <button @click="logout()" class="text-xs text-red-500 font-medium hover:bg-red-50 px-2 py-1 rounded-lg">Thoát</button>
+            </header>
 
-                <div class="bg-white/10 backdrop-blur-md rounded-xl p-4 space-y-1">
-                    <div class="flex items-center justify-between text-xs text-blue-100">
-                        <span>Tổng số dư tài khoản</span>
-                        <button @click="hideBalance = !hideBalance" class="hover:text-white">
-                            <span x-text="hideBalance ? '👁️ Hiện' : '🙈 Ẩn'"></span>
-                        </button>
-                    </div>
-                    <div class="text-2xl font-black" x-text="hideBalance ? '••••••••' : formatMoney(calculateTotalBalance())"></div>
-                </div>
-            </div>
+            <main class="p-4 space-y-4">
+                <!-- TAB HOME: TỔNG QUAN -->
+                <div x-show="activeTab === 'home'" class="space-y-4">
+                    <!-- Thẻ tổng số dư -->
+                    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-4 text-white shadow-lg relative overflow-hidden">
+                        <div class="flex justify-between items-start">
+                            <span class="text-xs text-blue-100 font-medium">Tổng số dư</span>
+                            <button @click="hideBalance = !hideBalance" class="text-xs bg-white/20 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                                <span x-text="hideBalance ? '👁️' : '🙈'"></span>
+                            </button>
+                        </div>
+                        <div class="text-2xl font-black my-2" x-text="hideBalance ? '••••••••' : formatMoney(calculateTotalBalance())"></div>
+                        <div class="flex justify-between text-[11px] text-blue-100 border-t border-white/20 pt-2 mt-2">
+                            <div>Thu nhập: <span class="font-bold text-white" x-text="formatMoney(filteredIncome)"></span></div>
+                            <div>Chi tiêu: <span class="font-bold text-white" x-text="formatMoney(filteredExpense)"></span></div>
+                        </div>
+                    </div>
 
-            <!-- TAB 1: Trang chủ / Tổng quan -->
-            <div x-show="activeTab === 'home'" class="p-4 space-y-4 flex-1">
-                <div class="flex items-center justify-between bg-white p-2 rounded-xl shadow-sm text-xs font-medium text-gray-600 overflow-x-auto">
-                    <button @click="timeFilter = 'today'; updateOverviewChart()" :class="timeFilter === 'today' ? 'bg-blue-500 text-white' : ''" class="px-3 py-1.5 rounded-lg transition">Hôm nay</button>
-                    <button @click="timeFilter = 'week'; updateOverviewChart()" :class="timeFilter === 'week' ? 'bg-blue-500 text-white' : ''" class="px-3 py-1.5 rounded-lg transition">Tuần này</button>
-                    <button @click="timeFilter = 'month'; updateOverviewChart()" :class="timeFilter === 'month' ? 'bg-blue-500 text-white' : ''" class="px-3 py-1.5 rounded-lg transition">Tháng này</button>
-                    <button @click="timeFilter = 'year'; updateOverviewChart()" :class="timeFilter === 'year' ? 'bg-blue-500 text-white' : ''" class="px-3 py-1.5 rounded-lg transition">Năm nay</button>
-                </div>
+                    <!-- Lọc Thời Gian -->
+                    <div class="flex bg-gray-200 p-1 rounded-xl text-xs font-semibold text-gray-600">
+                        <button @click="timeFilter = 'today'; updateOverviewChart()" :class="timeFilter === 'today' ? 'bg-white text-blue-600 shadow' : ''" class="flex-1 py-1 rounded-lg transition">Hôm nay</button>
+                        <button @click="timeFilter = 'week'; updateOverviewChart()" :class="timeFilter === 'week' ? 'bg-white text-blue-600 shadow' : ''" class="flex-1 py-1 rounded-lg transition">Tuần này</button>
+                        <button @click="timeFilter = 'month'; updateOverviewChart()" :class="timeFilter === 'month' ? 'bg-white text-blue-600 shadow' : ''" class="flex-1 py-1 rounded-lg transition">Tháng này</button>
+                        <button @click="timeFilter = 'year'; updateOverviewChart()" :class="timeFilter === 'year' ? 'bg-white text-blue-600 shadow' : ''" class="flex-1 py-1 rounded-lg transition">Năm nay</button>
+                    </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-white p-3 rounded-xl shadow-sm border border-emerald-100">
-                        <div class="text-xs text-gray-500 mb-1">Tổng Thu</div>
-                        <div class="text-emerald-600 font-bold text-base" x-text="formatMoney(filteredIncome)"></div>
-                    </div>
-                    <div class="bg-white p-3 rounded-xl shadow-sm border border-red-100">
-                        <div class="text-xs text-gray-500 mb-1">Tổng Chi</div>
-                        <div class="text-red-500 font-bold text-base" x-text="formatMoney(filteredExpense)"></div>
-                    </div>
-                </div>
+                    <!-- Biểu đồ phân tích chi tiêu -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm">
+                        <div class="text-xs font-bold text-gray-700 mb-3">Cơ cấu Chi tiêu</div>
+                        <div class="relative h-44 flex items-center justify-center">
+                            <canvas id="categoryDoughnutChart"></canvas>
+                        </div>
+                        <!-- Danh sách phần trăm danh mục -->
+                        <div class="mt-4 space-y-2">
+                            <template x-for="item in filteredCategoryPercentages" :key="item.category">
+                                <div class="flex items-center justify-between text-xs">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full" :style="`background-color: ${item.color}`"></span>
+                                        <span class="font-medium text-gray-700" x-text="item.category"></span>
+                                    </div>
+                                    <div class="font-semibold text-gray-900">
+                                        <span x-text="formatMoney(item.amount)"></span>
+                                        <span class="text-gray-400 text-[10px]" x-text="`(${item.percentage}%)`"></span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
 
-                <div class="bg-white p-4 rounded-xl shadow-sm">
-                    <h3 class="text-xs font-bold text-gray-700 mb-3">TỶ LỆ CHI TIÊU</h3>
-                    <div class="h-48 relative">
-                        <canvas id="categoryDoughnutChart"></canvas>
-                    </div>
-                    <div class="mt-4 space-y-2">
-                        <template x-for="item in filteredCategoryPercentages" :key="item.category">
-                            <div class="flex items-center justify-between text-xs">
-                                <div class="flex items-center gap-2">
-                                    <span class="w-3 h-3 rounded-full" :style="`background-color: ${item.color}`"></span>
-                                    <span x-text="item.category" class="font-medium"></span>
-                                </div>
-                                <div class="font-bold" x-text="`${formatMoney(item.amount)} (${item.percentage}%)`"></div>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-            </div>
+                    <!-- Giao dịch gần đây -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-xs font-bold text-gray-700">Giao dịch gần đây</span>
+                            <button @click="activeTab = 'history'" class="text-[11px] text-blue-600 font-semibold">Xem tất cả</button>
+                        </div>
+                        <div class="space-y-3">
+                            <template x-for="tx in filteredTransactions.slice(0, 5)" :key="tx.id">
+                                <div class="flex items-center justify-between border-b border-gray-50 pb-2">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm" :class="getTxTypeBg(tx.type)" x-text="getTxIcon(tx)"></div>
+                                        <div>
+                                            <div class="text-xs font-bold text-gray-800" x-text="getTxTitle(tx)"></div>
+                                            <div class="text-[10px] text-gray-400" x-text="`${formatDate(tx.date)} • ${getAccountName(tx.accountId)}`"></div>
+                                        </div>
+                                    </div>
+                                    <div class="text-xs font-bold" :class="getTxColorClass(tx.type)" x-text="`${getTxPrefix(tx.type)}${formatMoney(tx.amount)}`"></div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
 
-            <!-- TAB 2: Báo cáo / Thống kê -->
-            <div x-show="activeTab === 'analytics'" class="p-4 space-y-4 flex-1" style="display: none;">
-                <div class="bg-white p-3 rounded-xl shadow-sm space-y-2">
-                    <div class="text-xs font-bold text-gray-700 mb-1">Thời gian báo cáo:</div>
-                    <div class="flex items-center justify-between text-xs font-medium text-gray-600">
-                        <button @click="reportFilterType = 'day'" :class="reportFilterType === 'day' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center mr-1">Ngày</button>
-                        <button @click="reportFilterType = 'month'" :class="reportFilterType === 'month' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center mr-1">Tháng</button>
-                        <button @click="reportFilterType = 'year'" :class="reportFilterType === 'year' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center mr-1">Năm</button>
-                        <button @click="reportFilterType = 'all'" :class="reportFilterType === 'all' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center">Tất cả</button>
-                    </div>
+                <!-- TAB ACCOUNTS: QUẢN LÝ VÍ -->
+                <div x-show="activeTab === 'accounts'" class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-gray-700">Tài khoản & Ví tiền</span>
+                        <button @click="openAccountModal()" class="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm">+ Thêm ví</button>
+                    </div>
 
-                    <div class="pt-1 flex items-center justify-between gap-2 text-xs">
-                        <template x-if="reportFilterType === 'day'">
-                            <input type="date" x-model="reportFilterDate" class="w-full border rounded-lg px-3 py-1.5 text-xs text-gray-700 outline-none focus:border-blue-500">
-                        </template>
-                        <template x-if="reportFilterType === 'month'">
-                            <input type="month" x-model="reportFilterMonth" class="w-full border rounded-lg px-3 py-1.5 text-xs text-gray-700 outline-none focus:border-blue-500">
-                        </template>
-                        <template x-if="reportFilterType === 'year'">
-                            <select x-model="reportFilterYear" class="w-full border rounded-lg px-3 py-1.5 text-xs text-gray-700 outline-none focus:border-blue-500">
-                                <template x-for="y in availableYears" :key="y">
-                                    <option :value="y" x-text="'Năm ' + y"></option>
-                                </template>
-                            </select>
-                        </template>
-                    </div>
-                </div>
+                    <div class="grid grid-cols-1 gap-2.5">
+                        <template x-for="acc in accounts" :key="acc.id">
+                            <div class="bg-white p-3 rounded-xl shadow-sm flex items-center justify-between">
+                                <div>
+                                    <div class="font-bold text-sm text-gray-800" x-text="acc.name"></div>
+                                    <div class="text-xs text-blue-600 font-bold mt-0.5" x-text="formatMoney(acc.balance)"></div>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <!-- NÚT RESET SỐ DƯ VỀ 0 -->
+                                    <button @click="resetAccountBalance(acc.id)" title="Reset số dư về 0" class="text-gray-400 hover:text-amber-500 p-1.5 rounded-lg hover:bg-gray-100 text-xs transition">🔄</button>
+                                    <!-- NÚT XÓA VÍ -->
+                                    <button @click="deleteAccount(acc.id)" title="Xóa ví" class="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-gray-100 text-xs transition">🗑️</button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
 
-                <div class="bg-white p-4 rounded-xl shadow-sm">
-                    <h3 class="text-sm font-bold text-gray-800 mb-1">📊 Báo cáo Dòng tiền</h3>
-                    <p class="text-xs text-gray-500 mb-4">So sánh thu chi trong khoảng thời gian đã chọn</p>
-                    <div class="space-y-3">
-                        <div>
-                            <div class="flex justify-between text-xs font-semibold mb-1">
-                                <span class="text-emerald-600">Thu nhập</span>
-                                <span x-text="formatMoney(reportData.income)"></span>
-                            </div>
-                            <div class="w-full bg-gray-100 rounded-full h-2.5">
-                                <div class="bg-emerald-500 h-2.5 rounded-full" :style="`width: ${reportData.total > 0 ? (reportData.income / reportData.total * 100) : 0}%`"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-xs font-semibold mb-1">
-                                <span class="text-red-500">Chi tiêu</span>
-                                <span x-text="formatMoney(reportData.expense)"></span>
-                            </div>
-                            <div class="w-full bg-gray-100 rounded-full h-2.5">
-                                <div class="bg-red-500 h-2.5 rounded-full" :style="`width: ${reportData.total > 0 ? (reportData.expense / reportData.total * 100) : 0}%`"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <!-- TAB HISTORY: LỊCH SỬ GIAO DỊCH -->
+                <div x-show="activeTab === 'history'" class="space-y-3">
+                    <div class="text-xs font-bold text-gray-700">Lịch sử thu chi</div>
 
-                <div class="bg-white p-4 rounded-xl shadow-sm space-y-2">
-                    <h3 class="text-sm font-bold text-gray-800">💡 Thống kê chi tiết</h3>
-                    <div class="flex justify-between items-center text-xs py-2 border-b">
-                        <span class="text-gray-600">Tổng dư / Thâm hụt:</span>
-                        <span class="font-bold text-sm" :class="(reportData.income - reportData.expense) >= 0 ? 'text-emerald-600' : 'text-red-500'" x-text="formatMoney(reportData.income - reportData.expense)"></span>
-                    </div>
-                    <div class="flex justify-between items-center text-xs py-2">
-                        <span class="text-gray-600">Tỷ lệ tiết kiệm:</span>
-                        <span class="font-bold text-blue-600" x-text="reportData.income > 0 ? Math.max(0, (((reportData.income - reportData.expense) / reportData.income) * 100)).toFixed(1) + '%' : '0%'"></span>
-                    </div>
-                </div>
-            </div>
+                    <!-- Bộ Lọc Lịch Sử -->
+                    <div class="bg-white p-3 rounded-xl shadow-sm space-y-2">
+                        <div class="flex gap-2">
+                            <select x-model="historyFilterType" class="text-xs border rounded-lg px-2 py-1 bg-gray-50 flex-1">
+                                <option value="all">Tất cả thời gian</option>
+                                <option value="day">Theo ngày</option>
+                                <option value="month">Theo tháng</option>
+                                <option value="year">Theo năm</option>
+                            </select>
+                            <template x-if="historyFilterType === 'day'">
+                                <input type="date" x-model="historyFilterDate" class="text-xs border rounded-lg px-2 py-1 bg-gray-50">
+                            </template>
+                            <template x-if="historyFilterType === 'month'">
+                                <input type="month" x-model="historyFilterMonth" class="text-xs border rounded-lg px-2 py-1 bg-gray-50">
+                            </template>
+                            <template x-if="historyFilterType === 'year'">
+                                <select x-model="historyFilterYear" class="text-xs border rounded-lg px-2 py-1 bg-gray-50">
+                                    <template x-for="y in availableYears" :key="y">
+                                        <option :value="y" x-text="y"></option>
+                                    </template>
+                                </select>
+                            </template>
+                        </div>
+                    </div>
 
-            <!-- TAB 3: Ví tiền -->
-            <div x-show="activeTab === 'accounts'" class="p-4 space-y-5 flex-1" style="display: none;">
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between">
-                        <h2 class="font-bold text-base">Danh sách ví tài khoản</h2>
-                        <button @click="openAccountModal()" class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium shadow">+ Thêm ví</button>
-                    </div>
-                    <div class="space-y-2">
-                        <template x-for="acc in accounts" :key="acc.id">
-                            <div class="bg-white p-3 rounded-xl shadow-sm flex items-center justify-between">
-                                <div>
-                                    <div class="font-bold text-sm" x-text="acc.name"></div>
-                                    <div class="text-xs text-blue-600 font-semibold mt-0.5" x-text="formatMoney(acc.balance)"></div>
-                                </div>
-                                <button @click="deleteAccount(acc.id)" class="text-gray-400 hover:text-red-500 p-1">🗑️</button>
-                            </div>
-                        </template>
-                    </div>
-                </div>
+                    <!-- Danh sách lịch sử -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm space-y-3">
+                        <template x-for="tx in filteredHistoryTransactions" :key="tx.id">
+                            <div class="flex items-center justify-between border-b border-gray-50 pb-2">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm" :class="getTxTypeBg(tx.type)" x-text="getTxIcon(tx)"></div>
+                                    <div>
+                                        <div class="text-xs font-bold text-gray-800" x-text="getTxTitle(tx)"></div>
+                                        <div class="text-[10px] text-gray-400" x-text="`${formatDate(tx.date)} • ${getAccountName(tx.accountId)} ${tx.note ? '• ' + tx.note : ''}`"></div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="text-xs font-bold" :class="getTxColorClass(tx.type)" x-text="`${getTxPrefix(tx.type)}${formatMoney(tx.amount)}`"></div>
+                                    <button @click="deleteTransaction(tx.id)" class="text-gray-300 hover:text-red-500 text-xs">✕</button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
 
-                <div class="space-y-3 pt-2">
-                    <div class="flex items-center justify-between">
-                        <h2 class="font-bold text-base">Danh mục tùy chỉnh</h2>
-                        <button @click="showCatModal = true" class="bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium shadow">+ Tạo danh mục</button>
-                    </div>
-                    <div class="bg-white p-3 rounded-xl shadow-sm space-y-2">
-                        <template x-if="customCategories.length === 0">
-                            <div class="text-xs text-gray-400 text-center py-2">Chưa có danh mục tự tạo nào</div>
-                        </template>
-                        <template x-for="cat in customCategories" :key="cat.id">
-                            <div class="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0 text-xs">
-                                <div class="flex items-center gap-2">
-                                    <span x-text="cat.icon" class="text-base"></span>
-                                    <span x-text="cat.name" class="font-medium"></span>
-                                    <span :class="cat.type === 'expense' ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-600'" class="px-1.5 py-0.5 rounded text-[10px]" x-text="cat.type === 'expense' ? 'Chi' : 'Thu'"></span>
-                                </div>
-                                <button @click="deleteCategory(cat.id)" class="text-gray-400 hover:text-red-500">🗑️</button>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-            </div>
+                <!-- TAB REPORT: BÁO CÁO -->
+                <div x-show="activeTab === 'report'" class="space-y-3">
+                    <div class="text-xs font-bold text-gray-700">Báo cáo tài chính</div>
+                    
+                    <div class="bg-white p-3 rounded-xl shadow-sm flex gap-2">
+                        <select x-model="reportFilterType" class="text-xs border rounded-lg px-2 py-1 bg-gray-50 flex-1">
+                            <option value="day">Theo Ngày</option>
+                            <option value="month">Theo Tháng</option>
+                            <option value="year">Theo Năm</option>
+                        </select>
+                        <template x-if="reportFilterType === 'day'">
+                            <input type="date" x-model="reportFilterDate" class="text-xs border rounded-lg px-2 py-1 bg-gray-50">
+                        </template>
+                        <template x-if="reportFilterType === 'month'">
+                            <input type="month" x-model="reportFilterMonth" class="text-xs border rounded-lg px-2 py-1 bg-gray-50">
+                        </template>
+                        <template x-if="reportFilterType === 'year'">
+                            <select x-model="reportFilterYear" class="text-xs border rounded-lg px-2 py-1 bg-gray-50">
+                                <template x-for="y in availableYears" :key="y">
+                                    <option :value="y" x-text="y"></option>
+                                </template>
+                            </select>
+                        </template>
+                    </div>
 
-            <!-- TAB 4: Lịch sử Giao dịch -->
-            <div x-show="activeTab === 'history'" class="p-4 space-y-3 flex-1" style="display: none;">
-                <div class="flex items-center justify-between">
-                    <h2 class="font-bold text-base">Lịch sử giao dịch</h2>
-                    <button @click="openTxModal()" class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium shadow">+ Tạo mới</button>
-                </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-emerald-50 border border-emerald-100 p-3 rounded-xl">
+                            <div class="text-[10px] font-semibold text-emerald-600">TỔNG THU</div>
+                            <div class="text-sm font-black text-emerald-700 mt-1" x-text="formatMoney(reportData.income)"></div>
+                        </div>
+                        <div class="bg-red-50 border border-red-100 p-3 rounded-xl">
+                            <div class="text-[10px] font-semibold text-red-600">TỔNG CHI</div>
+                            <div class="text-sm font-black text-red-700 mt-1" x-text="formatMoney(reportData.expense)"></div>
+                        </div>
+                    </div>
+                </div>
+            </main>
 
-                <div class="bg-white p-2 rounded-xl shadow-sm space-y-2">
-                    <div class="flex items-center justify-between text-xs font-medium text-gray-600">
-                        <button @click="historyFilterType = 'day'" :class="historyFilterType === 'day' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center mr-1">Ngày</button>
-                        <button @click="historyFilterType = 'month'" :class="historyFilterType === 'month' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center mr-1">Tháng</button>
-                        <button @click="historyFilterType = 'year'" :class="historyFilterType === 'year' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center mr-1">Năm</button>
-                        <button @click="historyFilterType = 'all'" :class="historyFilterType === 'all' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-100 text-gray-600'" class="px-3 py-1.5 rounded-lg transition flex-1 text-center">Tất cả</button>
-                    </div>
+            <!-- Bottom Navigation Bar -->
+            <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 max-w-md mx-auto flex justify-around py-2 z-20">
+                <button @click="activeTab = 'home'" :class="activeTab === 'home' ? 'text-blue-600' : 'text-gray-400'" class="flex flex-col items-center">
+                    <span class="text-base">🏠</span>
+                    <span class="text-[10px] font-medium">Tổng quan</span>
+                </button>
+                <button @click="activeTab = 'accounts'" :class="activeTab === 'accounts' ? 'text-blue-600' : 'text-gray-400'" class="flex flex-col items-center">
+                    <span class="text-base">💳</span>
+                    <span class="text-[10px] font-medium">Ví tiền</span>
+                </button>
+                <!-- Nút Nhanh Tạo Giao Dịch -->
+                <button @click="openTxModal()" class="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center -mt-4 shadow-lg text-lg font-bold active:scale-95">+</button>
+                <button @click="activeTab = 'history'" :class="activeTab === 'history' ? 'text-blue-600' : 'text-gray-400'" class="flex flex-col items-center">
+                    <span class="text-base">📋</span>
+                    <span class="text-[10px] font-medium">Lịch sử</span>
+                </button>
+                <button @click="activeTab = 'report'" :class="activeTab === 'report' ? 'text-blue-600' : 'text-gray-400'" class="flex flex-col items-center">
+                    <span class="text-base">📊</span>
+                    <span class="text-[10px] font-medium">Báo cáo</span>
+                </button>
+            </nav>
 
-                    <div class="pt-1 flex items-center justify-between gap-2 text-xs">
-                        <template x-if="historyFilterType === 'day'">
-                            <input type="date" x-model="historyFilterDate" class="w-full border rounded-lg px-3 py-1.5 text-xs text-gray-700 outline-none focus:border-blue-500">
-                        </template>
-                        <template x-if="historyFilterType === 'month'">
-                            <input type="month" x-model="historyFilterMonth" class="w-full border rounded-lg px-3 py-1.5 text-xs text-gray-700 outline-none focus:border-blue-500">
-                        </template>
-                        <template x-if="historyFilterType === 'year'">
-                            <select x-model="historyFilterYear" class="w-full border rounded-lg px-3 py-1.5 text-xs text-gray-700 outline-none focus:border-blue-500">
-                                <template x-for="y in availableYears" :key="y">
-                                    <option :value="y" x-text="'Năm ' + y"></option>
-                                </template>
-                            </select>
-                        </template>
-                    </div>
-                </div>
+            <!-- MODAL 1: THÊM TÀI KHOẢN/VÍ -->
+            <div x-show="showAccModal" class="fixed inset-0 bg-black/50 z-30 flex items-center justify-center p-4" x-cloak>
+                <div class="bg-white rounded-2xl p-4 w-full max-w-xs space-y-3">
+                    <div class="text-sm font-bold text-gray-800">Thêm ví mới</div>
+                    <input type="text" x-model="newAcc.name" placeholder="Tên ví (VD: Tiền mặt, MB Bank)" class="w-full text-xs border p-2 rounded-xl">
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-semibold">Số dư ban đầu</label>
+                        <input type="text" x-model="newAcc.formattedBalance" @input="formatInputMoney($event, 'newAcc', 'balance', 'formattedBalance')" placeholder="0 đ" class="w-full text-xs border p-2 rounded-xl">
+                    </div>
+                    <div class="flex gap-2 pt-2">
+                        <button @click="showAccModal = false" class="flex-1 bg-gray-100 py-2 rounded-xl text-xs font-semibold text-gray-600">Hủy</button>
+                        <button @click="addAccount()" class="flex-1 bg-blue-600 py-2 rounded-xl text-xs font-semibold text-white">Lưu</button>
+                    </div>
+                </div>
+            </div>
 
-                <div class="space-y-2">
-                    <template x-if="filteredHistoryTransactions.length === 0">
-                        <div class="bg-white p-6 rounded-xl text-center text-xs text-gray-400">
-                            Không có giao dịch nào trong khoảng thời gian này
-                        </div>
-                    </template>
-                    <template x-for="tx in filteredHistoryTransactions" :key="tx.id">
-                        <div class="bg-white p-3 rounded-xl shadow-sm flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-full flex items-center justify-center text-base" :class="getTxTypeBg(tx.type)" x-text="getTxIcon(tx)"></div>
-                                <div>
-                                    <div class="font-bold text-xs" x-text="getTxTitle(tx)"></div>
-                                    <div class="text-[10px] text-gray-500 font-medium mt-0.5">
-                                        <span class="text-blue-600 font-semibold" x-text="getAccountName(tx.accountId)"></span>
-                                        <template x-if="tx.type === 'transfer'">
-                                            <span> ➔ <span class="text-blue-600 font-semibold" x-text="getAccountName(tx.targetAccountId)"></span></span>
-                                        </template>
-                                        <span x-text="' • ' + formatDate(tx.date)"></span>
-                                    </div>
-                                    <template x-if="tx.note">
-                                        <div class="text-[10px] text-gray-400 italic" x-text="tx.note"></div>
-                                    </template>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <div class="font-bold text-xs" :class="getTxColorClass(tx.type)" x-text="getTxPrefix(tx.type) + formatMoney(tx.amount)"></div>
-                                <button @click="deleteTransaction(tx.id)" class="text-[10px] text-gray-400 hover:text-red-500 mt-0.5">Xóa</button>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-            </div>
+            <!-- MODAL 2: THÊM GIAO DỊCH -->
+            <div x-show="showTxModal" class="fixed inset-0 bg-black/50 z-30 flex items-end sm:items-center justify-center p-0 sm:p-4" x-cloak>
+                <div class="bg-white rounded-t-2xl sm:rounded-2xl p-4 w-full max-w-sm space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-bold text-gray-800">Thêm giao dịch</span>
+                        <button @click="showTxModal = false" class="text-gray-400 text-xs">✕</button>
+                    </div>
 
-            <!-- Bottom Nav -->
-            <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 flex items-center justify-between py-2 px-3 z-10">
-                <button @click="activeTab = 'home'" :class="activeTab === 'home' ? 'text-blue-600 font-bold' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-[10px] flex-1">
-                    <span class="text-base">📊</span>
-                    <span>Tổng quan</span>
-                </button>
-                <button @click="activeTab = 'analytics'" :class="activeTab === 'analytics' ? 'text-blue-600 font-bold' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-[10px] flex-1">
-                    <span class="text-base">📈</span>
-                    <span>Báo cáo</span>
-                </button>
-                
-                <div class="flex-1 flex justify-center">
-                    <button @click="openTxModal()" class="bg-blue-600 text-white p-3 rounded-full -mt-6 shadow-lg hover:bg-blue-700 transition">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-                    </button>
-                </div>
+                    <!-- Chọn Loại Giao Dịch -->
+                    <div class="flex bg-gray-100 p-1 rounded-xl text-xs font-semibold">
+                        <button @click="newTx.type = 'expense'; onTxTypeChange()" :class="newTx.type === 'expense' ? 'bg-red-500 text-white' : 'text-gray-500'" class="flex-1 py-1 rounded-lg">Tiền chi</button>
+                        <button @click="newTx.type = 'income'; onTxTypeChange()" :class="newTx.type === 'income' ? 'bg-emerald-500 text-white' : 'text-gray-500'" class="flex-1 py-1 rounded-lg">Tiền thu</button>
+                        <button @click="newTx.type = 'transfer'; onTxTypeChange()" :class="newTx.type === 'transfer' ? 'bg-blue-500 text-white' : 'text-gray-500'" class="flex-1 py-1 rounded-lg">Chuyển ví</button>
+                    </div>
 
-                <button @click="activeTab = 'accounts'" :class="activeTab === 'accounts' ? 'text-blue-600 font-bold' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-[10px] flex-1">
-                    <span class="text-base">💳</span>
-                    <span>Ví tiền</span>
-                </button>
-                <button @click="activeTab = 'history'" :class="activeTab === 'history' ? 'text-blue-600 font-bold' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-[10px] flex-1">
-                    <span class="text-base">📜</span>
-                    <span>Lịch sử</span>
-                </button>
-            </div>
+                    <!-- Số tiền -->
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-semibold">Số tiền</label>
+                        <input type="text" x-model="newTx.formattedAmount" @input="formatInputMoney($event, 'newTx', 'amount', 'formattedAmount')" placeholder="0 đ" class="w-full text-lg font-bold border-b pb-1 focus:outline-none focus:border-blue-500">
+                    </div>
 
-            <!-- Modals -->
-            <div x-show="showAccModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" style="display: none;">
-                <div class="bg-white rounded-2xl w-full max-w-xs p-5 space-y-4">
-                    <h3 class="font-bold text-sm text-gray-800">Thêm Ví Mới</h3>
-                    <div>
-                        <label class="block text-xs text-gray-500 mb-1">Tên ví</label>
-                        <input type="text" x-model="newAcc.name" class="w-full border rounded-lg px-3 py-2 text-xs outline-none focus:border-blue-500" placeholder="VD: Tiền mặt, MB Bank...">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-gray-500 mb-1">Số dư ban đầu</label>
-                        <input type="text" x-model="newAcc.formattedBalance" @input="formatInputMoney($event, 'newAcc', 'balance', 'formattedBalance')" class="w-full border rounded-lg px-3 py-2 text-xs outline-none focus:border-blue-500" placeholder="0">
-                    </div>
-                    <div class="flex gap-2">
-                        <button @click="showAccModal = false" class="flex-1 py-2 text-xs bg-gray-100 rounded-lg">Hủy</button>
-                        <button @click="addAccount()" class="flex-1 py-2 text-xs bg-blue-600 text-white rounded-lg font-bold">Thêm</button>
-                    </div>
-                </div>
-            </div>
+                    <!-- Chọn Danh Mục (Không hiện khi Chuyển tiền) -->
+                    <template x-if="newTx.type !== 'transfer'">
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-[10px] text-gray-400 font-semibold">Danh mục</label>
+                                <button @click="showCatModal = true" class="text-[10px] text-blue-600 font-semibold">+ Thêm danh mục</button>
+                            </div>
+                            <select x-model="newTx.category" class="w-full text-xs border p-2 rounded-xl bg-white">
+                                <template x-for="cat in currentCategories" :key="cat.name">
+                                    <option :value="cat.name" x-text="`${cat.icon} ${cat.name}`"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </template>
 
-            <div x-show="showTxModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" style="display: none;">
-                <div class="bg-white rounded-2xl w-full max-w-xs p-5 space-y-3">
-                    <h3 class="font-bold text-sm text-gray-800">Ghi Chép Giao Dịch</h3>
-                    
-                    <div>
-                        <label class="block text-[11px] text-gray-500 mb-1">Loại giao dịch</label>
-                        <select x-model="newTx.type" @change="onTxTypeChange()" class="w-full border rounded-lg px-3 py-2 text-xs">
-                            <option value="expense">Khoản Chi (-)</option>
-                            <option value="income">Khoản Thu (+)</option>
-                            <option value="transfer">Chuyển ví (🔄)</option>
-                        </select>
-                    </div>
+                    <!-- Ví Chọn -->
+                    <div class="grid grid-cols-1 gap-2">
+                        <div>
+                            <label class="text-[10px] text-gray-400 font-semibold" x-text="newTx.type === 'transfer' ? 'Từ ví' : 'Ví sử dụng'"></label>
+                            <select x-model="newTx.accountId" class="w-full text-xs border p-2 rounded-xl bg-white">
+                                <template x-for="acc in accounts" :key="acc.id">
+                                    <option :value="acc.id" x-text="`${acc.name} (${formatMoney(acc.balance)})`"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <template x-if="newTx.type === 'transfer'">
+                            <div>
+                                <label class="text-[10px] text-gray-400 font-semibold">Đến ví</label>
+                                <select x-model="newTx.targetAccountId" class="w-full text-xs border p-2 rounded-xl bg-white">
+                                    <template x-for="acc in accounts" :key="acc.id">
+                                        <option :value="acc.id" x-text="`${acc.name} (${formatMoney(acc.balance)})`"></option>
+                                    </template>
+                                </select>
+                            </div>
+                        </template>
+                    </div>
 
-                    <div x-show="newTx.type !== 'transfer'">
-                        <div class="flex items-center justify-between mb-1">
-                            <label class="block text-[11px] text-gray-500">Danh mục</label>
-                            <button @click="newCat.type = newTx.type; showCatModal = true" class="text-[10px] text-blue-600 font-bold hover:underline">+ Tạo danh mục</button>
-                        </div>
-                        <select x-model="newTx.category" class="w-full border rounded-lg px-3 py-2 text-xs">
-                            <template x-for="cat in currentCategories" :key="cat.name">
-                                <option :value="cat.name" x-text="cat.icon + ' ' + cat.name"></option>
-                            </template>
-                        </select>
-                    </div>
+                    <!-- Ghi chú & Ngày -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[10px] text-gray-400 font-semibold">Ghi chú</label>
+                            <input type="text" x-model="newTx.note" placeholder="VD: Mua cà phê" class="w-full text-xs border p-2 rounded-xl">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 font-semibold">Ngày</label>
+                            <input type="date" x-model="newTx.date" class="w-full text-xs border p-2 rounded-xl">
+                        </div>
+                    </div>
 
-                    <div>
-                        <label class="block text-[11px] text-gray-500 mb-1">Số tiền</label>
-                        <input type="text" x-model="newTx.formattedAmount" @input="formatInputMoney($event, 'newTx', 'amount', 'formattedAmount')" class="w-full border rounded-lg px-3 py-2 text-xs font-bold text-blue-600" placeholder="0">
-                    </div>
+                    <button @click="addTransaction()" class="w-full bg-blue-600 text-white py-2.5 rounded-xl text-xs font-semibold shadow-md active:scale-95 mt-2">Lưu Giao Dịch</button>
+                </div>
+            </div>
 
-                    <div>
-                        <label class="block text-[11px] text-gray-500 mb-1" x-text="newTx.type === 'transfer' ? 'Từ ví' : 'Ví sử dụng'"></label>
-                        <select x-model="newTx.accountId" class="w-full border rounded-lg px-3 py-2 text-xs">
-                            <template x-for="acc in accounts" :key="acc.id">
-                                <option :value="acc.id" x-text="acc.name + ' (' + formatMoney(acc.balance) + ')'"></option>
-                            </template>
-                        </select>
-                    </div>
+            <!-- MODAL 3: THÊM DANH MỤC -->
+            <div x-show="showCatModal" class="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4" x-cloak>
+                <div class="bg-white rounded-2xl p-4 w-full max-w-xs space-y-3">
+                    <div class="text-sm font-bold text-gray-800">Thêm danh mục mới</div>
+                    <input type="text" x-model="newCat.name" placeholder="Tên danh mục" class="w-full text-xs border p-2 rounded-xl">
+                    <input type="text" x-model="newCat.icon" placeholder="Icon Emoji (VD: ☕)" class="w-full text-xs border p-2 rounded-xl">
+                    <select x-model="newCat.type" class="w-full text-xs border p-2 rounded-xl">
+                        <option value="expense">Khoản Chi</option>
+                        <option value="income">Khoản Thu</option>
+                    </select>
+                    <div class="flex gap-2 pt-2">
+                        <button @click="showCatModal = false" class="flex-1 bg-gray-100 py-2 rounded-xl text-xs font-semibold text-gray-600">Hủy</button>
+                        <button @click="addCategory()" class="flex-1 bg-blue-600 py-2 rounded-xl text-xs font-semibold text-white">Lưu</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
 
-                    <div x-show="newTx.type === 'transfer'">
-                        <label class="block text-[11px] text-gray-500 mb-1">Đến ví</label>
-                        <select x-model="newTx.targetAccountId" class="w-full border rounded-lg px-3 py-2 text-xs">
-                            <template x-for="acc in accounts" :key="acc.id">
-                                <option :value="acc.id" x-text="acc.name + ' (' + formatMoney(acc.balance) + ')'"></option>
-                            </template>
-                        </select>
-                    </div>
+    <!-- JS LOGIC (ALPINE.JS COMPONENT) -->
+    <script>
+    function app() {
+        return {
+            // App State
+            user: null,
+            authTab: 'google',
+            emailInput: '',
+            passwordInput: '',
+            isLoggingIn: false,
+            activeTab: 'home',
+            hideBalance: false,
+            
+            // Modals & Filters
+            showAccModal: false,
+            showTxModal: false,
+            showCatModal: false,
+            timeFilter: 'month',
+            reportFilterType: 'month',
+            reportFilterDate: new Date().toISOString().slice(0, 10),
+            reportFilterMonth: new Date().toISOString().slice(0, 7),
+            reportFilterYear: new Date().getFullYear().toString(),
+            historyFilterType: 'all',
+            historyFilterDate: new Date().toISOString().slice(0, 10),
+            historyFilterMonth: new Date().toISOString().slice(0, 7),
+            historyFilterYear: new Date().getFullYear().toString(),
+            
+            // Data Collections
+            accounts: [],
+            transactions: [],
+            customCategories: [],
+            
+            // Form Data
+            newAcc: { name: '', balance: 0, formattedBalance: '0' },
+            newTx: {
+                type: 'expense',
+                category: '',
+                amount: 0,
+                formattedAmount: '',
+                accountId: '',
+                targetAccountId: '',
+                note: '',
+                date: new Date().toISOString().slice(0, 10)
+            },
+            newCat: { name: '', icon: '📌', type: 'expense' },
+            
+            // Chart Instance Reference
+            chartInstance: null,
 
-                    <div>
-                        <label class="block text-[11px] text-gray-500 mb-1">Ghi chú</label>
-                        <input type="text" x-model="newTx.note" class="w-full border rounded-lg px-3 py-2 text-xs" placeholder="Ghi chú...">
-                    </div>
+            // Static Default Data
+            defaultExpenseCategories: [
+                { name: 'Ăn uống', icon: '🍔', color: '#EF4444' },
+                { name: 'Mua sắm', icon: '🛍️', color: '#F59E0B' },
+                { name: 'Di chuyển', icon: '🚗', color: '#3B82F6' },
+                { name: 'Giải trí', icon: '🎮', color: '#8B5CF6' },
+                { name: 'Hóa đơn', icon: '📄', color: '#10B981' },
+                { name: 'Điều chỉnh', icon: '⚙️', color: '#6B7280' },
+                { name: 'Khác', icon: '📌', color: '#9CA3AF' }
+            ],
+            defaultIncomeCategories: [
+                { name: 'Lương', icon: '💵', color: '#10B981' },
+                { name: 'Thưởng', icon: '🎁', color: '#3B82F6' },
+                { name: 'Đầu tư', icon: '📈', color: '#8B5CF6' },
+                { name: 'Phụ cấp', icon: '🪙', color: '#F59E0B' },
+                { name: 'Điều chỉnh', icon: '⚙️', color: '#6B7280' },
+                { name: 'Khác', icon: '📌', color: '#9CA3AF' }
+            ],
 
-                    <div class="flex gap-2 pt-2">
-                        <button @click="showTxModal = false" class="flex-1 py-2 text-xs bg-gray-100 rounded-lg">Hủy</button>
-                        <button @click="addTransaction()" class="flex-1 py-2 text-xs bg-blue-600 text-white rounded-lg font-bold">Lưu</button>
-                    </div>
-                </div>
-            </div>
+            // Lifecycle Initialization
+            init() {
+                firebase.auth().onAuthStateChanged((user) => {
+                    this.user = user;
+                    if (user) {
+                        this.loadFirebaseData();
+                    } else {
+                        this.resetData();
+                    }
+                });
+            },
 
-            <div x-show="showCatModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4" style="display: none;">
-                <div class="bg-white rounded-2xl w-full max-w-xs p-5 space-y-3">
-                    <h3 class="font-bold text-sm text-gray-800">Thêm Danh Mục Mới</h3>
-                    
-                    <div>
-                        <label class="block text-[11px] text-gray-500 mb-1">Loại danh mục</label>
-                        <select x-model="newCat.type" class="w-full border rounded-lg px-3 py-2 text-xs">
-                            <option value="expense">Khoản Chi (-)</option>
-                            <option value="income">Khoản Thu (+)</option>
-                        </select>
-                    </div>
+            // Auth Operations
+            loginWithGoogle() {
+                this.isLoggingIn = true;
+                const provider = new firebase.auth.GoogleAuthProvider();
+                firebase.auth().signInWithPopup(provider)
+                    .catch(err => alert(err.message))
+                    .finally(() => this.isLoggingIn = false);
+            },
 
-                    <div>
-                        <label class="block text-[11px] text-gray-500 mb-1">Chọn nhanh biểu tượng</label>
-                        <div class="flex flex-wrap gap-1.5 p-2 bg-gray-50 rounded-lg mb-2">
-                            <template x-for="emoji i
+            loginWithEmail() {
+                if (!this.emailInput || !this.passwordInput) return alert('Vui lòng nhập email và mật khẩu');
+                firebase.auth().signInWithEmailAndPassword(this.emailInput, this.passwordInput)
+                    .catch(err => alert(err.message));
+            },
+
+            registerWithEmail() {
+                if (!this.emailInput || !this.passwordInput) return alert('Vui lòng nhập email và mật khẩu');
+                firebase.auth().createUserWithEmailAndPassword(this.emailInput, this.passwordInput)
+                    .catch(err => alert(err.message));
+            },
+
+            logout() {
+                firebase.auth().signOut();
+            },
+
+            // Firebase Syncing
+            loadFirebaseData() {
+                const uid = this.user.uid;
+                const db = firebase.database();
+
+                db.ref(`users/${uid}/accounts`).on('value', snap => {
+                    const data = snap.val();
+                    this.accounts = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
+                });
+
+                db.ref(`users/${uid}/transactions`).on('value', snap => {
+                    const data = snap.val();
+                    this.transactions = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })).sort((a,b) => new Date(b.date) - new Date(a.date)) : [];
+                    this.$nextTick(() => this.updateOverviewChart());
+                });
+
+                db.ref(`users/${uid}/categories`).on('value', snap => {
+                    const data = snap.val();
+                    this.customCategories = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
+                });
+            },
+
+            resetData() {
+                this.accounts = [];
+                this.transactions = [];
+                this.customCategories = [];
+                if (this.chartInstance) this.chartInstance.destroy();
+            },
+
+            // Computed / Getters
+            get availableYears() {
+                const currentYear = new Date().getFullYear();
+                const years = new Set([currentYear]);
+                this.transactions.forEach(t => years.add(new Date(t.date).getFullYear()));
+                return Array.from(years).sort((a, b) => b - a);
+            },
+
+            get currentCategories() {
+                const custom = this.customCategories.filter(c => c.type === this.newTx.type);
+                const defaults = this.newTx.type === 'expense' ? this.defaultExpenseCategories : this.defaultIncomeCategories;
+                return [...custom, ...defaults];
+            },
+
+            get filteredTransactions() {
+                const now = new Date();
+                return this.transactions.filter(t => {
+                    const d = new Date(t.date);
+                    if (this.timeFilter === 'today') {
+                        return d.toDateString() === now.toDateString();
+                    } else if (this.timeFilter === 'week') {
+                        const startOfWeek = new Date(now);
+                        startOfWeek.setDate(now.getDate() - now.getDay());
+                        startOfWeek.setHours(0,0,0,0);
+                        return d >= startOfWeek;
+                    } else if (this.timeFilter === 'month') {
+                        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                    } else if (this.timeFilter === 'year') {
+                        return d.getFullYear() === now.getFullYear();
+                    }
+                    return true;
+                });
+            },
+
+            get filteredIncome() {
+                return this.filteredTransactions
+                    .filter(t => t.type === 'income')
+                    .reduce((sum, t) => sum + Number(t.amount), 0);
+            },
+
+            get filteredExpense() {
+                return this.filteredTransactions
+                    .filter(t => t.type === 'expense')
+                    .reduce((sum, t) => sum + Number(t.amount), 0);
+            },
+
+            get filteredCategoryPercentages() {
+                const expenses = this.filteredTransactions.filter(t => t.type === 'expense');
+                const total = this.filteredExpense;
+                if (total === 0) return [];
+
+                const categoriesMap = {};
+                expenses.forEach(t => {
+                    categoriesMap[t.category] = (categoriesMap[t.category] || 0) + Number(t.amount);
+                });
+
+                return Object.keys(categoriesMap).map(catName => {
+                    const amount = categoriesMap[catName];
+                    const catObj = this.currentCategories.find(c => c.name === catName) || { color: '#9CA3AF' };
+                    return {
+                        category: catName,
+                        amount: amount,
+                        percentage: ((amount / total) * 100).toFixed(1),
+                        color: catObj.color || '#3B82F6'
+                    };
+                }).sort((a, b) => b.amount - a.amount);
+            },
+
+            get reportData() {
+                const filtered = this.transactions.filter(t => {
+                    const d = new Date(t.date);
+                    if (this.reportFilterType === 'day') {
+                        return t.date.slice(0, 10) === this.reportFilterDate;
+                    } else if (this.reportFilterType === 'month') {
+                        return t.date.slice(0, 7) === this.reportFilterMonth;
+                    } else if (this.reportFilterType === 'year') {
+                        return d.getFullYear().toString() === this.reportFilterYear;
+                    }
+                    return true;
+                });
+
+                const income = filtered.filter(t => t.type === 'income').reduce((sum, t) => sum + Number(t.amount), 0);
+                const expense = filtered.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount), 0);
+                return { income, expense, total: income + expense };
+            },
+
+            get filteredHistoryTransactions() {
+                return this.transactions.filter(t => {
+                    if (this.historyFilterType === 'day') {
+                        return t.date.slice(0, 10) === this.historyFilterDate;
+                    } else if (this.historyFilterType === 'month') {
+                        return t.date.slice(0, 7) === this.historyFilterMonth;
+                    } else if (this.historyFilterType === 'year') {
+                        return new Date(t.date).getFullYear().toString() === this.historyFilterYear;
+                    }
+                    return true;
+                });
+            },
+
+            // Actions & Handlers
+            calculateTotalBalance() {
+                return this.accounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
+            },
+
+            formatMoney(amount) {
+                return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
+            },
+
+            formatInputMoney(event, objName, propName, formattedPropName) {
+                let rawValue = event.target.value.replace(/\D/g, '');
+                let numValue = Number(rawValue) || 0;
+                this[objName][propName] = numValue;
+                this[objName][formattedPropName] = numValue ? numValue.toLocaleString('vi-VN') : '';
+            },
+
+            formatDate(dateStr) {
+                if (!dateStr) return '';
+                const d = new Date(dateStr);
+                return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+            },
+
+            openAccountModal() {
+                this.newAcc = { name: '', balance: 0, formattedBalance: '' };
+                this.showAccModal = true;
+            },
+
+            addAccount() {
+                if (!this.newAcc.name) return alert('Vui lòng nhập tên ví');
+                const uid = this.user.uid;
+                firebase.database().ref(`users/${uid}/accounts`).push({
+                    name: this.newAcc.name,
+                    balance: Number(this.newAcc.balance) || 0
+                });
+                this.showAccModal = false;
+            },
+
+            deleteAccount(id) {
+                if (confirm('Bạn có chắc chắn muốn xóa ví này?')) {
+                    firebase.database().ref(`users/${this.user.uid}/accounts/${id}`).remove();
+                }
+            },
+
+            // CHỨC NĂNG: Reset số dư ví về 0
+            resetAccountBalance(accountId) {
+                const acc = this.accounts.find(a => a.id === accountId);
+                if (!acc) return;
+
+                const currentBalance = Number(acc.balance);
+                if (currentBalance === 0) {
+                    return alert(`Ví "${acc.name}" hiện tại đã có số dư bằng 0.`);
+                }
+
+                if (confirm(`Bạn có chắc muốn đặt số dư ví "${acc.name}" về 0 đ?`)) {
+                    const uid = this.user.uid;
+                    const db = firebase.database();
+
+                    // 1. Cập nhật số dư ví về 0
+                    db.ref(`users/${uid}/accounts/${accountId}`).update({ balance: 0 });
+
+                    // 2. Tạo một giao dịch "Điều chỉnh" tương ứng
+                    const isPositive = currentBalance > 0;
+                    const adjustmentTx = {
+                        type: isPositive ? 'expense' : 'income',
+                        category: 'Điều chỉnh',
+                        amount: Math.abs(currentBalance),
+                        accountId: accountId,
+                        note: `Cân bằng số dư ví về 0`,
+                        date: new Date().toISOString()
+                    };
+
+                    db.ref(`users/${uid}/transactions`).push(adjustmentTx);
+                }
+            },
+
+            openTxModal() {
+                if (this.accounts.length === 0) return alert('Vui lòng thêm ít nhất một ví tài khoản trước!');
+                this.newTx = {
+                    type: 'expense',
+                    category: this.defaultExpenseCategories[0].name,
+                    amount: 0,
+                    formattedAmount: '',
+                    accountId: this.accounts[0].id,
+                    targetAccountId: this.accounts[1] ? this.accounts[1].id : this.accounts[0].id,
+                    note: '',
+                    date: new Date().toISOString().slice(0, 10)
+                };
+                this.showTxModal = true;
+            },
+
+            onTxTypeChange() {
+                if (this.newTx.type !== 'transfer') {
+                    const cats = this.currentCategories;
+                    this.newTx.category = cats.length > 0 ? cats[0].name : '';
+                }
+            },
+
+            addTransaction() {
+                if (!this.newTx.amount || this.newTx.amount <= 0) return alert('Vui lòng nhập số tiền hợp lệ');
+                const uid = this.user.uid;
+                const db = firebase.database();
+                const txData = { ...this.newTx, amount: Number(this.newTx.amount) };
+
+                if (txData.type === 'expense') {
+                    const acc = this.accounts.find(a => a.id === txData.accountId);
+                    if (acc) db.ref(`users/${uid}/accounts/${acc.id}`).update({ balance: Number(acc.balance) - txData.amount });
+                } else if (txData.type === 'income') {
+                    const acc = this.accounts.find(a => a.id === txData.accountId);
+                    if (acc) db.ref(`users/${uid}/accounts/${acc.id}`).update({ balance: Number(acc.balance) + txData.amount });
+                } else if (txData.type === 'transfer') {
+                    if (txData.accountId === txData.targetAccountId) return alert('Ví chuyển và ví nhận phải khác nhau!');
+                    const accSrc = this.accounts.find(a => a.id === txData.accountId);
+                    const accTarget = this.accounts.find(a => a.id === txData.targetAccountId);
+                    if (accSrc) db.ref(`users/${uid}/accounts/${accSrc.id}`).update({ balance: Number(accSrc.balance) - txData.amount });
+                    if (accTarget) db.ref(`users/${uid}/accounts/${accTarget.id}`).update({ balance: Number(accTarget.balance) + txData.amount });
+                }
+
+                db.ref(`users/${uid}/transactions`).push(txData);
+                this.showTxModal = false;
+            },
+
+            deleteTransaction(id) {
+                if (!confirm('Bạn có chắc chắn muốn xóa giao dịch này?')) return;
+                const uid = this.user.uid;
+                const tx = this.transactions.find(t => t.id === id);
+                if (!tx) return;
+
+                const db = firebase.database();
+                if (tx.type === 'expense') {
+                    const acc = this.accounts.find(a => a.id === tx.accountId);
+                    if (acc) db.ref(`users/${uid}/accounts/${acc.id}`).update({ balance: Number(acc.balance) + Number(tx.amount) });
+                } else if (tx.type === 'income') {
+                    const acc = this.accounts.find(a => a.id === tx.accountId);
+                    if (acc) db.ref(`users/${uid}/accounts/${acc.id}`).update({ balance: Number(acc.balance) - Number(tx.amount) });
+                } else if (tx.type === 'transfer') {
+                    const accSrc = this.accounts.find(a => a.id === tx.accountId);
+                    const accTarget = this.accounts.find(a => a.id === tx.targetAccountId);
+                    if (accSrc) db.ref(`users/${uid}/accounts/${accSrc.id}`).update({ balance: Number(accSrc.balance) + Number(tx.amount) });
+                    if (accTarget) db.ref(`users/${uid}/accounts/${accTarget.id}`).update({ balance: Number(accTarget.balance) - Number(tx.amount) });
+                }
+
+                db.ref(`users/${uid}/transactions/${id}`).remove();
+            },
+
+            addCategory() {
+                if (!this.newCat.name) return alert('Vui lòng nhập tên danh mục');
+                const uid = this.user.uid;
+                firebase.database().ref(`users/${uid}/categories`).push({ ...this.newCat });
+                this.showCatModal = false;
+                this.newCat = { name: '', icon: '📌', type: 'expense' };
+            },
+
+            deleteCategory(id) {
+                if (confirm('Bạn có chắc chắn muốn xóa danh mục này?')) {
+                    firebase.database().ref(`users/${this.user.uid}/categories/${id}`).remove();
+                }
+            },
+
+            // Helper render functions
+            getAccountName(id) {
+                const acc = this.accounts.find(a => a.id === id);
+                return acc ? acc.name : 'N/A';
+            },
+
+            getTxIcon(tx) {
+                if (tx.type === 'transfer') return '🔄';
+                const cat = this.currentCategories.find(c => c.name === tx.category);
+                return cat ? cat.icon : '📌';
+            },
+
+            getTxTitle(tx) {
+                return tx.type === 'transfer' ? 'Chuyển tiền' : tx.category;
+            },
+
+            getTxTypeBg(type) {
+                if (type === 'income') return 'bg-emerald-100 text-emerald-600';
+                if (type === 'expense') return 'bg-red-100 text-red-500';
+                return 'bg-blue-100 text-blue-600';
+            },
+
+            getTxColorClass(type) {
+                if (type === 'income') return 'text-emerald-600';
+                if (type === 'expense') return 'text-red-500';
+                return 'text-blue-600';
+            },
+
+            getTxPrefix(type) {
+                if (type === 'income') return '+';
+                if (type === 'expense') return '-';
+                return '';
+            },
+
+            // Chart.js Visualization
+            updateOverviewChart() {
+                const ctx = document.getElementById('categoryDoughnutChart');
+                if (!ctx) return;
+
+                const dataItems = this.filteredCategoryPercentages;
+                
+                if (this.chartInstance) {
+                    this.chartInstance.destroy();
+                }
+
+                this.chartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: dataItems.length ? dataItems.map(i => i.category) : ['Không có dữ liệu'],
+                        datasets: [{
+                            data: dataItems.length ? dataItems.map(i => i.amount) : [1],
+                            backgroundColor: dataItems.length ? dataItems.map(i => i.color) : ['#E5E7EB'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        cutout: '70%'
+                    }
+                });
+            }
+        };
+    }
+    </script>
+</body>
+</html>
