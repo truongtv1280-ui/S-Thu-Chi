@@ -4,76 +4,53 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quản Lý Thu Chi</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
-  <div x-data="app()" x-init="initApp()" class="w-full max-w-md bg-white rounded-xl shadow-md p-6">
+  <div class="w-full max-w-md bg-white rounded-xl shadow-md p-6">
     
     <!-- Màn hình Đăng nhập -->
-    <template x-if="!user">
-      <div class="text-center py-8">
-        <h1 class="text-2xl font-bold mb-2 text-gray-800">Quản Lý Thu Chi</h1>
-        <p class="text-gray-500 mb-6 text-sm">Theo dõi tài chính cá nhân dễ dàng</p>
-        <button @click="loginWithGoogle()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 shadow transition">
-          <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.761H12.545z"/></svg>
-          Đăng nhập với Google
-        </button>
-      </div>
-    </template>
+    <div id="login-view" class="text-center py-8">
+      <h1 class="text-2xl font-bold mb-2 text-gray-800">Quản Lý Thu Chi</h1>
+      <p class="text-gray-500 mb-6 text-sm">Theo dõi tài chính cá nhân dễ dàng</p>
+      <button id="login-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 shadow transition">
+        <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.761H12.545z"/></svg>
+        Đăng nhập với Google
+      </button>
+    </div>
 
-    <!-- Màn hình Dashboard khi đã Đăng nhập -->
-    <template x-if="user">
-      <div>
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-6 pb-4 border-b">
-          <div class="flex items-center gap-2">
-            <img :src="user.photoURL" class="w-8 h-8 rounded-full border">
-            <span class="font-medium text-sm text-gray-700" x-text="user.displayName"></span>
-          </div>
-          <button @click="logout()" class="text-xs text-red-500 hover:underline font-medium">Đăng xuất</button>
+    <!-- Màn hình Dashboard -->
+    <div id="app-view" class="hidden">
+      <div class="flex justify-between items-center mb-6 pb-4 border-b">
+        <div class="flex items-center gap-2">
+          <img id="user-avatar" class="w-8 h-8 rounded-full border" src="" alt="Avatar">
+          <span id="user-name" class="font-medium text-sm text-gray-700"></span>
         </div>
-
-        <!-- Ví & Số dư -->
-        <div class="bg-blue-50 p-4 rounded-lg mb-6 text-center border border-blue-100">
-          <span class="text-xs text-gray-500 uppercase font-semibold tracking-wider">Số Dư Hiện Tại</span>
-          <div class="text-3xl font-bold text-blue-600 my-1" x-text="formatMoney(balance)"></div>
-          <button @click="resetBalance()" class="text-xs text-gray-500 hover:text-red-600 underline mt-1">Reset ví về 0 đ</button>
-        </div>
-
-        <!-- Form Nhập Khoản Thu/Chi -->
-        <form @submit.prevent="addTransaction()" class="space-y-3 mb-6">
-          <input type="text" x-model="title" placeholder="Nội dung (vd: Lương, Ăn sáng)" required class="w-full border p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <input type="number" x-model.number="amount" placeholder="Số tiền" required class="w-full border p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <div class="flex gap-2">
-            <select x-model="type" class="w-1/2 border p-2.5 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="income">Thu nhập (+)</option>
-              <option value="expense">Chi tiêu (-)</option>
-            </select>
-            <button type="submit" class="w-1/2 bg-green-600 text-white font-medium py-2.5 rounded-lg text-sm hover:bg-green-700 transition">Thêm</button>
-          </div>
-        </form>
-
-        <!-- Danh sách giao dịch -->
-        <h3 class="font-bold text-gray-700 mb-2 text-sm">Lịch sử gần đây</h3>
-        <ul class="divide-y max-h-48 overflow-y-auto mb-4 border rounded-lg bg-gray-50">
-          <template x-for="(tx, id) in transactions" :key="id">
-            <li class="p-3 flex justify-between items-center text-sm bg-white">
-              <div>
-                <div class="font-medium text-gray-800" x-text="tx.title"></div>
-                <div class="text-xs text-gray-400" x-text="tx.date"></div>
-              </div>
-              <div class="flex items-center gap-3">
-                <span :class="tx.type === 'income' ? 'text-green-600' : 'text-red-600'" class="font-bold" x-text="(tx.type === 'income' ? '+' : '-') + formatMoney(tx.amount)"></span>
-                <button @click="deleteTransaction(id)" class="text-gray-400 hover:text-red-500 font-bold text-xs p-1">✕</button>
-              </div>
-            </li>
-          </template>
-        </ul>
+        <button id="logout-btn" class="text-xs text-red-500 hover:underline font-medium">Đăng xuất</button>
       </div>
-    </template>
+
+      <div class="bg-blue-50 p-4 rounded-lg mb-6 text-center border border-blue-100">
+        <span class="text-xs text-gray-500 uppercase font-semibold tracking-wider">Số Dư Hiện Tại</span>
+        <div id="balance-amount" class="text-3xl font-bold text-blue-600 my-1">0 đ</div>
+        <button id="reset-btn" class="text-xs text-gray-500 hover:text-red-600 underline mt-1">Reset ví về 0 đ</button>
+      </div>
+
+      <form id="tx-form" class="space-y-3 mb-6">
+        <input type="text" id="tx-title" placeholder="Nội dung (vd: Lương, Ăn sáng)" required class="w-full border p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <input type="number" id="tx-amount" placeholder="Số tiền" required class="w-full border p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <div class="flex gap-2">
+          <select id="tx-type" class="w-1/2 border p-2.5 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="income">Thu nhập (+)</option>
+            <option value="expense">Chi tiêu (-)</option>
+          </select>
+          <button type="submit" class="w-1/2 bg-green-600 text-white font-medium py-2.5 rounded-lg text-sm hover:bg-green-700 transition">Thêm</button>
+        </div>
+      </form>
+
+      <h3 class="font-bold text-gray-700 mb-2 text-sm">Lịch sử gần đây</h3>
+      <ul id="tx-list" class="divide-y max-h-48 overflow-y-auto mb-4 border rounded-lg bg-gray-50"></ul>
+    </div>
 
   </div>
 
@@ -82,7 +59,6 @@
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // API Key được gán nguyên bản dạng String
     const firebaseConfig = {
       apiKey: "AIzaSyCNVhHtsp--ZWj_U-WFDFkJFXBBLR-Nvzg",
       authDomain: "quanlythuchi-7d202.firebaseapp.com",
@@ -98,86 +74,102 @@
     const provider = new GoogleAuthProvider();
     const db = getDatabase(firebaseApp);
 
-    window.app = function() {
-      return {
-        user: null,
-        title: '',
-        amount: null,
-        type: 'expense',
-        transactions: {},
-        balance: 0,
+    let currentUser = null;
+    let currentBalance = 0;
 
-        initApp() {
-          onAuthStateChanged(auth, (currentUser) => {
-            this.user = currentUser;
-            if (currentUser) {
-              this.loadTransactions();
-            }
-          });
-        },
+    const loginView = document.getElementById('login-view');
+    const appView = document.getElementById('app-view');
+    const userName = document.getElementById('user-name');
+    const userAvatar = document.getElementById('user-avatar');
+    const balanceAmount = document.getElementById('balance-amount');
+    const txList = document.getElementById('tx-list');
 
-        loginWithGoogle() {
-          signInWithPopup(auth, provider).catch(err => alert("Lỗi đăng nhập: " + err.message));
-        },
-
-        logout() {
-          signOut(auth);
-        },
-
-        loadTransactions() {
-          const userRef = ref(db, `users/${this.user.uid}/transactions`);
-          onValue(userRef, (snapshot) => {
-            const data = snapshot.val() || {};
-            this.transactions = data;
-            this.calculateBalance();
-          });
-        },
-
-        addTransaction() {
-          if (!this.title || !this.amount) return;
-          const userRef = ref(db, `users/${this.user.uid}/transactions`);
-          push(userRef, {
-            title: this.title,
-            amount: Number(this.amount),
-            type: this.type,
-            date: new Date().toLocaleDateString('vi-VN')
-          });
-          this.title = '';
-          this.amount = null;
-        },
-
-        deleteTransaction(id) {
-          const itemRef = ref(db, `users/${this.user.uid}/transactions/${id}`);
-          remove(itemRef);
-        },
-
-        resetBalance() {
-          if (confirm("Bạn có chắc chắn muốn điều chỉnh ví về 0 đ?")) {
-            const diff = -this.balance;
-            const userRef = ref(db, `users/${this.user.uid}/transactions`);
-            push(userRef, {
-              title: 'Điều chỉnh số dư về 0',
-              amount: Math.abs(diff),
-              type: diff >= 0 ? 'income' : 'expense',
-              date: new Date().toLocaleDateString('vi-VN')
-            });
-          }
-        },
-
-        calculateBalance() {
-          let total = 0;
-          Object.values(this.transactions).forEach(tx => {
-            if (tx.type === 'income') total += Number(tx.amount);
-            else total -= Number(tx.amount);
-          });
-          this.balance = total;
-        },
-
-        formatMoney(val) {
-          return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
-        }
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+      if (user) {
+        userName.textContent = user.displayName;
+        userAvatar.src = user.photoURL;
+        loginView.classList.add('hidden');
+        appView.classList.remove('hidden');
+        loadTransactions();
+      } else {
+        loginView.classList.remove('hidden');
+        appView.classList.add('hidden');
       }
+    });
+
+    document.getElementById('login-btn').addEventListener('click', () => {
+      signInWithPopup(auth, provider).catch(err => alert("Lỗi đăng nhập: " + err.message));
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+    document.getElementById('tx-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const title = document.getElementById('tx-title').value;
+      const amount = Number(document.getElementById('tx-amount').value);
+      const type = document.getElementById('tx-type').value;
+
+      push(ref(db, `users/${currentUser.uid}/transactions`), {
+        title, amount, type, date: new Date().toLocaleDateString('vi-VN')
+      });
+
+      document.getElementById('tx-title').value = '';
+      document.getElementById('tx-amount').value = '';
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      if (confirm("Bạn có chắc chắn muốn điều chỉnh ví về 0 đ?")) {
+        const diff = -currentBalance;
+        push(ref(db, `users/${currentUser.uid}/transactions`), {
+          title: 'Điều chỉnh số dư về 0',
+          amount: Math.abs(diff),
+          type: diff >= 0 ? 'income' : 'expense',
+          date: new Date().toLocaleDateString('vi-VN')
+        });
+      }
+    });
+
+    function loadTransactions() {
+      onValue(ref(db, `users/${currentUser.uid}/transactions`), (snapshot) => {
+        const data = snapshot.val() || {};
+        txList.innerHTML = '';
+        let total = 0;
+
+        Object.keys(data).forEach(id => {
+          const tx = data[id];
+          if (tx.type === 'income') total += Number(tx.amount);
+          else total -= Number(tx.amount);
+
+          const li = document.createElement('li');
+          li.className = 'p-3 flex justify-between items-center text-sm bg-white';
+          li.innerHTML = `
+            <div>
+              <div class="font-medium text-gray-800">${tx.title}</div>
+              <div class="text-xs text-gray-400">${tx.date}</div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="${tx.type === 'income' ? 'text-green-600' : 'text-red-600'} font-bold">
+                ${tx.type === 'income' ? '+' : '-'}${formatMoney(tx.amount)}
+              </span>
+              <button onclick="deleteTx('${id}')" class="text-gray-400 hover:text-red-500 font-bold text-xs p-1">✕</button>
+            </div>
+          `;
+          txList.appendChild(li);
+        });
+
+        currentBalance = total;
+        balanceAmount.textContent = formatMoney(total);
+      });
+    }
+
+    window.deleteTx = function(id) {
+      remove(ref(db, `users/${currentUser.uid}/transactions/${id}`));
     };
+
+    function formatMoney(val) {
+      return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
+    }
   </script>
 </body>
 </html>
