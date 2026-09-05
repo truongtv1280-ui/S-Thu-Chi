@@ -8,39 +8,43 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
-  <div class="w-full max-w-md bg-white rounded-xl shadow-md p-6">
-    
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-6">
     <!-- Màn hình Đăng nhập -->
-    <div id="login-view" class="text-center py-8">
-      <h1 class="text-2xl font-bold mb-2 text-gray-800">Quản Lý Thu Chi</h1>
-      <p class="text-gray-500 mb-6 text-sm">Theo dõi tài chính cá nhân dễ dàng</p>
-      <button id="login-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 shadow transition">
-        <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.761H12.545z"/></svg>
-        Đăng nhập với Google
+    <div id="login-screen" class="text-center space-y-4">
+      <h1 class="text-2xl font-bold text-gray-800">Quản Lý Thu Chi</h1>
+      <p class="text-gray-500 text-sm">Theo dõi tài chính cá nhân dễ dàng</p>
+      <button id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition duration-200 flex items-center justify-center space-x-2">
+        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+          <path d="M12.24 10.285V13.4h6.887C18.2 15.683 15.65 18 12.24 18c-3.315 0-6-2.685-6-6s2.685-6 6-6c1.47 0 2.81.53 3.845 1.41l2.58-2.58C17.07 3.32 14.8 2.4 12.24 2.4 6.97 2.4 2.7 6.67 2.7 11.94s4.27 9.54 9.54 9.54c5.51 0 9.18-3.87 9.18-9.35 0-.64-.06-1.25-.18-1.845H12.24z"/>
+        </svg>
+        <span>Đăng nhập với Google</span>
       </button>
     </div>
 
-    <!-- Màn hình Dashboard -->
-    <div id="app-view" class="hidden">
-      <div class="flex justify-between items-center mb-6 pb-4 border-b">
-        <div class="flex items-center gap-2">
-          <img id="user-avatar" class="w-8 h-8 rounded-full border" src="" alt="Avatar">
-          <span id="user-name" class="font-medium text-sm text-gray-700"></span>
+    <!-- Màn hình Ứng dụng chính -->
+    <div id="app-screen" class="hidden space-y-6">
+      <!-- Thông tin User -->
+      <div class="flex items-center justify-between border-b pb-4">
+        <div class="flex items-center space-x-3">
+          <img id="user-avatar" class="w-10 h-10 rounded-full border" src="" alt="Avatar">
+          <span id="user-name" class="font-semibold text-gray-700"></span>
         </div>
-        <button id="logout-btn" class="text-xs text-red-500 hover:underline font-medium">Đăng xuất</button>
+        <button id="btn-logout" class="text-xs text-red-500 hover:underline">Đăng xuất</button>
       </div>
 
-      <div class="bg-blue-50 p-4 rounded-lg mb-6 text-center border border-blue-100">
-        <span class="text-xs text-gray-500 uppercase font-semibold tracking-wider">Số Dư Hiện Tại</span>
-        <div id="balance-amount" class="text-3xl font-bold text-blue-600 my-1">0 đ</div>
-        <button id="reset-btn" class="text-xs text-gray-500 hover:text-red-600 underline mt-1">Reset ví về 0 đ</button>
+      <!-- Số dư -->
+      <div class="bg-blue-50 p-4 rounded-xl text-center">
+        <p class="text-xs font-semibold text-gray-500 uppercase">Số dư hiện tại</p>
+        <p id="balance" class="text-2xl font-bold text-blue-600 my-1">0 đ</p>
+        <button id="btn-reset" class="text-xs text-gray-400 hover:text-gray-600 underline">Reset ví về 0 đ</button>
       </div>
 
-      <form id="tx-form" class="space-y-3 mb-6">
-        <input type="text" id="tx-title" placeholder="Nội dung (vd: Lương, Ăn sáng)" required class="w-full border p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <input type="number" id="tx-amount" placeholder="Số tiền" required class="w-full border p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <div class="flex gap-2">
-          <select id="tx-type" class="w-1/2 border p-2.5 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <!-- Form nhập -->
+      <form id="tx-form" class="space-y-3">
+        <input id="tx-desc" type="text" placeholder="Nội dung (ví dụ: Lương, Ăn sáng)" required class="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <input id="tx-amount" type="number" placeholder="Số tiền" required min="1" class="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <div class="flex space-x-2">
+          <select id="tx-type" class="w-1/2 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option value="income">Thu nhập (+)</option>
             <option value="expense">Chi tiêu (-)</option>
           </select>
@@ -48,10 +52,12 @@
         </div>
       </form>
 
-      <h3 class="font-bold text-gray-700 mb-2 text-sm">Lịch sử gần đây</h3>
-      <ul id="tx-list" class="divide-y max-h-48 overflow-y-auto mb-4 border rounded-lg bg-gray-50"></ul>
+      <!-- Lịch sử -->
+      <div>
+        <h3 class="font-bold text-gray-700 mb-2 text-sm">Lịch sử gần đây</h3>
+        <ul id="tx-list" class="divide-y max-h-48 overflow-y-auto mb-4 border rounded-lg bg-gray-50"></ul>
+      </div>
     </div>
-
   </div>
 
   <script type="module">
@@ -59,7 +65,7 @@
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // Cấu hình Firebase mới nhất từ màn hình của bạn
+    // Cấu hình Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDwMnJtx2cxiB2vppy51as3NVvVC3IvWpw",
       authDomain: "quanlythuchi-7d202.firebaseapp.com",
@@ -67,110 +73,118 @@
       projectId: "quanlythuchi-7d202",
       storageBucket: "quanlythuchi-7d202.firebasestorage.app",
       messagingSenderId: "1072192237025",
-      appId: "1:1072192237025:web:5ba6b82296c2684b22f6a0"
+      appId: "1:1072192237025:web:5ba6b82296c2684b22f6a8"
     };
 
     const firebaseApp = initializeApp(firebaseConfig);
     const auth = getAuth(firebaseApp);
-    const provider = new GoogleAuthProvider();
     const db = getDatabase(firebaseApp);
+    const provider = new GoogleAuthProvider();
 
-    let currentUser = null;
-    let currentBalance = 0;
-
-    const loginView = document.getElementById('login-view');
-    const appView = document.getElementById('app-view');
+    const loginScreen = document.getElementById('login-screen');
+    const appScreen = document.getElementById('app-screen');
+    const btnLogin = document.getElementById('btn-login');
+    const btnLogout = document.getElementById('btn-logout');
     const userName = document.getElementById('user-name');
     const userAvatar = document.getElementById('user-avatar');
-    const balanceAmount = document.getElementById('balance-amount');
+    const balanceEl = document.getElementById('balance');
+    const txForm = document.getElementById('tx-form');
     const txList = document.getElementById('tx-list');
+    const btnReset = document.getElementById('btn-reset');
 
-    onAuthStateChanged(auth, (user) => {
-      currentUser = user;
+    let currentUser = null;
+
+    // Đăng nhập Popup (Hỗ trợ tốt trên điện thoại)
+    btnLogin.addEventListener('click', () => {
+      signInWithPopup(auth, provider).catch(error => {
+        alert("Lỗi đăng nhập: " + error.message);
+      });
+    });
+
+    btnLogout.addEventListener('click', () => signOut(auth));
+
+    // Theo dõi trạng thái Đăng nhập
+    onAuthStateChanged(auth, user => {
       if (user) {
+        currentUser = user;
         userName.textContent = user.displayName;
-        userAvatar.src = user.photoURL;
-        loginView.classList.add('hidden');
-        appView.classList.remove('hidden');
-        loadTransactions();
+        userAvatar.src = user.photoURL || 'https://via.placeholder.com/40';
+        loginScreen.classList.add('hidden');
+        appScreen.classList.remove('hidden');
+        loadData(user.uid);
       } else {
-        loginView.classList.remove('hidden');
-        appView.classList.add('hidden');
+        currentUser = null;
+        loginScreen.classList.remove('hidden');
+        appScreen.classList.add('hidden');
       }
     });
 
-    document.getElementById('login-btn').addEventListener('click', () => {
-      signInWithPopup(auth, provider).catch(err => alert("Lỗi đăng nhập: " + err.message));
-    });
-
-    document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
-
-    document.getElementById('tx-form').addEventListener('submit', (e) => {
+    // Thêm giao dịch
+    txForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const title = document.getElementById('tx-title').value;
-      const amount = Number(document.getElementById('tx-amount').value);
+      if (!currentUser) return;
+
+      const desc = document.getElementById('tx-desc').value;
+      const amount = parseFloat(document.getElementById('tx-amount').value);
       const type = document.getElementById('tx-type').value;
 
       push(ref(db, `users/${currentUser.uid}/transactions`), {
-        title, amount, type, date: new Date().toLocaleDateString('vi-VN')
+        desc,
+        amount,
+        type,
+        timestamp: Date.now()
       });
 
-      document.getElementById('tx-title').value = '';
-      document.getElementById('tx-amount').value = '';
+      txForm.reset();
     });
 
-    document.getElementById('reset-btn').addEventListener('click', () => {
-      if (confirm("Bạn có chắc chắn muốn điều chỉnh ví về 0 đ?")) {
-        const diff = -currentBalance;
-        push(ref(db, `users/${currentUser.uid}/transactions`), {
-          title: 'Điều chỉnh số dư về 0',
-          amount: Math.abs(diff),
-          type: diff >= 0 ? 'income' : 'expense',
-          date: new Date().toLocaleDateString('vi-VN')
-        });
-      }
-    });
-
-    function loadTransactions() {
-      onValue(ref(db, `users/${currentUser.uid}/transactions`), (snapshot) => {
-        const data = snapshot.val() || {};
+    // Tải dữ liệu từ Firebase
+    function loadData(uid) {
+      onValue(ref(db, `users/${uid}/transactions`), snapshot => {
+        const data = snapshot.val();
         txList.innerHTML = '';
         let total = 0;
 
-        Object.keys(data).forEach(id => {
-          const tx = data[id];
-          if (tx.type === 'income') total += Number(tx.amount);
-          else total -= Number(tx.amount);
+        if (data) {
+          Object.keys(data).reverse().forEach(key => {
+            const item = data[key];
+            const isIncome = item.type === 'income';
+            total += isIncome ? item.amount : -item.amount;
 
-          const li = document.createElement('li');
-          li.className = 'p-3 flex justify-between items-center text-sm bg-white';
-          li.innerHTML = `
-            <div>
-              <div class="font-medium text-gray-800">${tx.title}</div>
-              <div class="text-xs text-gray-400">${tx.date}</div>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="${tx.type === 'income' ? 'text-green-600' : 'text-red-600'} font-bold">
-                ${tx.type === 'income' ? '+' : '-'}${formatMoney(tx.amount)}
-              </span>
-              <button onclick="deleteTx('${id}')" class="text-gray-400 hover:text-red-500 font-bold text-xs p-1">✕</button>
-            </div>
-          `;
-          txList.appendChild(li);
-        });
-
-        currentBalance = total;
-        balanceAmount.textContent = formatMoney(total);
+            const li = document.createElement('li');
+            li.className = 'flex justify-between items-center p-3 text-sm';
+            li.innerHTML = `
+              <div>
+                <p class="font-medium text-gray-800">${item.desc}</p>
+                <p class="text-xs text-gray-400">${new Date(item.timestamp).toLocaleDateString('vi-VN')}</p>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="font-bold ${isIncome ? 'text-green-600' : 'text-red-600'}">
+                  ${isIncome ? '+' : '-'}${item.amount.toLocaleString('vi-VN')} đ
+                </span>
+                <button onclick="deleteTx('${key}')" class="text-gray-400 hover:text-red-500 font-bold ml-2">✕</button>
+              </div>
+            `;
+            txList.appendChild(li);
+          });
+        }
+        balanceEl.textContent = `${total.toLocaleString('vi-VN')} đ`;
       });
     }
 
-    window.deleteTx = function(id) {
-      remove(ref(db, `users/${currentUser.uid}/transactions/${id}`));
+    // Xóa giao dịch
+    window.deleteTx = function(key) {
+      if (currentUser && confirm("Bạn có muốn xóa giao dịch này?")) {
+        remove(ref(db, `users/${currentUser.uid}/transactions/${key}`));
+      }
     };
 
-    function formatMoney(val) {
-      return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
-    }
+    // Reset ví
+    btnReset.addEventListener('click', () => {
+      if (currentUser && confirm("Bạn có chắc muốn xóa tất cả giao dịch về 0 đ?")) {
+        remove(ref(db, `users/${currentUser.uid}/transactions`));
+      }
+    });
   </script>
 </body>
 </html>
