@@ -649,8 +649,8 @@
         `;
         walletsListEl.appendChild(div);
 
-        // Hiển thị tên ví kèm số tiền còn tồn trong danh sách dropdown
-        const walletLabel = `${w.icon} ${w.name} (Số dư: ${bal.toLocaleString('vi-VN')} đ)`;
+        // Đã bỏ chữ "Số dư:", chỉ giữ lại tên ví và số tiền trong ngoặc
+        const walletLabel = `${w.icon} ${w.name} (${bal.toLocaleString('vi-VN')} đ)`;
 
         const opt1 = new Option(walletLabel, wId);
         const opt2 = new Option(walletLabel, wId);
