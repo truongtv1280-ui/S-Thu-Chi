@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sổ Thu Chi - Ẩn Số Tiền</title>
+  <title>Sổ Thu Chi</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -13,7 +13,7 @@
   <div id="login-screen" class="max-w-md mx-auto min-h-screen flex flex-col justify-center items-center p-6 text-center bg-white">
     <div class="w-20 h-20 bg-blue-500 rounded-3xl flex items-center justify-center text-white text-4xl shadow-lg mb-6">💰</div>
     <h1 class="text-2xl font-bold text-gray-800">Sổ Thu Chi Cá Nhân</h1>
-    <p class="text-gray-500 text-sm mt-2 mb-8">Quản lý tài chính & Bảo mật số dư</p>
+    <p class="text-gray-500 text-sm mt-2 mb-8">Quản lý tài chính cá nhân</p>
     <button id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 px-4 rounded-xl shadow-md transition flex items-center justify-center space-x-3">
       <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
         <path d="M12.24 10.285V13.4h6.887C18.2 15.683 15.65 18 12.24 18c-3.315 0-6-2.685-6-6s2.685-6 6-6c1.47 0 2.81.53 3.845 1.41l2.58-2.58C17.07 3.32 14.8 2.4 12.24 2.4 6.97 2.4 2.7 6.67 2.7 11.94s4.27 9.54 9.54 9.54c5.51 0 9.18-3.87 9.18-9.35 0-.64-.06-1.25-.18-1.845H12.24z"/>
@@ -277,7 +277,6 @@
     let allTransactions = null;
     let myChart = null;
 
-    // Trạng thái Ẩn / Hiện số tiền (Mặc định: Ẩn)
     let isBalanceHidden = true;
 
     document.getElementById('tx-date').valueAsDate = new Date();
@@ -297,7 +296,6 @@
       return parseFloat(raw) || 0;
     }
 
-    // Toggle Ẩn / Hiện số tiền
     window.toggleBalanceVisibility = function() {
       isBalanceHidden = !isBalanceHidden;
       document.getElementById('eye-icon').textContent = isBalanceHidden ? '👁️' : '🙈';
@@ -583,6 +581,7 @@
             const li = document.createElement('li');
             li.className = 'py-3 flex justify-between items-center text-sm';
 
+            // Lịch sử luôn hiển thị rõ số tiền
             if (item.type === 'transfer') {
               const fromName = userWallets[item.fromWallet] ? userWallets[item.fromWallet].name : 'Ví cũ';
               const toName = userWallets[item.toWallet] ? userWallets[item.toWallet].name : 'Ví cũ';
@@ -595,7 +594,7 @@
                   </div>
                 </div>
                 <div class="text-right">
-                  <span class="font-bold text-xs text-blue-600">${isBalanceHidden ? '*** đ' : item.amount.toLocaleString('vi-VN') + ' đ'}</span>
+                  <span class="font-bold text-xs text-blue-600">${item.amount.toLocaleString('vi-VN')} đ</span>
                   <button onclick="deleteTx('${key}')" class="text-gray-300 hover:text-red-500 text-xs ml-2">✕</button>
                 </div>
               `;
@@ -612,7 +611,7 @@
                 </div>
                 <div class="text-right">
                   <span class="font-bold text-xs ${isInc ? 'text-green-600' : 'text-red-600'}">
-                    ${isInc ? '+' : '-'}${isBalanceHidden ? '*** đ' : item.amount.toLocaleString('vi-VN') + ' đ'}
+                    ${isInc ? '+' : '-'}${item.amount.toLocaleString('vi-VN')} đ
                   </span>
                   <button onclick="deleteTx('${key}')" class="text-gray-300 hover:text-red-500 text-xs ml-2">✕</button>
                 </div>
@@ -664,7 +663,6 @@
 
       const totalBalanceAll = Object.values(walletBalances).reduce((a, b) => a + b, 0);
 
-      // Hiển thị dạng *** đ nếu đang chọn Ẩn
       document.getElementById('total-balance').textContent = isBalanceHidden ? '*** đ' : `${totalBalanceAll.toLocaleString('vi-VN')} đ`;
       document.getElementById('wallets-total-balance').textContent = isBalanceHidden ? '*** đ' : `${totalBalanceAll.toLocaleString('vi-VN')} đ`;
       document.getElementById('total-income').textContent = isBalanceHidden ? '*** đ' : `+${totalIncomePeriod.toLocaleString('vi-VN')} đ`;
