@@ -3,107 +3,201 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quản Lý Thu Chi</title>
+  <title>Sổ Thu Chi</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gray-50 min-h-screen text-gray-800">
+<body class="bg-gray-100 min-h-screen pb-20 text-gray-800 antialiased">
 
-  <!-- Header / Navbar -->
-  <header class="bg-white border-b sticky top-0 z-10 shadow-sm">
-    <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
-      <div class="flex items-center space-x-2">
-        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">💰</div>
-        <h1 class="text-xl font-bold text-gray-800">Quản Lý Thu Chi</h1>
+  <!-- Màn hình Đăng nhập -->
+  <div id="login-screen" class="max-w-md mx-auto min-h-screen flex flex-col justify-center items-center p-6 text-center bg-white">
+    <div class="w-20 h-20 bg-blue-500 rounded-3xl flex items-center justify-center text-white text-4xl shadow-lg mb-6">
+      💰
+    </div>
+    <h1 class="text-2xl font-bold text-gray-800">Sổ Thu Chi Cá Nhân</h1>
+    <p class="text-gray-500 text-sm mt-2 mb-8">Quản lý tài chính, ví tiền & báo cáo thông minh</p>
+    <button id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 px-4 rounded-xl shadow-md transition flex items-center justify-center space-x-3">
+      <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+        <path d="M12.24 10.285V13.4h6.887C18.2 15.683 15.65 18 12.24 18c-3.315 0-6-2.685-6-6s2.685-6 6-6c1.47 0 2.81.53 3.845 1.41l2.58-2.58C17.07 3.32 14.8 2.4 12.24 2.4 6.97 2.4 2.7 6.67 2.7 11.94s4.27 9.54 9.54 9.54c5.51 0 9.18-3.87 9.18-9.35 0-.64-.06-1.25-.18-1.845H12.24z"/>
+      </svg>
+      <span>Đăng nhập với Google</span>
+    </button>
+  </div>
+
+  <!-- App chính -->
+  <div id="app-screen" class="hidden max-w-md mx-auto min-h-screen bg-gray-50 flex flex-col">
+    
+    <!-- Top Bar Header -->
+    <header class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-20 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <img id="user-avatar" class="w-9 h-9 rounded-full border-2 border-white/50" src="" alt="Avatar">
+        <div>
+          <p id="user-name" class="font-bold text-sm leading-tight"></p>
+          <p class="text-[10px] text-blue-100">Sổ Thu Chi</p>
+        </div>
       </div>
-      <div id="user-info" class="hidden flex items-center space-x-3">
-        <img id="user-avatar" class="w-8 h-8 rounded-full border" src="" alt="Avatar">
-        <span id="user-name" class="text-sm font-medium text-gray-700 hidden sm:inline"></span>
-        <button id="btn-logout" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-lg transition">Đăng xuất</button>
+      <button id="btn-logout" class="text-xs bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg transition">Đăng xuất</button>
+    </header>
+
+    <!-- CONTENT TAB 1: TỔNG QUAN -->
+    <div id="tab-overview" class="tab-content p-4 space-y-4">
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+        <p class="text-xs font-medium text-gray-400 uppercase">Tổng số dư</p>
+        <h2 id="total-balance" class="text-3xl font-extrabold text-blue-600 my-1">0 đ</h2>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-white p-3.5 rounded-xl border border-gray-100">
+          <p class="text-[11px] text-gray-400 font-medium">Tổng Thu</p>
+          <p id="total-income" class="text-lg font-bold text-green-600 my-0.5">+0 đ</p>
+        </div>
+        <div class="bg-white p-3.5 rounded-xl border border-gray-100">
+          <p class="text-[11px] text-gray-400 font-medium">Tổng Chi</p>
+          <p id="total-expense" class="text-lg font-bold text-red-600 my-0.5">-0 đ</p>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+        <h3 class="font-bold text-gray-700 text-sm mb-3">Lịch sử giao dịch gần đây</h3>
+        <ul id="recent-tx-list" class="divide-y divide-gray-100 max-h-80 overflow-y-auto"></ul>
       </div>
     </div>
-  </header>
 
-  <main class="max-w-4xl mx-auto px-4 py-6">
-    <!-- Màn hình Đăng nhập -->
-    <div id="login-screen" class="max-w-md mx-auto my-12 bg-white rounded-2xl shadow-lg p-8 text-center space-y-6">
-      <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto text-3xl">📊</div>
-      <div>
-        <h2 class="text-2xl font-bold text-gray-800">Chào mừng trở lại</h2>
-        <p class="text-gray-500 text-sm mt-1">Đăng nhập để tiếp tục theo dõi tài chính cá nhân</p>
-      </div>
-      <button id="btn-login" class="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 px-4 rounded-xl shadow-sm transition duration-200 flex items-center justify-center space-x-3">
-        <svg class="w-5 h-5" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-        </svg>
-        <span>Đăng nhập bằng Google</span>
-      </button>
-    </div>
-
-    <!-- Màn hình App chính -->
-    <div id="app-screen" class="hidden space-y-6">
-      <!-- Thẻ Tổng quan Thống kê -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Tổng Số Dư</p>
-          <h3 id="balance" class="text-2xl font-extrabold text-blue-600 my-1">0 đ</h3>
-          <button id="btn-reset" class="text-xs text-gray-400 hover:text-red-500 underline transition">Reset ví về 0 đ</button>
-        </div>
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Tổng Thu Nhập</p>
-          <h3 id="total-income" class="text-2xl font-extrabold text-green-600 my-1">+0 đ</h3>
-          <span class="text-xs text-green-500 bg-green-50 px-2 py-0.5 rounded-full font-medium">Thu nhập</span>
-        </div>
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Tổng Chi Tiêu</p>
-          <h3 id="total-expense" class="text-2xl font-extrabold text-red-600 my-1">-0 đ</h3>
-          <span class="text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded-full font-medium">Chi tiêu</span>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Form Nhập Khoản Thu/Chi -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
-          <h3 class="font-bold text-gray-800 text-lg border-b pb-2">Thêm Giao Dịch</h3>
-          <form id="tx-form" class="space-y-4">
+    <!-- CONTENT TAB 2: TÀI KHOẢN (CÁC VÍ) -->
+    <div id="tab-wallets" class="tab-content hidden p-4 space-y-4">
+      <h3 class="font-bold text-gray-800 text-base">Danh sách Tài khoản / Ví</h3>
+      <div class="space-y-3">
+        <div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm">
+          <div class="flex items-center space-x-3">
+            <span class="text-2xl">💵</span>
             <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Mô tả / Nội dung</label>
-              <input id="tx-desc" type="text" placeholder="Ví dụ: Lương tháng, Cà phê..." required class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Số tiền (VNĐ)</label>
-              <input id="tx-amount" type="number" placeholder="0" required min="1" class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1">Loại giao dịch</label>
-              <select id="tx-type" class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50">
-                <option value="expense">Chi tiêu (-)</option>
-                <option value="income">Thu nhập (+)</option>
-              </select>
-            </div>
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl text-sm shadow-md transition duration-200">
-              Thêm Giao Dịch
-            </button>
-          </form>
-        </div>
-
-        <!-- Biểu đồ & Lịch sử -->
-        <div class="lg:col-span-2 space-y-6">
-          <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="font-bold text-gray-800 text-lg">Lịch Sử Giao Dịch</h3>
-            </div>
-            <div class="overflow-x-auto">
-              <ul id="tx-list" class="divide-y divide-gray-100 max-h-80 overflow-y-auto pr-1"></ul>
+              <p class="font-semibold text-sm">Tiền mặt</p>
+              <p class="text-xs text-gray-400">Ví cá nhân</p>
             </div>
           </div>
+          <span id="wallet-cash" class="font-bold text-gray-800">0 đ</span>
+        </div>
+        <div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm">
+          <div class="flex items-center space-x-3">
+            <span class="text-2xl">🏦</span>
+            <div>
+              <p class="font-semibold text-sm">Vietcombank (VCB)</p>
+              <p class="text-xs text-gray-400">Tài khoản Ngân hàng</p>
+            </div>
+          </div>
+          <span id="wallet-vcb" class="font-bold text-gray-800">0 đ</span>
+        </div>
+        <div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm">
+          <div class="flex items-center space-x-3">
+            <span class="text-2xl">📲</span>
+            <div>
+              <p class="font-semibold text-sm">Ví Điện tử (Momo/ZaloPay)</p>
+              <p class="text-xs text-gray-400">Ví thanh toán</p>
+            </div>
+          </div>
+          <span id="wallet-momo" class="font-bold text-gray-800">0 đ</span>
         </div>
       </div>
     </div>
-  </main>
+
+    <!-- CONTENT TAB 3: THÊM GIAO DỊCH (NÚT +) -->
+    <div id="tab-add" class="tab-content hidden p-4 space-y-4">
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+        
+        <!-- Toggle Chi Tiền / Thu Tiền -->
+        <div class="flex bg-gray-100 p-1 rounded-xl">
+          <button id="btn-type-expense" type="button" onclick="setTxType('expense')" class="w-1/2 py-2 text-sm font-bold rounded-lg bg-white text-red-600 shadow-sm transition">Chi tiền</button>
+          <button id="btn-type-income" type="button" onclick="setTxType('income')" class="w-1/2 py-2 text-sm font-bold rounded-lg text-gray-500 hover:text-green-600 transition">Thu tiền</button>
+        </div>
+
+        <!-- Ô Nhập Số Tiền Hiển Thị To MISA Style -->
+        <div class="text-center py-2 bg-gray-50 rounded-xl border border-gray-100">
+          <p class="text-xs text-gray-400 font-medium">Số tiền</p>
+          <div class="flex items-center justify-center space-x-1 mt-1">
+            <input id="tx-amount" type="number" placeholder="0" min="1" class="text-3xl font-bold text-center bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none w-48 text-red-600">
+            <span id="amount-currency" class="text-xl font-bold text-red-600">đ</span>
+          </div>
+        </div>
+
+        <!-- Danh mục nhanh Icon MISA -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-2">Chọn hạng mục</label>
+          <div id="categories-grid" class="grid grid-cols-4 gap-2 text-center">
+            <!-- Render categories bằng JS -->
+          </div>
+        </div>
+
+        <!-- Chọn Ví & Diễn giải -->
+        <div class="space-y-3 pt-2">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Tài khoản / Ví</label>
+            <select id="tx-wallet" class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50">
+              <option value="vcb">🏦 Vietcombank (VCB)</option>
+              <option value="cash">💵 Tiền mặt</option>
+              <option value="momo">📲 Ví Điện tử</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Diễn giải / Ghi chú</label>
+            <input id="tx-desc" type="text" placeholder="Nhập ghi chú (VD: Cafe sáng, Ăn trưa...)" class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50">
+          </div>
+        </div>
+
+        <button id="btn-save-tx" type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-md transition text-base">
+          Lưu lại
+        </button>
+      </div>
+    </div>
+
+    <!-- CONTENT TAB 4: BÁO CÁO -->
+    <div id="tab-reports" class="tab-content hidden p-4 space-y-4">
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
+        <h3 class="font-bold text-gray-800 text-sm mb-3">Phân tích Thu / Chi</h3>
+        <div class="w-full max-w-[220px] mx-auto">
+          <canvas id="reportChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENT TAB 5: KHÁC -->
+    <div id="tab-more" class="tab-content hidden p-4 space-y-4">
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y">
+        <button id="btn-reset-data" class="w-full p-4 text-left text-red-600 font-semibold text-sm hover:bg-red-50 flex items-center justify-between">
+          <span>Reset tất cả dữ liệu ví về 0 đ</span>
+          <span>🗑️</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- BOTTOM NAVIGATION (Thanh Tab Chuẩn MISA) -->
+    <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 py-2 px-3 flex justify-around items-center z-30 shadow-lg">
+      <button onclick="switchTab('overview')" id="nav-overview" class="nav-btn flex flex-col items-center text-blue-600 text-[10px] font-medium">
+        <span class="text-xl">🏠</span>
+        <span>Tổng quan</span>
+      </button>
+      <button onclick="switchTab('wallets')" id="nav-wallets" class="nav-btn flex flex-col items-center text-gray-400 hover:text-blue-600 text-[10px] font-medium">
+        <span class="text-xl">👛</span>
+        <span>Tài khoản</span>
+      </button>
+      
+      <!-- Nút (+) Tròn To Ở Giữa -->
+      <button onclick="switchTab('add')" id="nav-add" class="flex flex-col items-center -mt-5">
+        <div class="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center text-2xl shadow-lg border-2 border-white active:scale-95 transition">
+          +
+        </div>
+      </button>
+
+      <button onclick="switchTab('reports')" id="nav-reports" class="nav-btn flex flex-col items-center text-gray-400 hover:text-blue-600 text-[10px] font-medium">
+        <span class="text-xl">📊</span>
+        <span>Báo cáo</span>
+      </button>
+      <button onclick="switchTab('more')" id="nav-more" class="nav-btn flex flex-col items-center text-gray-400 hover:text-blue-600 text-[10px] font-medium">
+        <span class="text-xl">🎛️</span>
+        <span>Khác</span>
+      </button>
+    </nav>
+
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -125,129 +219,231 @@
     const db = getDatabase(firebaseApp);
     const provider = new GoogleAuthProvider();
 
-    const loginScreen = document.getElementById('login-screen');
-    const appScreen = document.getElementById('app-screen');
-    const userInfo = document.getElementById('user-info');
-    const btnLogin = document.getElementById('btn-login');
-    const btnLogout = document.getElementById('btn-logout');
-    const userName = document.getElementById('user-name');
-    const userAvatar = document.getElementById('user-avatar');
-
-    const balanceEl = document.getElementById('balance');
-    const totalIncomeEl = document.getElementById('total-income');
-    const totalExpenseEl = document.getElementById('total-expense');
-
-    const txForm = document.getElementById('tx-form');
-    const txList = document.getElementById('tx-list');
-    const btnReset = document.getElementById('btn-reset');
-
     let currentUser = null;
+    let currentType = 'expense';
+    let selectedCategory = 'Cafe';
+    let myChart = null;
 
-    // Đăng nhập bằng Popup (Chống lỗi mobile/Safari)
-    btnLogin.addEventListener('click', () => {
-      signInWithPopup(auth, provider).catch(error => {
-        alert("Lỗi đăng nhập: " + error.message);
-      });
+    const categoriesExpense = [
+      { name: 'Cafe', icon: '☕' },
+      { name: 'Ăn uống', icon: '🥗' },
+      { name: 'Xăng xe', icon: '⛽' },
+      { name: 'Con cái', icon: '👶' },
+      { name: 'Sửa chữa', icon: '🛠️' },
+      { name: 'Thuốc', icon: '💊' },
+      { name: 'Dịch vụ', icon: '🏠' },
+      { name: 'Khác', icon: '📝' }
+    ];
+
+    const categoriesIncome = [
+      { name: 'Lương', icon: '💵' },
+      { name: 'Thưởng', icon: '🎁' },
+      { name: 'Đầu tư', icon: '📈' },
+      { name: 'Khác', icon: '💰' }
+    ];
+
+    // Auth Handlers
+    document.getElementById('btn-login').addEventListener('click', () => {
+      signInWithPopup(auth, provider).catch(err => alert("Lỗi: " + err.message));
     });
-
-    btnLogout.addEventListener('click', () => signOut(auth));
+    document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
     onAuthStateChanged(auth, user => {
       if (user) {
         currentUser = user;
-        userName.textContent = user.displayName;
-        userAvatar.src = user.photoURL || 'https://via.placeholder.com/40';
-        loginScreen.classList.add('hidden');
-        appScreen.classList.remove('hidden');
-        userInfo.classList.remove('hidden');
-        userInfo.classList.add('flex');
+        document.getElementById('user-name').textContent = user.displayName;
+        document.getElementById('user-avatar').src = user.photoURL || 'https://via.placeholder.com/40';
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('app-screen').classList.remove('hidden');
         loadData(user.uid);
       } else {
         currentUser = null;
-        loginScreen.classList.remove('hidden');
-        appScreen.classList.add('hidden');
-        userInfo.classList.add('hidden');
-        userInfo.classList.remove('flex');
+        document.getElementById('login-screen').classList.remove('hidden');
+        document.getElementById('app-screen').classList.add('hidden');
       }
     });
 
-    txForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      if (!currentUser) return;
+    // Render hạng mục
+    window.renderCategories = function() {
+      const grid = document.getElementById('categories-grid');
+      grid.innerHTML = '';
+      const list = currentType === 'expense' ? categoriesExpense : categoriesIncome;
 
-      const desc = document.getElementById('tx-desc').value;
-      const amount = parseFloat(document.getElementById('tx-amount').value);
-      const type = document.getElementById('tx-type').value;
+      list.forEach((cat, idx) => {
+        if (idx === 0 && !selectedCategory) selectedCategory = cat.name;
+        const isSelected = selectedCategory === cat.name;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `p-2 rounded-xl text-center flex flex-col items-center justify-center transition border ${isSelected ? 'border-blue-500 bg-blue-50 text-blue-600 font-bold' : 'border-gray-100 bg-gray-50 text-gray-600'}`;
+        btn.onclick = () => {
+          selectedCategory = cat.name;
+          renderCategories();
+        };
+        btn.innerHTML = `<span class="text-xl mb-1">${cat.icon}</span><span class="text-[11px]">${cat.name}</span>`;
+        grid.appendChild(btn);
+      });
+    };
 
-      push(ref(db, `users/${currentUser.uid}/transactions`), {
-        desc,
-        amount,
-        type,
-        timestamp: Date.now()
+    // Set Loại Chi/Thu
+    window.setTxType = function(type) {
+      currentType = type;
+      const btnExp = document.getElementById('btn-type-expense');
+      const btnInc = document.getElementById('btn-type-income');
+      const inputAmt = document.getElementById('tx-amount');
+      const curr = document.getElementById('amount-currency');
+
+      if (type === 'expense') {
+        btnExp.className = 'w-1/2 py-2 text-sm font-bold rounded-lg bg-white text-red-600 shadow-sm transition';
+        btnInc.className = 'w-1/2 py-2 text-sm font-bold rounded-lg text-gray-500 hover:text-green-600 transition';
+        inputAmt.className = 'text-3xl font-bold text-center bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none w-48 text-red-600';
+        curr.className = 'text-xl font-bold text-red-600';
+      } else {
+        btnInc.className = 'w-1/2 py-2 text-sm font-bold rounded-lg bg-white text-green-600 shadow-sm transition';
+        btnExp.className = 'w-1/2 py-2 text-sm font-bold rounded-lg text-gray-500 hover:text-red-600 transition';
+        inputAmt.className = 'text-3xl font-bold text-center bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none w-48 text-green-600';
+        curr.className = 'text-xl font-bold text-green-600';
+      }
+      selectedCategory = type === 'expense' ? 'Cafe' : 'Lương';
+      renderCategories();
+    };
+
+    // Chuyển Tab Bottom Nav
+    window.switchTab = function(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('text-blue-600');
+        btn.classList.add('text-gray-400');
       });
 
-      txForm.reset();
+      const activeNav = document.getElementById(`nav-${tabName}`);
+      if (activeNav) {
+        activeNav.classList.remove('text-gray-400');
+        activeNav.classList.add('text-blue-600');
+      }
+    };
+
+    // Lưu Giao Dịch
+    document.getElementById('btn-save-tx').addEventListener('click', () => {
+      if (!currentUser) return;
+
+      const amountVal = parseFloat(document.getElementById('tx-amount').value);
+      const walletVal = document.getElementById('tx-wallet').value;
+      const descVal = document.getElementById('tx-desc').value || selectedCategory;
+
+      if (!amountVal || amountVal <= 0) {
+        alert("Vui lòng nhập số tiền!");
+        return;
+      }
+
+      push(ref(db, `users/${currentUser.uid}/transactions`), {
+        amount: amountVal,
+        type: currentType,
+        category: selectedCategory,
+        wallet: walletVal,
+        desc: descVal,
+        timestamp: Date.now()
+      }).then(() => {
+        document.getElementById('tx-amount').value = '';
+        document.getElementById('tx-desc').value = '';
+        switchTab('overview');
+      });
     });
 
+    // Load Data Firebase
     function loadData(uid) {
       onValue(ref(db, `users/${uid}/transactions`), snapshot => {
         const data = snapshot.val();
-        txList.innerHTML = '';
+        const listEl = document.getElementById('recent-tx-list');
+        listEl.innerHTML = '';
+
         let totalIncome = 0;
         let totalExpense = 0;
+        let walletBalances = { cash: 0, vcb: 0, momo: 0 };
 
         if (data) {
           Object.keys(data).reverse().forEach(key => {
             const item = data[key];
-            const isIncome = item.type === 'income';
-            
-            if (isIncome) {
+            const isInc = item.type === 'income';
+            const wKey = item.wallet || 'cash';
+
+            if (isInc) {
               totalIncome += item.amount;
+              walletBalances[wKey] = (walletBalances[wKey] || 0) + item.amount;
             } else {
               totalExpense += item.amount;
+              walletBalances[wKey] = (walletBalances[wKey] || 0) - item.amount;
             }
 
             const li = document.createElement('li');
-            li.className = 'flex justify-between items-center py-3.5 px-2 hover:bg-gray-50/80 rounded-xl transition';
+            li.className = 'py-3 flex justify-between items-center text-sm';
             li.innerHTML = `
               <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${isIncome ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">
-                  ${isIncome ? '↓' : '↑'}
-                </div>
+                <span class="text-xl">${isInc ? '💰' : '☕'}</span>
                 <div>
-                  <p class="font-semibold text-gray-800 text-sm">${item.desc}</p>
-                  <p class="text-xs text-gray-400">${new Date(item.timestamp).toLocaleDateString('vi-VN')} ${new Date(item.timestamp).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}</p>
+                  <p class="font-semibold text-gray-800 text-xs">${item.desc}</p>
+                  <p class="text-[10px] text-gray-400">${new Date(item.timestamp).toLocaleDateString('vi-VN')}</p>
                 </div>
               </div>
-              <div class="flex items-center space-x-3">
-                <span class="font-bold text-sm ${isIncome ? 'text-green-600' : 'text-red-600'}">
-                  ${isIncome ? '+' : '-'}${item.amount.toLocaleString('vi-VN')} đ
+              <div class="text-right">
+                <span class="font-bold text-xs ${isInc ? 'text-green-600' : 'text-red-600'}">
+                  ${isInc ? '+' : '-'}${item.amount.toLocaleString('vi-VN')} đ
                 </span>
-                <button onclick="deleteTx('${key}')" class="text-gray-300 hover:text-red-500 font-bold p-1 rounded transition">✕</button>
+                <button onclick="deleteTx('${key}')" class="text-gray-300 hover:text-red-500 text-xs ml-2">✕</button>
               </div>
             `;
-            txList.appendChild(li);
+            listEl.appendChild(li);
           });
         }
 
         const balance = totalIncome - totalExpense;
-        balanceEl.textContent = `${balance.toLocaleString('vi-VN')} đ`;
-        totalIncomeEl.textContent = `+${totalIncome.toLocaleString('vi-VN')} đ`;
-        totalExpenseEl.textContent = `-${totalExpense.toLocaleString('vi-VN')} đ`;
+        document.getElementById('total-balance').textContent = `${balance.toLocaleString('vi-VN')} đ`;
+        document.getElementById('total-income').textContent = `+${totalIncome.toLocaleString('vi-VN')} đ`;
+        document.getElementById('total-expense').textContent = `-${totalExpense.toLocaleString('vi-VN')} đ`;
+
+        document.getElementById('wallet-cash').textContent = `${(walletBalances.cash || 0).toLocaleString('vi-VN')} đ`;
+        document.getElementById('wallet-vcb').textContent = `${(walletBalances.vcb || 0).toLocaleString('vi-VN')} đ`;
+        document.getElementById('wallet-momo').textContent = `${(walletBalances.momo || 0).toLocaleString('vi-VN')} đ`;
+
+        updateChart(totalIncome, totalExpense);
       });
     }
 
+    // Biểu đồ báo cáo
+    function updateChart(income, expense) {
+      const ctx = document.getElementById('reportChart').getContext('2d');
+      if (myChart) myChart.destroy();
+
+      myChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Thu nhập', 'Chi tiêu'],
+          datasets: [{
+            data: [income, expense],
+            backgroundColor: ['#16a34a', '#dc2626']
+          }]
+        },
+        options: {
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+
+    // Xóa
     window.deleteTx = function(key) {
-      if (currentUser && confirm("Bạn có muốn xóa giao dịch này?")) {
+      if (currentUser && confirm("Xóa giao dịch này?")) {
         remove(ref(db, `users/${currentUser.uid}/transactions/${key}`));
       }
     };
 
-    btnReset.addEventListener('click', () => {
-      if (currentUser && confirm("Bạn có chắc muốn xóa tất cả giao dịch về 0 đ?")) {
+    document.getElementById('btn-reset-data').addEventListener('click', () => {
+      if (currentUser && confirm("Bạn có chắc muốn xóa tất cả giao dịch?")) {
         remove(ref(db, `users/${currentUser.uid}/transactions`));
       }
     });
+
+    renderCategories();
   </script>
 </body>
 </html>
