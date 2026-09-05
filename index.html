@@ -649,16 +649,11 @@
         `;
         walletsListEl.appendChild(div);
 
-        // Đã bỏ chữ "Số dư:", chỉ giữ lại tên ví và số tiền trong ngoặc
         const walletLabel = `${w.icon} ${w.name} (${bal.toLocaleString('vi-VN')} đ)`;
 
-        const opt1 = new Option(walletLabel, wId);
-        const opt2 = new Option(walletLabel, wId);
-        const opt3 = new Option(walletLabel, wId);
-
-        walletSelectEl.add(opt1);
-        fromWalletEl.add(opt2);
-        toWalletEl.add(opt3);
+        walletSelectEl.add(new Option(walletLabel, wId));
+        fromWalletEl.add(new Option(walletLabel, wId));
+        toWalletEl.add(new Option(walletLabel, wId));
       });
 
       if (toWalletEl.options.length > 1) toWalletEl.selectedIndex = 1;
@@ -692,9 +687,17 @@
       }
     };
 
+    // ĐÃ CẬP NHẬT: XÁC NHẬN 2 LẦN KHI RESET
     document.getElementById('btn-reset-data').addEventListener('click', () => {
-      if (currentUser && confirm("Bạn có chắc muốn xóa tất cả ví và giao dịch?")) {
-        remove(ref(db, `users/${currentUser.uid}`));
+      if (!currentUser) return;
+      const firstConfirm = confirm("⚠️ CẢNH BÁO: Bạn có thực sự muốn xóa toàn bộ ví và toàn bộ lịch sử giao dịch không?");
+      if (firstConfirm) {
+        const secondConfirm = confirm("❗ XÁC NHẬN LẦN CUỐI: Hành động này không thể hoàn tác. Mọi dữ liệu tài chính của bạn sẽ bị xóa sạch về 0. Bạn vẫn muốn tiếp tục chứ?");
+        if (secondConfirm) {
+          remove(ref(db, `users/${currentUser.uid}`)).then(() => {
+            alert("Đã reset toàn bộ dữ liệu thành công!");
+          });
+        }
       }
     });
 
