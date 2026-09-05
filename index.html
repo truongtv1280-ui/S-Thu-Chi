@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sổ Thu Chi - Định Dạng Tiền</title>
+  <title>Sổ Thu Chi - Ẩn Số Tiền</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -13,7 +13,7 @@
   <div id="login-screen" class="max-w-md mx-auto min-h-screen flex flex-col justify-center items-center p-6 text-center bg-white">
     <div class="w-20 h-20 bg-blue-500 rounded-3xl flex items-center justify-center text-white text-4xl shadow-lg mb-6">💰</div>
     <h1 class="text-2xl font-bold text-gray-800">Sổ Thu Chi Cá Nhân</h1>
-    <p class="text-gray-500 text-sm mt-2 mb-8">Quản lý tài chính & Định dạng tiền tệ tự động</p>
+    <p class="text-gray-500 text-sm mt-2 mb-8">Quản lý tài chính & Bảo mật số dư</p>
     <button id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 px-4 rounded-xl shadow-md transition flex items-center justify-center space-x-3">
       <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
         <path d="M12.24 10.285V13.4h6.887C18.2 15.683 15.65 18 12.24 18c-3.315 0-6-2.685-6-6s2.685-6 6-6c1.47 0 2.81.53 3.845 1.41l2.58-2.58C17.07 3.32 14.8 2.4 12.24 2.4 6.97 2.4 2.7 6.67 2.7 11.94s4.27 9.54 9.54 9.54c5.51 0 9.18-3.87 9.18-9.35 0-.64-.06-1.25-.18-1.845H12.24z"/>
@@ -65,18 +65,23 @@
     <!-- TAB 1: TỔNG QUAN -->
     <div id="tab-overview" class="tab-content p-4 space-y-4">
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-        <p class="text-xs font-medium text-gray-400 uppercase">Tổng số dư tài sản</p>
-        <h2 id="total-balance" class="text-3xl font-extrabold text-blue-600 my-1">0 đ</h2>
+        <div class="flex justify-between items-center">
+          <p class="text-xs font-medium text-gray-400 uppercase">Tổng số dư tài sản</p>
+          <button onclick="toggleBalanceVisibility()" class="text-gray-400 hover:text-blue-600 p-1 text-sm transition focus:outline-none" title="Ẩn/Hiện số tiền">
+            <span id="eye-icon">👁️</span>
+          </button>
+        </div>
+        <h2 id="total-balance" class="text-3xl font-extrabold text-blue-600 my-1">*** đ</h2>
       </div>
 
       <div class="grid grid-cols-2 gap-3">
         <div class="bg-white p-3.5 rounded-xl border border-gray-100">
           <p class="text-[11px] text-gray-400 font-medium">Thu trong kỳ</p>
-          <p id="total-income" class="text-lg font-bold text-green-600 my-0.5">+0 đ</p>
+          <p id="total-income" class="text-lg font-bold text-green-600 my-0.5">*** đ</p>
         </div>
         <div class="bg-white p-3.5 rounded-xl border border-gray-100">
           <p class="text-[11px] text-gray-400 font-medium">Chi trong kỳ</p>
-          <p id="total-expense" class="text-lg font-bold text-red-600 my-0.5">-0 đ</p>
+          <p id="total-expense" class="text-lg font-bold text-red-600 my-0.5">*** đ</p>
         </div>
       </div>
 
@@ -90,8 +95,13 @@
     <div id="tab-wallets" class="tab-content hidden p-4 space-y-4">
       <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-5 rounded-2xl shadow-md flex justify-between items-center">
         <div>
-          <p class="text-xs text-blue-100 font-medium">Tổng tài sản hiện tại</p>
-          <h2 id="wallets-total-balance" class="text-2xl font-bold mt-1">0 đ</h2>
+          <div class="flex items-center space-x-2">
+            <p class="text-xs text-blue-100 font-medium">Tổng tài sản hiện tại</p>
+            <button onclick="toggleBalanceVisibility()" class="text-blue-200 hover:text-white p-0.5 text-xs transition focus:outline-none">
+              <span class="eye-icon-secondary">👁️</span>
+            </button>
+          </div>
+          <h2 id="wallets-total-balance" class="text-2xl font-bold mt-1">*** đ</h2>
         </div>
         <div class="flex space-x-2">
           <button onclick="openTransferModal()" class="bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-1 shadow transition">
@@ -118,7 +128,6 @@
           <button id="btn-type-transfer" type="button" onclick="setTxType('transfer')" class="w-1/3 py-2 rounded-lg text-gray-500 hover:text-blue-600 transition">Chuyển tiền</button>
         </div>
 
-        <!-- Khung số tiền có tự động format dấu chấm -->
         <div class="text-center py-2 bg-gray-50 rounded-xl border border-gray-100">
           <p class="text-xs text-gray-400 font-medium">Số tiền</p>
           <div class="flex items-center justify-center space-x-1 mt-1">
@@ -268,9 +277,11 @@
     let allTransactions = null;
     let myChart = null;
 
+    // Trạng thái Ẩn / Hiện số tiền (Mặc định: Ẩn)
+    let isBalanceHidden = true;
+
     document.getElementById('tx-date').valueAsDate = new Date();
 
-    // Tự động thêm dấu chấm vào ô nhập số tiền
     const amountInput = document.getElementById('tx-amount');
     amountInput.addEventListener('input', (e) => {
       let rawVal = e.target.value.replace(/\D/g, ''); 
@@ -281,11 +292,18 @@
       }
     });
 
-    // Lấy số tiền thực tế không có dấu chấm
     function getCleanAmount() {
       const raw = amountInput.value.replace(/\./g, '').replace(/\,/g, '');
       return parseFloat(raw) || 0;
     }
+
+    // Toggle Ẩn / Hiện số tiền
+    window.toggleBalanceVisibility = function() {
+      isBalanceHidden = !isBalanceHidden;
+      document.getElementById('eye-icon').textContent = isBalanceHidden ? '👁️' : '🙈';
+      document.querySelectorAll('.eye-icon-secondary').forEach(el => el.textContent = isBalanceHidden ? '👁️' : '🙈');
+      renderFilteredData();
+    };
 
     const categoriesExpense = [
       { name: 'Cafe', icon: '☕' },
@@ -577,7 +595,7 @@
                   </div>
                 </div>
                 <div class="text-right">
-                  <span class="font-bold text-xs text-blue-600">${item.amount.toLocaleString('vi-VN')} đ</span>
+                  <span class="font-bold text-xs text-blue-600">${isBalanceHidden ? '*** đ' : item.amount.toLocaleString('vi-VN') + ' đ'}</span>
                   <button onclick="deleteTx('${key}')" class="text-gray-300 hover:text-red-500 text-xs ml-2">✕</button>
                 </div>
               `;
@@ -594,7 +612,7 @@
                 </div>
                 <div class="text-right">
                   <span class="font-bold text-xs ${isInc ? 'text-green-600' : 'text-red-600'}">
-                    ${isInc ? '+' : '-'}${item.amount.toLocaleString('vi-VN')} đ
+                    ${isInc ? '+' : '-'}${isBalanceHidden ? '*** đ' : item.amount.toLocaleString('vi-VN') + ' đ'}
                   </span>
                   <button onclick="deleteTx('${key}')" class="text-gray-300 hover:text-red-500 text-xs ml-2">✕</button>
                 </div>
@@ -626,7 +644,7 @@
             <span class="text-2xl">${w.icon}</span>
             <div>
               <p class="font-bold text-gray-800 text-sm">${w.name}</p>
-              <p class="text-xs ${bal >= 0 ? 'text-blue-600' : 'text-red-500'} font-medium">${bal.toLocaleString('vi-VN')} đ</p>
+              <p class="text-xs ${bal >= 0 ? 'text-blue-600' : 'text-red-500'} font-medium">${isBalanceHidden ? '*** đ' : bal.toLocaleString('vi-VN') + ' đ'}</p>
             </div>
           </div>
           <button onclick="deleteWallet('${wId}', '${w.name}')" class="text-gray-300 hover:text-red-500 p-1 text-sm font-bold">🗑️</button>
@@ -645,10 +663,12 @@
       if (toWalletEl.options.length > 1) toWalletEl.selectedIndex = 1;
 
       const totalBalanceAll = Object.values(walletBalances).reduce((a, b) => a + b, 0);
-      document.getElementById('total-balance').textContent = `${totalBalanceAll.toLocaleString('vi-VN')} đ`;
-      document.getElementById('wallets-total-balance').textContent = `${totalBalanceAll.toLocaleString('vi-VN')} đ`;
-      document.getElementById('total-income').textContent = `+${totalIncomePeriod.toLocaleString('vi-VN')} đ`;
-      document.getElementById('total-expense').textContent = `-${totalExpensePeriod.toLocaleString('vi-VN')} đ`;
+
+      // Hiển thị dạng *** đ nếu đang chọn Ẩn
+      document.getElementById('total-balance').textContent = isBalanceHidden ? '*** đ' : `${totalBalanceAll.toLocaleString('vi-VN')} đ`;
+      document.getElementById('wallets-total-balance').textContent = isBalanceHidden ? '*** đ' : `${totalBalanceAll.toLocaleString('vi-VN')} đ`;
+      document.getElementById('total-income').textContent = isBalanceHidden ? '*** đ' : `+${totalIncomePeriod.toLocaleString('vi-VN')} đ`;
+      document.getElementById('total-expense').textContent = isBalanceHidden ? '*** đ' : `-${totalExpensePeriod.toLocaleString('vi-VN')} đ`;
 
       updateChart(totalIncomePeriod, totalExpensePeriod);
     }
