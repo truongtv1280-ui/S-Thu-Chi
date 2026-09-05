@@ -1,183 +1,101 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quản Lý Thu Chi</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Thu Chi</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center font-sans">
 
-  <div x-data="app" class="w-full max-w-md bg-white rounded-xl shadow-md p-6">
-    
-    <!-- Màn hình Đăng nhập -->
-    <template x-if="!user">
-      <div class="text-center py-8">
-        <h1 class="text-2xl font-bold mb-2 text-gray-800">Quản Lý Thu Chi</h1>
-        <p class="text-gray-500 mb-6 text-sm">Theo dõi tài chính cá nhân dễ dàng</p>
-        <button @click="loginWithGoogle()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 shadow transition">
-          <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.761H12.545z"/></svg>
-          Đăng nhập với Google
-        </button>
-      </div>
-    </template>
+    <div x-data="app" class="bg-white p-8 rounded-xl shadow-md w-full max-w-md text-center">
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">Quản Lý Thu Chi</h1>
+        <p class="text-sm text-gray-500 mb-6">Theo dõi tài chính cá nhân dễ dàng</p>
 
-    <!-- Màn hình Dashboard khi đã Đăng nhập -->
-    <template x-if="user">
-      <div>
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-6 pb-4 border-b">
-          <div class="flex items-center gap-2">
-            <img :src="user.photoURL" class="w-8 h-8 rounded-full border">
-            <span class="font-medium text-sm text-gray-700" x-text="user.displayName"></span>
-          </div>
-          <button @click="logout()" class="text-xs text-red-500 hover:underline font-medium">Đăng xuất</button>
-        </div>
+        <!-- Trạng thái chưa đăng nhập -->
+        <template x-if="!user">
+            <button @click="loginWithGoogle" class="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-gray-700 px-4 py-2.5 rounded-lg font-medium hover:bg-gray-50 transition shadow-sm">
+                <svg class="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                Đăng nhập với Google
+            </button>
+        </template>
 
-        <!-- Ví & Số dư -->
-        <div class="bg-blue-50 p-4 rounded-lg mb-6 text-center border border-blue-100">
-          <span class="text-xs text-gray-500 uppercase font-semibold tracking-wider">Số Dư Hiện Tại</span>
-          <div class="text-3xl font-bold text-blue-600 my-1" x-text="formatMoney(balance)"></div>
-          <button @click="resetBalance()" class="text-xs text-gray-500 hover:text-red-600 underline mt-1">Reset ví về 0 đ</button>
-        </div>
+        <!-- Trạng thái đã đăng nhập -->
+        <template x-if="user">
+            <div class="space-y-4">
+                <div class="flex items-center gap-3 text-left p-3 bg-gray-50 rounded-lg">
+                    <img :src="user.photoURL" class="w-10 h-10 rounded-full" alt="Avatar">
+                    <div>
+                        <div class="font-semibold text-gray-800" x-text="user.displayName"></div>
+                        <div class="text-xs text-gray-500" x-text="user.email"></div>
+                    </div>
+                </div>
+                <button @click="logout" class="w-full bg-red-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition">
+                    Đăng xuất
+                </button>
+            </div>
+        </template>
+    </div>
 
-        <!-- Form Nhập Khoản Thu/Chi -->
-        <form @submit.prevent="addTransaction()" class="space-y-3 mb-6">
-          <input type="text" x-model="title" placeholder="Nội dung (vd: Lương, Ăn sáng)" required class="w-full border p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <input type="number" x-model.number="amount" placeholder="Số tiền" required class="w-full border p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <div class="flex gap-2">
-            <select x-model="type" class="w-1/2 border p-2.5 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="income">Thu nhập (+)</option>
-              <option value="expense">Chi tiêu (-)</option>
-            </select>
-            <button type="submit" class="w-1/2 bg-green-600 text-white font-medium py-2.5 rounded-lg text-sm hover:bg-green-700 transition">Thêm</button>
-          </div>
-        </form>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        <!-- Danh sách giao dịch -->
-        <h3 class="font-bold text-gray-700 mb-2 text-sm">Lịch sử gần đây</h3>
-        <ul class="divide-y max-h-48 overflow-y-auto mb-4 border rounded-lg bg-gray-50">
-          <template x-for="(tx, id) in transactions" :key="id">
-            <li class="p-3 flex justify-between items-center text-sm bg-white">
-              <div>
-                <div class="font-medium text-gray-800" x-text="tx.title"></div>
-                <div class="text-xs text-gray-400" x-text="tx.date"></div>
-              </div>
-              <div class="flex items-center gap-3">
-                <span :class="tx.type === 'income' ? 'text-green-600' : 'text-red-600'" class="font-bold" x-text="(tx.type === 'income' ? '+' : '-') + formatMoney(tx.amount)"></span>
-                <button @click="deleteTransaction(id)" class="text-gray-400 hover:text-red-500 font-bold text-xs p-1">✕</button>
-              </div>
-            </li>
-          </template>
-        </ul>
-      </div>
-    </template>
+        // Tạo API Key bằng mảng để tránh bị tự động nối dấu gạch ngang dài
+        const apiKeyParts = ["AIzaSyCNVhHtsp", "--", "ZWj_U-WFDFkJFXBBLR-Nvzg"];
+        
+        const firebaseConfig = {
+            apiKey: apiKeyParts.join(""),
+            authDomain: "quanlythuchi-7d202.firebaseapp.com",
+            projectId: "quanlythuchi-7d202",
+            storageBucket: "quanlythuchi-7d202.firebasestorage.app",
+            messagingSenderId: "1072192237025",
+            appId: "1:1072192237025:web:7b126514825b414822f6a0",
+            databaseURL: "https://quanlythuchi-7d202-default-rtdb.firebaseio.com"
+        };
 
-  </div>
+        const firebaseApp = initializeApp(firebaseConfig);
+        const auth = getAuth(firebaseApp);
+        const provider = new GoogleAuthProvider();
+        const db = getDatabase(firebaseApp);
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('app', () => ({
+                user: null,
 
-    // Cấu hình Firebase đã chuẩn chuẩn xác apiKey
-    const firebaseConfig = {
-      apiKey: "AIzaSyCNVhHtsp" + "--" + "ZWj_U-WFDFkJFXBBLR-Nvzg",
-      authDomain: "quanlythuchi-7d202.firebaseapp.com",
-      projectId: "quanlythuchi-7d202",
-      storageBucket: "quanlythuchi-7d202.firebasestorage.app",
-      messagingSenderId: "1072192237025",
-      appId: "1:1072192237025:web:7b126514825b414822f6a0",
-      databaseURL: "https://quanlythuchi-7d202-default-rtdb.firebaseio.com"
-    };
+                init() {
+                    onAuthStateChanged(auth, (currentUser) => {
+                        this.user = currentUser;
+                    });
+                },
 
-    const firebaseApp = initializeApp(firebaseConfig);
-    const auth = getAuth(firebaseApp);
-    const provider = new GoogleAuthProvider();
-    const db = getDatabase(firebaseApp);
+                loginWithGoogle() {
+                    signInWithPopup(auth, provider)
+                        .then((result) => {
+                            console.log("Đăng nhập thành công:", result.user);
+                        })
+                        .catch((error) => {
+                            alert("Lỗi đăng nhập: " + error.message);
+                            console.error("Firebase Auth Error:", error);
+                        });
+                },
 
-    document.addEventListener('alpine:init', () => {
-      Alpine.data('app', () => ({
-        user: null,
-        title: '',
-        amount: null,
-        type: 'expense',
-        transactions: {},
-        balance: 0,
-
-        init() {
-          onAuthStateChanged(auth, (currentUser) => {
-            this.user = currentUser;
-            if (currentUser) {
-              this.loadTransactions();
-            }
-          });
-        },
-
-        loginWithGoogle() {
-          signInWithPopup(auth, provider).catch(err => alert("Lỗi đăng nhập: " + err.message));
-        },
-
-        logout() {
-          signOut(auth);
-        },
-
-        loadTransactions() {
-          const userRef = ref(db, `users/${this.user.uid}/transactions`);
-          onValue(userRef, (snapshot) => {
-            const data = snapshot.val() || {};
-            this.transactions = data;
-            this.calculateBalance();
-          });
-        },
-
-        addTransaction() {
-          if (!this.title || !this.amount) return;
-          const userRef = ref(db, `users/${this.user.uid}/transactions`);
-          push(userRef, {
-            title: this.title,
-            amount: Number(this.amount),
-            type: this.type,
-            date: new Date().toLocaleDateString('vi-VN')
-          });
-          this.title = '';
-          this.amount = null;
-        },
-
-        deleteTransaction(id) {
-          const itemRef = ref(db, `users/${this.user.uid}/transactions/${id}`);
-          remove(itemRef);
-        },
-
-        resetBalance() {
-          if (confirm("Bạn có chắc chắn muốn điều chỉnh ví về 0 đ?")) {
-            const diff = -this.balance;
-            const userRef = ref(db, `users/${this.user.uid}/transactions`);
-            push(userRef, {
-              title: 'Điều chỉnh số dư về 0',
-              amount: Math.abs(diff),
-              type: diff >= 0 ? 'income' : 'expense',
-              date: new Date().toLocaleDateString('vi-VN')
-            });
-          }
-        },
-
-        calculateBalance() {
-          let total = 0;
-          Object.values(this.transactions).forEach(tx => {
-            if (tx.type === 'income') total += Number(tx.amount);
-            else total -= Number(tx.amount);
-          });
-          this.balance = total;
-        },
-
-        formatMoney(val) {
-          return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
-        }
-      }));
-    });
-  </script>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+                logout() {
+                    signOut(auth).then(() => {
+                        this.user = null;
+                    });
+                }
+            }));
+        });
+    </script>
 </body>
 </html>
