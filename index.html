@@ -5,67 +5,111 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quản Lý Thu Chi</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+<body class="bg-gray-50 min-h-screen text-gray-800">
 
-  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-6">
+  <!-- Header / Navbar -->
+  <header class="bg-white border-b sticky top-0 z-10 shadow-sm">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">💰</div>
+        <h1 class="text-xl font-bold text-gray-800">Quản Lý Thu Chi</h1>
+      </div>
+      <div id="user-info" class="hidden flex items-center space-x-3">
+        <img id="user-avatar" class="w-8 h-8 rounded-full border" src="" alt="Avatar">
+        <span id="user-name" class="text-sm font-medium text-gray-700 hidden sm:inline"></span>
+        <button id="btn-logout" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-lg transition">Đăng xuất</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 py-6">
     <!-- Màn hình Đăng nhập -->
-    <div id="login-screen" class="text-center space-y-4">
-      <h1 class="text-2xl font-bold text-gray-800">Quản Lý Thu Chi</h1>
-      <p class="text-gray-500 text-sm">Theo dõi tài chính cá nhân dễ dàng</p>
-      <button id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition duration-200 flex items-center justify-center space-x-2">
-        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
-          <path d="M12.24 10.285V13.4h6.887C18.2 15.683 15.65 18 12.24 18c-3.315 0-6-2.685-6-6s2.685-6 6-6c1.47 0 2.81.53 3.845 1.41l2.58-2.58C17.07 3.32 14.8 2.4 12.24 2.4 6.97 2.4 2.7 6.67 2.7 11.94s4.27 9.54 9.54 9.54c5.51 0 9.18-3.87 9.18-9.35 0-.64-.06-1.25-.18-1.845H12.24z"/>
+    <div id="login-screen" class="max-w-md mx-auto my-12 bg-white rounded-2xl shadow-lg p-8 text-center space-y-6">
+      <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto text-3xl">📊</div>
+      <div>
+        <h2 class="text-2xl font-bold text-gray-800">Chào mừng trở lại</h2>
+        <p class="text-gray-500 text-sm mt-1">Đăng nhập để tiếp tục theo dõi tài chính cá nhân</p>
+      </div>
+      <button id="btn-login" class="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 px-4 rounded-xl shadow-sm transition duration-200 flex items-center justify-center space-x-3">
+        <svg class="w-5 h-5" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
         </svg>
-        <span>Đăng nhập với Google</span>
+        <span>Đăng nhập bằng Google</span>
       </button>
     </div>
 
-    <!-- Màn hình Ứng dụng chính -->
+    <!-- Màn hình App chính -->
     <div id="app-screen" class="hidden space-y-6">
-      <!-- Thông tin User -->
-      <div class="flex items-center justify-between border-b pb-4">
-        <div class="flex items-center space-x-3">
-          <img id="user-avatar" class="w-10 h-10 rounded-full border" src="" alt="Avatar">
-          <span id="user-name" class="font-semibold text-gray-700"></span>
+      <!-- Thẻ Tổng quan Thống kê -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Tổng Số Dư</p>
+          <h3 id="balance" class="text-2xl font-extrabold text-blue-600 my-1">0 đ</h3>
+          <button id="btn-reset" class="text-xs text-gray-400 hover:text-red-500 underline transition">Reset ví về 0 đ</button>
         </div>
-        <button id="btn-logout" class="text-xs text-red-500 hover:underline">Đăng xuất</button>
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Tổng Thu Nhập</p>
+          <h3 id="total-income" class="text-2xl font-extrabold text-green-600 my-1">+0 đ</h3>
+          <span class="text-xs text-green-500 bg-green-50 px-2 py-0.5 rounded-full font-medium">Thu nhập</span>
+        </div>
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+          <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Tổng Chi Tiêu</p>
+          <h3 id="total-expense" class="text-2xl font-extrabold text-red-600 my-1">-0 đ</h3>
+          <span class="text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded-full font-medium">Chi tiêu</span>
+        </div>
       </div>
 
-      <!-- Số dư -->
-      <div class="bg-blue-50 p-4 rounded-xl text-center">
-        <p class="text-xs font-semibold text-gray-500 uppercase">Số dư hiện tại</p>
-        <p id="balance" class="text-2xl font-bold text-blue-600 my-1">0 đ</p>
-        <button id="btn-reset" class="text-xs text-gray-400 hover:text-gray-600 underline">Reset ví về 0 đ</button>
-      </div>
-
-      <!-- Form nhập -->
-      <form id="tx-form" class="space-y-3">
-        <input id="tx-desc" type="text" placeholder="Nội dung (ví dụ: Lương, Ăn sáng)" required class="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <input id="tx-amount" type="number" placeholder="Số tiền" required min="1" class="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <div class="flex space-x-2">
-          <select id="tx-type" class="w-1/2 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="income">Thu nhập (+)</option>
-            <option value="expense">Chi tiêu (-)</option>
-          </select>
-          <button type="submit" class="w-1/2 bg-green-600 text-white font-medium py-2.5 rounded-lg text-sm hover:bg-green-700 transition">Thêm</button>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Form Nhập Khoản Thu/Chi -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+          <h3 class="font-bold text-gray-800 text-lg border-b pb-2">Thêm Giao Dịch</h3>
+          <form id="tx-form" class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Mô tả / Nội dung</label>
+              <input id="tx-desc" type="text" placeholder="Ví dụ: Lương tháng, Cà phê..." required class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Số tiền (VNĐ)</label>
+              <input id="tx-amount" type="number" placeholder="0" required min="1" class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Loại giao dịch</label>
+              <select id="tx-type" class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50">
+                <option value="expense">Chi tiêu (-)</option>
+                <option value="income">Thu nhập (+)</option>
+              </select>
+            </div>
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl text-sm shadow-md transition duration-200">
+              Thêm Giao Dịch
+            </button>
+          </form>
         </div>
-      </form>
 
-      <!-- Lịch sử -->
-      <div>
-        <h3 class="font-bold text-gray-700 mb-2 text-sm">Lịch sử gần đây</h3>
-        <ul id="tx-list" class="divide-y max-h-48 overflow-y-auto mb-4 border rounded-lg bg-gray-50"></ul>
+        <!-- Biểu đồ & Lịch sử -->
+        <div class="lg:col-span-2 space-y-6">
+          <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-bold text-gray-800 text-lg">Lịch Sử Giao Dịch</h3>
+            </div>
+            <div class="overflow-x-auto">
+              <ul id="tx-list" class="divide-y divide-gray-100 max-h-80 overflow-y-auto pr-1"></ul>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
+  </main>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // Cấu hình Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDwMnJtx2cxiB2vppy51as3NVvVC3IvWpw",
       authDomain: "quanlythuchi-7d202.firebaseapp.com",
@@ -83,18 +127,23 @@
 
     const loginScreen = document.getElementById('login-screen');
     const appScreen = document.getElementById('app-screen');
+    const userInfo = document.getElementById('user-info');
     const btnLogin = document.getElementById('btn-login');
     const btnLogout = document.getElementById('btn-logout');
     const userName = document.getElementById('user-name');
     const userAvatar = document.getElementById('user-avatar');
+
     const balanceEl = document.getElementById('balance');
+    const totalIncomeEl = document.getElementById('total-income');
+    const totalExpenseEl = document.getElementById('total-expense');
+
     const txForm = document.getElementById('tx-form');
     const txList = document.getElementById('tx-list');
     const btnReset = document.getElementById('btn-reset');
 
     let currentUser = null;
 
-    // Đăng nhập Popup (Hỗ trợ tốt trên điện thoại)
+    // Đăng nhập bằng Popup (Chống lỗi mobile/Safari)
     btnLogin.addEventListener('click', () => {
       signInWithPopup(auth, provider).catch(error => {
         alert("Lỗi đăng nhập: " + error.message);
@@ -103,7 +152,6 @@
 
     btnLogout.addEventListener('click', () => signOut(auth));
 
-    // Theo dõi trạng thái Đăng nhập
     onAuthStateChanged(auth, user => {
       if (user) {
         currentUser = user;
@@ -111,15 +159,18 @@
         userAvatar.src = user.photoURL || 'https://via.placeholder.com/40';
         loginScreen.classList.add('hidden');
         appScreen.classList.remove('hidden');
+        userInfo.classList.remove('hidden');
+        userInfo.classList.add('flex');
         loadData(user.uid);
       } else {
         currentUser = null;
         loginScreen.classList.remove('hidden');
         appScreen.classList.add('hidden');
+        userInfo.classList.add('hidden');
+        userInfo.classList.remove('flex');
       }
     });
 
-    // Thêm giao dịch
     txForm.addEventListener('submit', (e) => {
       e.preventDefault();
       if (!currentUser) return;
@@ -138,48 +189,60 @@
       txForm.reset();
     });
 
-    // Tải dữ liệu từ Firebase
     function loadData(uid) {
       onValue(ref(db, `users/${uid}/transactions`), snapshot => {
         const data = snapshot.val();
         txList.innerHTML = '';
-        let total = 0;
+        let totalIncome = 0;
+        let totalExpense = 0;
 
         if (data) {
           Object.keys(data).reverse().forEach(key => {
             const item = data[key];
             const isIncome = item.type === 'income';
-            total += isIncome ? item.amount : -item.amount;
+            
+            if (isIncome) {
+              totalIncome += item.amount;
+            } else {
+              totalExpense += item.amount;
+            }
 
             const li = document.createElement('li');
-            li.className = 'flex justify-between items-center p-3 text-sm';
+            li.className = 'flex justify-between items-center py-3.5 px-2 hover:bg-gray-50/80 rounded-xl transition';
             li.innerHTML = `
-              <div>
-                <p class="font-medium text-gray-800">${item.desc}</p>
-                <p class="text-xs text-gray-400">${new Date(item.timestamp).toLocaleDateString('vi-VN')}</p>
+              <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${isIncome ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">
+                  ${isIncome ? '↓' : '↑'}
+                </div>
+                <div>
+                  <p class="font-semibold text-gray-800 text-sm">${item.desc}</p>
+                  <p class="text-xs text-gray-400">${new Date(item.timestamp).toLocaleDateString('vi-VN')} ${new Date(item.timestamp).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}</p>
+                </div>
               </div>
-              <div class="flex items-center space-x-2">
-                <span class="font-bold ${isIncome ? 'text-green-600' : 'text-red-600'}">
+              <div class="flex items-center space-x-3">
+                <span class="font-bold text-sm ${isIncome ? 'text-green-600' : 'text-red-600'}">
                   ${isIncome ? '+' : '-'}${item.amount.toLocaleString('vi-VN')} đ
                 </span>
-                <button onclick="deleteTx('${key}')" class="text-gray-400 hover:text-red-500 font-bold ml-2">✕</button>
+                <button onclick="deleteTx('${key}')" class="text-gray-300 hover:text-red-500 font-bold p-1 rounded transition">✕</button>
               </div>
             `;
             txList.appendChild(li);
           });
         }
-        balanceEl.textContent = `${total.toLocaleString('vi-VN')} đ`;
+
+        const balance = totalIncome - totalExpense;
+        balanceEl.textContent = `${balance.toLocaleString('vi-VN')} đ`;
+        totalIncomeEl.textContent = `+${totalIncome.toLocaleString('vi-VN')} đ`;
+        totalExpenseEl.textContent = `-${totalExpense.toLocaleString('vi-VN')} đ`;
       });
     }
 
-    // Xóa giao dịch
     window.deleteTx = function(key) {
       if (currentUser && confirm("Bạn có muốn xóa giao dịch này?")) {
         remove(ref(db, `users/${currentUser.uid}/transactions/${key}`));
       }
     };
 
-    // Reset ví
     btnReset.addEventListener('click', () => {
       if (currentUser && confirm("Bạn có chắc muốn xóa tất cả giao dịch về 0 đ?")) {
         remove(ref(db, `users/${currentUser.uid}/transactions`));
