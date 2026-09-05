@@ -5,12 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quản Lý Thu Chi</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
-  <div x-data="app()" x-init="initApp()" class="w-full max-w-md bg-white rounded-xl shadow-md p-6">
+  <div x-data="app()" class="w-full max-w-md bg-white rounded-xl shadow-md p-6">
     
     <!-- Màn hình Đăng nhập -->
     <template x-if="!user">
@@ -97,8 +96,8 @@
     const provider = new GoogleAuthProvider();
     const db = getDatabase(app);
 
-    window.app = function() {
-      return {
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('app', () => ({
         user: null,
         title: '',
         amount: null,
@@ -106,7 +105,7 @@
         transactions: {},
         balance: 0,
 
-        initApp() {
+        init() {
           onAuthStateChanged(auth, (currentUser) => {
             this.user = currentUser;
             if (currentUser) {
@@ -175,9 +174,9 @@
         formatMoney(val) {
           return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
         }
-      }
-    }
+      }));
+    });
   </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </body>
 </html>
-<!-- Updated code -->
