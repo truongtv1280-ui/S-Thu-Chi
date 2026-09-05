@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sổ Thu Chi - Bộ Lọc Ngày</title>
+  <title>Sổ Thu Chi - Định Dạng Tiền</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -13,7 +13,7 @@
   <div id="login-screen" class="max-w-md mx-auto min-h-screen flex flex-col justify-center items-center p-6 text-center bg-white">
     <div class="w-20 h-20 bg-blue-500 rounded-3xl flex items-center justify-center text-white text-4xl shadow-lg mb-6">💰</div>
     <h1 class="text-2xl font-bold text-gray-800">Sổ Thu Chi Cá Nhân</h1>
-    <p class="text-gray-500 text-sm mt-2 mb-8">Quản lý tài chính & Bộ lọc thời gian thông minh</p>
+    <p class="text-gray-500 text-sm mt-2 mb-8">Quản lý tài chính & Định dạng tiền tệ tự động</p>
     <button id="btn-login" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 px-4 rounded-xl shadow-md transition flex items-center justify-center space-x-3">
       <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
         <path d="M12.24 10.285V13.4h6.887C18.2 15.683 15.65 18 12.24 18c-3.315 0-6-2.685-6-6s2.685-6 6-6c1.47 0 2.81.53 3.845 1.41l2.58-2.58C17.07 3.32 14.8 2.4 12.24 2.4 6.97 2.4 2.7 6.67 2.7 11.94s4.27 9.54 9.54 9.54c5.51 0 9.18-3.87 9.18-9.35 0-.64-.06-1.25-.18-1.845H12.24z"/>
@@ -37,7 +37,7 @@
       <button id="btn-logout" class="text-xs bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg transition">Đăng xuất</button>
     </header>
 
-    <!-- BỘ LỌC THỜI GIAN CHUNG DÙNG CHO CÁC TAB -->
+    <!-- BỘ LỌC THỜI GIAN -->
     <div class="bg-white px-4 py-3 border-b shadow-sm space-y-2">
       <div class="flex justify-between items-center">
         <span class="text-xs font-bold text-gray-500">📅 Bộ lọc thời gian:</span>
@@ -50,7 +50,6 @@
         </select>
       </div>
 
-      <!-- Khung tùy chọn từ ngày -> đến ngày -->
       <div id="custom-date-range" class="hidden grid grid-cols-2 gap-2 pt-1 border-t border-dashed">
         <div>
           <label class="block text-[10px] text-gray-400 font-semibold mb-0.5">Từ ngày</label>
@@ -82,7 +81,7 @@
       </div>
 
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-        <h3 class="font-bold text-gray-700 text-sm mb-3">Lịch sử giao dịch theo lọc</h3>
+        <h3 class="font-bold text-gray-700 text-sm mb-3">Lịch sử giao dịch</h3>
         <ul id="recent-tx-list" class="divide-y divide-gray-100 max-h-80 overflow-y-auto pr-1"></ul>
       </div>
     </div>
@@ -119,10 +118,11 @@
           <button id="btn-type-transfer" type="button" onclick="setTxType('transfer')" class="w-1/3 py-2 rounded-lg text-gray-500 hover:text-blue-600 transition">Chuyển tiền</button>
         </div>
 
+        <!-- Khung số tiền có tự động format dấu chấm -->
         <div class="text-center py-2 bg-gray-50 rounded-xl border border-gray-100">
           <p class="text-xs text-gray-400 font-medium">Số tiền</p>
           <div class="flex items-center justify-center space-x-1 mt-1">
-            <input id="tx-amount" type="number" placeholder="0" min="1" class="text-3xl font-bold text-center bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none w-48 text-red-600">
+            <input id="tx-amount" type="text" inputmode="numeric" placeholder="0" class="text-3xl font-bold text-center bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none w-56 text-red-600">
             <span id="amount-currency" class="text-xl font-bold text-red-600">đ</span>
           </div>
         </div>
@@ -133,7 +133,6 @@
         </div>
 
         <div class="space-y-3 pt-2">
-          <!-- Ngày giao dịch -->
           <div>
             <label class="block text-xs font-semibold text-gray-600 mb-1">Ngày thực hiện</label>
             <input id="tx-date" type="date" class="w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50">
@@ -171,7 +170,7 @@
     <!-- TAB 4: BÁO CÁO -->
     <div id="tab-reports" class="tab-content hidden p-4 space-y-4">
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
-        <h3 class="font-bold text-gray-800 text-sm mb-3">Phân tích Thu / Chi Theo Thời Gian</h3>
+        <h3 class="font-bold text-gray-800 text-sm mb-3">Phân tích Thu / Chi</h3>
         <div class="w-full max-w-[240px] mx-auto">
           <canvas id="reportChart"></canvas>
         </div>
@@ -269,8 +268,24 @@
     let allTransactions = null;
     let myChart = null;
 
-    // Set mặc định ngày hôm nay cho input date
     document.getElementById('tx-date').valueAsDate = new Date();
+
+    // Tự động thêm dấu chấm vào ô nhập số tiền
+    const amountInput = document.getElementById('tx-amount');
+    amountInput.addEventListener('input', (e) => {
+      let rawVal = e.target.value.replace(/\D/g, ''); 
+      if (rawVal) {
+        e.target.value = parseInt(rawVal, 10).toLocaleString('vi-VN');
+      } else {
+        e.target.value = '';
+      }
+    });
+
+    // Lấy số tiền thực tế không có dấu chấm
+    function getCleanAmount() {
+      const raw = amountInput.value.replace(/\./g, '').replace(/\,/g, '');
+      return parseFloat(raw) || 0;
+    }
 
     const categoriesExpense = [
       { name: 'Cafe', icon: '☕' },
@@ -349,11 +364,9 @@
       }
     };
 
-    // LOGIC BỘ LỌC THỜI GIAN
     window.handlePresetChange = function() {
       const preset = document.getElementById('filter-preset').value;
       const customRange = document.getElementById('custom-date-range');
-
       if (preset === 'custom') {
         customRange.classList.remove('hidden');
       } else {
@@ -424,7 +437,7 @@
 
       if (type === 'expense') {
         btnExp.className = 'w-1/3 py-2 rounded-lg bg-white text-red-600 shadow-sm transition';
-        inputAmt.className = 'text-3xl font-bold text-center bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none w-48 text-red-600';
+        inputAmt.className = 'text-3xl font-bold text-center bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none w-56 text-red-600';
         curr.className = 'text-xl font-bold text-red-600';
         sectionIncExp.classList.remove('hidden');
         fieldSingle.classList.remove('hidden');
@@ -432,7 +445,7 @@
         selectedCategory = 'Cafe';
       } else if (type === 'income') {
         btnInc.className = 'w-1/3 py-2 rounded-lg bg-white text-green-600 shadow-sm transition';
-        inputAmt.className = 'text-3xl font-bold text-center bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none w-48 text-green-600';
+        inputAmt.className = 'text-3xl font-bold text-center bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none w-56 text-green-600';
         curr.className = 'text-xl font-bold text-green-600';
         sectionIncExp.classList.remove('hidden');
         fieldSingle.classList.remove('hidden');
@@ -440,7 +453,7 @@
         selectedCategory = 'Lương';
       } else if (type === 'transfer') {
         btnTrf.className = 'w-1/3 py-2 rounded-lg bg-white text-blue-600 shadow-sm transition';
-        inputAmt.className = 'text-3xl font-bold text-center bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none w-48 text-blue-600';
+        inputAmt.className = 'text-3xl font-bold text-center bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none w-56 text-blue-600';
         curr.className = 'text-xl font-bold text-blue-600';
         sectionIncExp.classList.add('hidden');
         fieldSingle.classList.add('hidden');
@@ -467,7 +480,7 @@
 
     document.getElementById('btn-save-tx').addEventListener('click', () => {
       if (!currentUser) return;
-      const amountVal = parseFloat(document.getElementById('tx-amount').value);
+      const amountVal = getCleanAmount();
       const customDateStr = document.getElementById('tx-date').value;
       const timestamp = customDateStr ? new Date(customDateStr + "T12:00:00").getTime() : Date.now();
 
@@ -536,7 +549,6 @@
           const item = allTransactions[key];
           const txTime = item.timestamp;
 
-          // Tính tổng số dư ví (toàn thời gian)
           if (item.type === 'transfer') {
             if (walletBalances[item.fromWallet] !== undefined) walletBalances[item.fromWallet] -= item.amount;
             if (walletBalances[item.toWallet] !== undefined) walletBalances[item.toWallet] += item.amount;
@@ -546,7 +558,6 @@
             if (walletBalances[item.walletId] !== undefined) walletBalances[item.walletId] -= item.amount;
           }
 
-          // Lọc danh sách và tính thu/chi theo khoảng thời gian đã chọn
           if (txTime >= startMs && txTime <= endMs) {
             if (item.type === 'income') totalIncomePeriod += item.amount;
             if (item.type === 'expense') totalExpensePeriod += item.amount;
@@ -594,7 +605,6 @@
         });
       }
 
-      // Render Ví & Select Options
       const walletsListEl = document.getElementById('wallets-list');
       const walletSelectEl = document.getElementById('tx-wallet-select');
       const fromWalletEl = document.getElementById('tx-from-wallet');
