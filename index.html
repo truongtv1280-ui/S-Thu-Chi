@@ -178,10 +178,21 @@
 
     <!-- TAB 4: BÁO CÁO -->
     <div id="tab-reports" class="tab-content hidden p-4 space-y-4">
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center">
-        <h3 class="font-bold text-gray-800 text-sm mb-3">Phân tích Thu / Chi</h3>
-        <div class="w-full max-w-[240px] mx-auto">
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center space-y-4">
+        <h3 class="font-bold text-gray-800 text-sm">Phân tích Tổng quan</h3>
+        <div class="w-full max-w-[220px] mx-auto">
           <canvas id="reportChart"></canvas>
+        </div>
+      </div>
+
+      <!-- BẢNG CHI TIẾT THEO DANH MỤC CHI -->
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+        <div class="flex justify-between items-center border-b pb-2">
+          <h3 class="font-bold text-gray-800 text-sm">Chi tiết theo danh mục chi</h3>
+          <span id="report-total-expense" class="text-xs font-bold text-red-600">0 đ</span>
+        </div>
+        <div id="category-report-list" class="divide-y divide-gray-100 text-sm">
+          <!-- Danh sách sẽ được render tự động ở đây -->
         </div>
       </div>
     </div>
@@ -434,7 +445,6 @@
       });
     });
 
-    // Mở modal sửa ví
     window.openEditWalletModal = function(wId, wName, wIcon) {
       document.getElementById('edit-wallet-id').value = wId;
       document.getElementById('edit-wallet-name').value = wName;
@@ -643,6 +653,7 @@
       let totalIncomePeriod = 0;
       let totalExpensePeriod = 0;
       let walletBalances = {};
+      let categoryExpenses = {}; // Dùng để gom nhóm chi tiêu theo danh mục
 
       Object.keys(userWallets).forEach(wId => walletBalances[wId] = 0);
 
@@ -663,8 +674,14 @@
           }
 
           if (txTime >= startMs && txTime <= endMs) {
-            if (item.type === 'income') totalIncomePeriod += item.amount;
-            if (item.type === 'expense') totalExpensePeriod += item.amount;
+            if (item.type === 'income') {
+              totalIncomePeriod += item.amount;
+            }
+            if (item.type === 'expense') {
+              totalExpensePeriod += item.amount;
+              const cat = item.category || 'Khác';
+              categoryExpenses[cat] = (categoryExpenses[cat] || 0) + item.amount;
+            }
 
             const li = document.createElement('li');
             li.className = 'py-3 flex justify-between items-center text-sm';
@@ -759,6 +776,42 @@
       document.getElementById('total-expense').textContent = isBalanceHidden ? '*** đ' : `-${totalExpensePeriod.toLocaleString('vi-VN')} đ`;
 
       updateChart(totalIncomePeriod, totalExpensePeriod);
+      renderCategoryReport(categoryExpenses, totalExpensePeriod);
+    }
+
+    // Render danh sách chi tiết theo danh mục + %
+    function renderCategoryReport(categoryExpenses, totalExpense) {
+      const container = document.getElementById('category-report-list');
+      container.innerHTML = '';
+      document.getElementById('report-total-expense').textContent = `-${totalExpense.toLocaleString('vi-VN')} đ`;
+
+      const sortedCategories = Object.keys(categoryExpenses).sort((a, b) => categoryExpenses[b] - categoryExpenses[a]);
+
+      if (sortedCategories.length === 0) {
+        container.innerHTML = `<p class="text-center text-gray-400 py-2 text-xs">Không có dữ liệu chi tiêu trong kỳ này</p>`;
+        return;
+      }
+
+      sortedCategories.forEach(catName => {
+        const amount = categoryExpenses[catName];
+        const percent = totalExpense > 0 ? ((amount / totalExpense) * 100).toFixed(1) : 0;
+
+        const div = document.createElement('div');
+        div.className = 'py-2.5 flex justify-between items-center';
+        div.innerHTML = `
+          <div>
+            <p class="font-semibold text-gray-800 text-xs">${catName}</p>
+            <div class="w-32 bg-gray-100 h-1.5 rounded-full mt-1 overflow-hidden">
+              <div class="bg-red-500 h-full rounded-full" style="width: ${percent}%"></div>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="font-bold text-xs text-red-600">-${amount.toLocaleString('vi-VN')} đ</p>
+            <p class="text-[10px] text-gray-400 font-medium">${percent}%</p>
+          </div>
+        `;
+        container.appendChild(div);
+      });
     }
 
     window.openEditModal = function(key) {
