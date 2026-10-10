@@ -85,8 +85,14 @@
         </div>
       </div>
 
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-        <h3 class="font-bold text-gray-700 text-sm mb-3">Lịch sử giao dịch</h3>
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+        <div class="flex justify-between items-center">
+          <h3 class="font-bold text-gray-700 text-sm">Lịch sử giao dịch</h3>
+          <!-- BỘ LỌC LỊCH SỬ THEO VÍ -->
+          <select id="filter-wallet" onchange="renderFilteredData()" class="text-xs bg-gray-100 border rounded-lg px-2 py-1 font-semibold text-blue-600 focus:outline-none">
+            <option value="all">Tất cả ví</option>
+          </select>
+        </div>
         <ul id="recent-tx-list" class="divide-y divide-gray-100 max-h-80 overflow-y-auto pr-1"></ul>
       </div>
     </div>
@@ -185,15 +191,12 @@
         </div>
       </div>
 
-      <!-- BẢNG CHI TIẾT THEO DANH MỤC CHI -->
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
         <div class="flex justify-between items-center border-b pb-2">
           <h3 class="font-bold text-gray-800 text-sm">Chi tiết theo danh mục chi</h3>
           <span id="report-total-expense" class="text-xs font-bold text-red-600">0 đ</span>
         </div>
-        <div id="category-report-list" class="divide-y divide-gray-100 text-sm">
-          <!-- Danh sách sẽ được render tự động ở đây -->
-        </div>
+        <div id="category-report-list" class="divide-y divide-gray-100 text-sm"></div>
       </div>
     </div>
 
@@ -646,18 +649,19 @@
       });
     }
 
-    function renderFilteredData() {
+    window.renderFilteredData = function() {
       const listEl = document.getElementById('recent-tx-list');
       listEl.innerHTML = '';
 
       let totalIncomePeriod = 0;
       let totalExpensePeriod = 0;
       let walletBalances = {};
-      let categoryExpenses = {}; // Dùng để gom nhóm chi tiêu theo danh mục
+      let categoryExpenses = {};
 
       Object.keys(userWallets).forEach(wId => walletBalances[wId] = 0);
 
       const { startMs, endMs } = getTimeRange();
+      const selectedFilterWallet = document.getElementById('filter-wallet').value;
 
       if (allTransactions) {
         Object.keys(allTransactions).reverse().forEach(key => {
@@ -674,56 +678,66 @@
           }
 
           if (txTime >= startMs && txTime <= endMs) {
-            if (item.type === 'income') {
-              totalIncomePeriod += item.amount;
-            }
+            if (item.type === 'income') totalIncomePeriod += item.amount;
             if (item.type === 'expense') {
               totalExpensePeriod += item.amount;
               const cat = item.category || 'Khác';
               categoryExpenses[cat] = (categoryExpenses[cat] || 0) + item.amount;
             }
 
-            const li = document.createElement('li');
-            li.className = 'py-3 flex justify-between items-center text-sm';
-
-            if (item.type === 'transfer') {
-              const fromName = userWallets[item.fromWallet] ? userWallets[item.fromWallet].name : 'Ví cũ';
-              const toName = userWallets[item.toWallet] ? userWallets[item.toWallet].name : 'Ví cũ';
-              li.innerHTML = `
-                <div class="flex items-center space-x-3">
-                  <span class="text-xl">🔄</span>
-                  <div>
-                    <p class="font-semibold text-gray-800 text-xs">${item.desc}</p>
-                    <p class="text-[10px] text-gray-400">${fromName} ➔ ${toName} • ${new Date(item.timestamp).toLocaleDateString('vi-VN')}</p>
-                  </div>
-                </div>
-                <div class="text-right flex items-center space-x-1">
-                  <span class="font-bold text-xs text-blue-600">${item.amount.toLocaleString('vi-VN')} đ</span>
-                  <button onclick="openEditModal('${key}')" class="text-gray-400 hover:text-blue-500 text-xs px-1" title="Sửa">✏️</button>
-                  <button onclick="deleteTx('${key}')" class="text-gray-300 hover:text-red-500 text-xs px-1" title="Xóa">✕</button>
-                </div>
-              `;
-            } else {
-              const isInc = item.type === 'income';
-              const wName = userWallets[item.walletId] ? userWallets[item.walletId].name : 'Ví cũ';
-              li.innerHTML = `
-                <div class="flex items-center space-x-3">
-                  <span class="text-xl">${isInc ? '💰' : '☕'}</span>
-                  <div>
-                    <p class="font-semibold text-gray-800 text-xs">${item.desc} <span class="text-[10px] text-gray-400">(${wName})</span></p>
-                    <p class="text-[10px] text-gray-400">${new Date(item.timestamp).toLocaleDateString('vi-VN')}</p>
-                  </div>
-                </div>
-                <div class="text-right flex items-center space-x-1">
-                  <span class="font-bold text-xs ${isInc ? 'text-green-600' : 'text-red-600'}">
-                    ${isInc ? '+' : '-'}${item.amount.toLocaleString('vi-VN')} đ
-                  </span>
-                  <button onclick="openEditModal('${key}')" class="text-gray-400 hover:text-blue-500 text-xs px-1" title="Sửa">✏️</button>
-                  <button onclick="deleteTx('${key}')" class="text-gray-300 hover:text-red-500 text-xs px-1" title="Xóa">✕</button>
-                </div>
-              `;
+            // Kiểm tra điều kiện lọc theo ví
+            let matchWallet = true;
+            if (selectedFilterWallet !== 'all') {
+              if (item.type === 'transfer') {
+                matchWallet = (item.fromWallet === selectedFilterWallet || item.toWallet === selectedFilterWallet);
+              } else {
+                matchWallet = (item.walletId === selectedFilterWallet);
+              }
             }
-            listEl.appendChild(li);
+
+            if (matchWallet) {
+              const li = document.createElement('li');
+              li.className = 'py-3 flex justify-between items-center text-sm';
+
+              if (item.type === 'transfer') {
+                const fromName = userWallets[item.fromWallet] ? userWallets[item.fromWallet].name : 'Ví cũ';
+                const toName = userWallets[item.toWallet] ? userWallets[item.toWallet].name : 'Ví cũ';
+                li.innerHTML = `
+                  <div class="flex items-center space-x-3">
+                    <span class="text-xl">🔄</span>
+                    <div>
+                      <p class="font-semibold text-gray-800 text-xs">${item.desc}</p>
+                      <p class="text-[10px] text-gray-400">${fromName} ➔ ${toName} • ${new Date(item.timestamp).toLocaleDateString('vi-VN')}</p>
+                    </div>
+                  </div>
+                  <div class="text-right flex items-center space-x-1">
+                    <span class="font-bold text-xs text-blue-600">${item.amount.toLocaleString('vi-VN')} đ</span>
+                    <button onclick="openEditModal('${key}')" class="text-gray-400 hover:text-blue-500 text-xs px-1" title="Sửa">✏️</button>
+                    <button onclick="deleteTx('${key}')" class="text-gray-300 hover:text-red-500 text-xs px-1" title="Xóa">✕</button>
+                  </div>
+                `;
+              } else {
+                const isInc = item.type === 'income';
+                const wName = userWallets[item.walletId] ? userWallets[item.walletId].name : 'Ví cũ';
+                li.innerHTML = `
+                  <div class="flex items-center space-x-3">
+                    <span class="text-xl">${isInc ? '💰' : '☕'}</span>
+                    <div>
+                      <p class="font-semibold text-gray-800 text-xs">${item.desc} <span class="text-[10px] text-gray-400">(${wName})</span></p>
+                      <p class="text-[10px] text-gray-400">${new Date(item.timestamp).toLocaleDateString('vi-VN')}</p>
+                    </div>
+                  </div>
+                  <div class="text-right flex items-center space-x-1">
+                    <span class="font-bold text-xs ${isInc ? 'text-green-600' : 'text-red-600'}">
+                      ${isInc ? '+' : '-'}${item.amount.toLocaleString('vi-VN')} đ
+                    </span>
+                    <button onclick="openEditModal('${key}')" class="text-gray-400 hover:text-blue-500 text-xs px-1" title="Sửa">✏️</button>
+                    <button onclick="deleteTx('${key}')" class="text-gray-300 hover:text-red-500 text-xs px-1" title="Xóa">✕</button>
+                  </div>
+                `;
+              }
+              listEl.appendChild(li);
+            }
           }
         });
       }
@@ -732,11 +746,16 @@
       const walletSelectEl = document.getElementById('tx-wallet-select');
       const fromWalletEl = document.getElementById('tx-from-wallet');
       const toWalletEl = document.getElementById('tx-to-wallet');
+      const filterWalletEl = document.getElementById('filter-wallet');
+
+      // Giữ lại lựa chọn hiện tại của bộ lọc ví
+      const currentFilterVal = filterWalletEl.value;
 
       walletsListEl.innerHTML = '';
       walletSelectEl.innerHTML = '';
       fromWalletEl.innerHTML = '';
       toWalletEl.innerHTML = '';
+      filterWalletEl.innerHTML = '<option value="all">Tất cả ví</option>';
 
       Object.keys(userWallets).forEach(wId => {
         const w = userWallets[wId];
@@ -764,7 +783,12 @@
         walletSelectEl.add(new Option(walletLabel, wId));
         fromWalletEl.add(new Option(walletLabel, wId));
         toWalletEl.add(new Option(walletLabel, wId));
+        filterWalletEl.add(new Option(`${w.icon} ${w.name}`, wId));
       });
+
+      if (filterWalletEl.querySelector(`option[value="${currentFilterVal}"]`)) {
+        filterWalletEl.value = currentFilterVal;
+      }
 
       if (toWalletEl.options.length > 1) toWalletEl.selectedIndex = 1;
 
@@ -779,7 +803,6 @@
       renderCategoryReport(categoryExpenses, totalExpensePeriod);
     }
 
-    // Render danh sách chi tiết theo danh mục + %
     function renderCategoryReport(categoryExpenses, totalExpense) {
       const container = document.getElementById('category-report-list');
       container.innerHTML = '';
